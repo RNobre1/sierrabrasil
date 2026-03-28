@@ -168,9 +168,11 @@ export default function AttendantConfig() {
             <Select value={model} onValueChange={setModel}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="gpt-4o-mini">GPT-4o Mini (rápido, econômico)</SelectItem>
-                <SelectItem value="gpt-4o">GPT-4o (equilibrado)</SelectItem>
-                <SelectItem value="claude-sonnet">Claude Sonnet (conversacional)</SelectItem>
+                <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (rápido, equilibrado)</SelectItem>
+                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (econômico)</SelectItem>
+                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (avançado)</SelectItem>
+                <SelectItem value="openai/gpt-5-mini">GPT-5 Mini (versátil)</SelectItem>
+                <SelectItem value="openai/gpt-5">GPT-5 (máxima qualidade)</SelectItem>
               </SelectContent>
             </Select>
           </div>
