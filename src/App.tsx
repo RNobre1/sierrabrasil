@@ -40,8 +40,8 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/conversations" element={<Conversations />} />
               <Route path="/conversations/:id" element={<ConversationDetail />} />
-              <Route path="/attendant/config" element={<Placeholder />} />
-              <Route path="/attendant/playground" element={<Placeholder />} />
+              <Route path="/attendant/config" element={<AttendantConfig />} />
+              <Route path="/attendant/playground" element={<AttendantPlayground />} />
               <Route path="/reports" element={<Placeholder />} />
               <Route path="/account" element={<Placeholder />} />
             </Route>
