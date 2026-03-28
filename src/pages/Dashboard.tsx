@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MessageSquare, ShoppingCart, CalendarCheck, Star, Play, Pause, Settings, ArrowUpRight, ArrowDownRight, TrendingUp } from "lucide-react";
+import { MessageSquare, ShoppingCart, CalendarCheck, Star, Play, Pause, Settings, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,10 +80,10 @@ export default function Dashboard() {
   const resolvedCount = conversations.filter(c => c.status === "resolved").length;
 
   const kpis = [
-    { label: "Conversas hoje", value: String(totalConversations), delta: "+12%", up: true, icon: MessageSquare },
-    { label: "Resolvidas", value: String(resolvedCount), delta: "+25%", up: true, icon: ShoppingCart },
-    { label: "Ativas", value: String(activeCount), delta: "+5%", up: true, icon: CalendarCheck },
-    { label: "Satisfação média", value: "4.8", delta: "-0.1", up: false, icon: Star },
+    { label: "Conversas totais", value: String(totalConversations), icon: MessageSquare },
+    { label: "Resolvidas", value: String(resolvedCount), icon: ShoppingCart },
+    { label: "Ativas", value: String(activeCount), icon: CalendarCheck },
+    { label: "Taxa de resolução", value: totalConversations ? `${Math.round(resolvedCount / totalConversations * 100)}%` : "—", icon: Star },
   ];
 
   const timeAgo = (dateStr: string) => {
@@ -117,10 +117,6 @@ export default function Dashboard() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <kpi.icon className="h-5 w-5 text-muted-foreground" />
-                <span className={`flex items-center gap-1 text-xs font-medium ${kpi.up ? "text-meteora-success" : "text-meteora-danger"}`}>
-                  {kpi.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                  {kpi.delta}
-                </span>
               </div>
               <p className="mt-3 font-display text-[40px] font-light leading-none text-foreground">{kpi.value}</p>
               <p className="mt-1 text-xs text-muted-foreground">{kpi.label}</p>
