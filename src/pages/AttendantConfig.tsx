@@ -27,7 +27,7 @@ export default function AttendantConfig() {
   const [name, setName] = useState("");
   const [persona, setPersona] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [model, setModel] = useState("gpt-4o-mini");
+  const [model, setModel] = useState("google/gemini-3-flash-preview");
   const [temperature, setTemperature] = useState(0.7);
   const [channels, setChannels] = useState<string[]>([]);
   const [status, setStatus] = useState("offline");
