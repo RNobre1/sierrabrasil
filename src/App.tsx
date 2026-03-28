@@ -49,7 +49,7 @@ const App = () => (
             {/* Admin Routes */}
             <Route element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/tenants" element={<Placeholder />} />
+              <Route path="/admin/tenants" element={<AdminTenants />} />
               <Route path="/admin/attendants" element={<Placeholder />} />
               <Route path="/admin/consumption" element={<Placeholder />} />
             </Route>
