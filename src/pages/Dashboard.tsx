@@ -80,10 +80,10 @@ export default function Dashboard() {
   const resolvedCount = conversations.filter(c => c.status === "resolved").length;
 
   const kpis = [
-    { label: "Conversas hoje", value: String(totalConversations), delta: "+12%", up: true, icon: MessageSquare },
-    { label: "Resolvidas", value: String(resolvedCount), delta: "+25%", up: true, icon: ShoppingCart },
-    { label: "Ativas", value: String(activeCount), delta: "+5%", up: true, icon: CalendarCheck },
-    { label: "Satisfação média", value: "4.8", delta: "-0.1", up: false, icon: Star },
+    { label: "Conversas totais", value: String(totalConversations), icon: MessageSquare },
+    { label: "Resolvidas", value: String(resolvedCount), icon: ShoppingCart },
+    { label: "Ativas", value: String(activeCount), icon: CalendarCheck },
+    { label: "Taxa de resolução", value: totalConversations ? `${Math.round(resolvedCount / totalConversations * 100)}%` : "—", icon: Star },
   ];
 
   const timeAgo = (dateStr: string) => {
