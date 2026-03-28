@@ -1,21 +1,14 @@
-import { useState } from "react";
-import { Search, Filter, MessageSquare } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 type ConversationStatus = "all" | "active" | "resolved" | "escalated";
-
-const mockConversations = [
-  { id: "1", name: "Maria Silva", phone: "+55 11 99999-1234", lastMessage: "Obrigada! Agendamento confirmado para amanhã.", status: "resolved", channel: "whatsapp", time: "2 min" },
-  { id: "2", name: "João Santos", phone: "+55 11 98888-5678", lastMessage: "Qual o prazo de entrega do produto X?", status: "active", channel: "whatsapp", time: "5 min" },
-  { id: "3", name: "Ana Costa", phone: "+55 21 97777-9012", lastMessage: "Preciso falar com um atendente humano", status: "escalated", channel: "instagram", time: "12 min" },
-  { id: "4", name: "Pedro Oliveira", phone: "+55 31 96666-3456", lastMessage: "Pedido #5678 — aguardando pagamento", status: "active", channel: "whatsapp", time: "18 min" },
-  { id: "5", name: "Lucia Ferreira", phone: "+55 41 95555-7890", lastMessage: "Pode me enviar o cardápio atualizado?", status: "resolved", channel: "whatsapp", time: "25 min" },
-  { id: "6", name: "Carlos Mendes", phone: "+55 51 94444-2345", lastMessage: "Horário de funcionamento?", status: "resolved", channel: "whatsapp", time: "1h" },
-];
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
   active: { label: "Ativa", variant: "default" },
@@ -23,16 +16,88 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
   escalated: { label: "Escalada", variant: "destructive" },
 };
 
+interface ConversationRow {
+  id: string;
+  contact_name: string;
+  contact_phone: string | null;
+  channel: string;
+  status: string;
+  started_at: string;
+  last_message?: string;
+}
+
 export default function Conversations() {
   const [filter, setFilter] = useState<ConversationStatus>("all");
   const [search, setSearch] = useState("");
+  const [conversations, setConversations] = useState<ConversationRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const filtered = mockConversations.filter((c) => {
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchConversations = async () => {
+      const { data: tenant } = await supabase
+        .from("tenants")
+        .select("id")
+        .eq("owner_id", user.id)
+        .single();
+
+      if (!tenant) { setLoading(false); return; }
+
+      const { data } = await supabase
+        .from("conversations")
+        .select("id, contact_name, contact_phone, channel, status, started_at")
+        .eq("tenant_id", tenant.id)
+        .order("started_at", { ascending: false });
+
+      if (data) {
+        // Fetch last message for each conversation
+        const withMessages = await Promise.all(
+          data.map(async (conv) => {
+            const { data: msgs } = await supabase
+              .from("messages")
+              .select("content")
+              .eq("conversation_id", conv.id)
+              .order("created_at", { ascending: false })
+              .limit(1);
+            return { ...conv, last_message: msgs?.[0]?.content ?? "" };
+          })
+        );
+        setConversations(withMessages);
+      }
+      setLoading(false);
+    };
+
+    fetchConversations();
+  }, [user]);
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins} min`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h`;
+    return `${Math.floor(hours / 24)}d`;
+  };
+
+  const filtered = conversations.filter((c) => {
     if (filter !== "all" && c.status !== filter) return false;
-    if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.phone.includes(search)) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!c.contact_name.toLowerCase().includes(q) && !(c.contact_phone ?? "").includes(q)) return false;
+    }
     return true;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -68,22 +133,22 @@ export default function Conversations() {
               <div className="flex items-center gap-3 min-w-0">
                 <div className="h-10 w-10 shrink-0 rounded-full bg-muted flex items-center justify-center">
                   <span className="text-xs font-medium text-muted-foreground">
-                    {c.name.split(" ").map((n) => n[0]).join("")}
+                    {c.contact_name.split(" ").map((n) => n[0]).join("")}
                   </span>
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium truncate">{c.name}</p>
-                    <Badge variant="outline" className="text-[10px] shrink-0">{c.channel}</Badge>
+                    <p className="text-sm font-medium truncate">{c.contact_name}</p>
+                    <Badge variant="outline" className="text-[10px] shrink-0 capitalize">{c.channel}</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{c.lastMessage}</p>
+                  <p className="text-xs text-muted-foreground truncate">{c.last_message}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <Badge variant={statusConfig[c.status]?.variant || "default"}>
                   {statusConfig[c.status]?.label || c.status}
                 </Badge>
-                <span className="text-xs text-muted-foreground">{c.time}</span>
+                <span className="text-xs text-muted-foreground">{timeAgo(c.started_at)}</span>
               </div>
             </div>
           </Card>

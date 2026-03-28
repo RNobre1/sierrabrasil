@@ -1,28 +1,11 @@
+import { useEffect, useState } from "react";
 import { MessageSquare, ShoppingCart, CalendarCheck, Star, Play, Pause, Settings, ArrowUpRight, ArrowDownRight, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-
-const kpis = [
-  { label: "Conversas hoje", value: "47", delta: "+12%", up: true, icon: MessageSquare },
-  { label: "Vendas realizadas", value: "8", delta: "+25%", up: true, icon: ShoppingCart },
-  { label: "Agendamentos", value: "15", delta: "+5%", up: true, icon: CalendarCheck },
-  { label: "Satisfação média", value: "4.8", delta: "-0.1", up: false, icon: Star },
-];
-
-const recentConversations = [
-  { name: "Maria Silva", action: "Agendamento confirmado", time: "2 min", status: "resolved" },
-  { name: "João Santos", action: "Pedido #1234 realizado", time: "8 min", status: "resolved" },
-  { name: "Ana Costa", action: "Aguardando resposta", time: "15 min", status: "active" },
-  { name: "Pedro Oliveira", action: "Escalado para humano", time: "22 min", status: "escalated" },
-  { name: "Lucia Ferreira", action: "Dúvida sobre produto", time: "30 min", status: "active" },
-];
-
-const insights = [
-  { title: "Horário de pico detectado", desc: "80% das conversas ocorrem entre 10h-14h. Considere aumentar capacidade.", action: "Aceitar" },
-  { title: "FAQ mais comum", desc: "\"Qual o prazo de entrega?\" apareceu 23 vezes hoje. Sugestão: resposta automática.", action: "Aceitar" },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const statusBadge = (status: string) => {
   const map: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -34,8 +17,91 @@ const statusBadge = (status: string) => {
   return <Badge variant={s.variant}>{s.label}</Badge>;
 };
 
+const insights = [
+  { title: "Horário de pico detectado", desc: "80% das conversas ocorrem entre 10h-14h. Considere aumentar capacidade.", action: "Aceitar" },
+  { title: "FAQ mais comum", desc: "\"Qual o prazo de entrega?\" apareceu 23 vezes hoje. Sugestão: resposta automática.", action: "Aceitar" },
+];
+
+interface Attendant {
+  id: string;
+  name: string;
+  status: string;
+  channels: string[] | null;
+}
+
+interface Conversation {
+  id: string;
+  contact_name: string;
+  status: string;
+  started_at: string;
+  channel: string;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [attendant, setAttendant] = useState<Attendant | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [totalConversations, setTotalConversations] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchData = async () => {
+      // Get tenant for this user
+      const { data: tenant } = await supabase
+        .from("tenants")
+        .select("id")
+        .eq("owner_id", user.id)
+        .single();
+
+      if (!tenant) {
+        setLoading(false);
+        return;
+      }
+
+      // Fetch attendant, conversations in parallel
+      const [attRes, convRes] = await Promise.all([
+        supabase.from("attendants").select("id, name, status, channels").eq("tenant_id", tenant.id).limit(1).single(),
+        supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id).order("started_at", { ascending: false }).limit(5),
+      ]);
+
+      setAttendant(attRes.data);
+      setConversations(convRes.data ?? []);
+      setTotalConversations(convRes.data?.length ?? 0);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [user]);
+
+  const activeCount = conversations.filter(c => c.status === "active").length;
+  const resolvedCount = conversations.filter(c => c.status === "resolved").length;
+
+  const kpis = [
+    { label: "Conversas hoje", value: String(totalConversations), delta: "+12%", up: true, icon: MessageSquare },
+    { label: "Resolvidas", value: String(resolvedCount), delta: "+25%", up: true, icon: ShoppingCart },
+    { label: "Ativas", value: String(activeCount), delta: "+5%", up: true, icon: CalendarCheck },
+    { label: "Satisfação média", value: "4.8", delta: "-0.1", up: false, icon: Star },
+  ];
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins} min`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h`;
+    return `${Math.floor(hours / 24)}d`;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -64,42 +130,47 @@ export default function Dashboard() {
       </div>
 
       {/* Attendant Hero Card */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <span className="text-2xl">🤖</span>
+      {attendant && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <span className="text-2xl">🤖</span>
+                  </div>
+                  <span className={`absolute -right-1 -top-1 h-4 w-4 rounded-full border-2 border-card animate-pulse-dot ${attendant.status === "online" ? "bg-meteora-success" : "bg-muted-foreground"}`} />
                 </div>
-                <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-meteora-success border-2 border-card animate-pulse-dot" />
+                <div>
+                  <h2 className="font-display text-lg font-semibold">{attendant.name} — Atendente IA</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    {attendant.channels?.map((ch) => (
+                      <Badge key={ch} variant="outline" className="text-[10px] capitalize">{ch}</Badge>
+                    ))}
+                    <span className={`text-xs font-medium ${attendant.status === "online" ? "text-meteora-success" : "text-muted-foreground"}`}>
+                      ● {attendant.status === "online" ? "Online" : "Offline"}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h2 className="font-display text-lg font-semibold">Luna — Atendente IA</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className="text-[10px]">WhatsApp</Badge>
-                  <Badge variant="outline" className="text-[10px]">Instagram</Badge>
-                  <span className="text-xs text-meteora-success font-medium">● Online</span>
-                </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => navigate("/attendant/playground")}>
+                  <Play className="h-4 w-4 mr-1" /> Testar
+                </Button>
+                <Button size="sm" variant="outline">
+                  <Pause className="h-4 w-4 mr-1" /> Pausar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => navigate("/attendant/config")}>
+                  <Settings className="h-4 w-4 mr-1" /> Configurar
+                </Button>
+                <Button size="sm" onClick={() => navigate("/conversations")}>
+                  <MessageSquare className="h-4 w-4 mr-1" /> Ver conversas
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => navigate("/attendant/playground")}>
-                <Play className="h-4 w-4 mr-1" /> Testar
-              </Button>
-              <Button size="sm" variant="outline">
-                <Pause className="h-4 w-4 mr-1" /> Pausar
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => navigate("/attendant/config")}>
-                <Settings className="h-4 w-4 mr-1" /> Configurar
-              </Button>
-              <Button size="sm" onClick={() => navigate("/conversations")}>
-                <MessageSquare className="h-4 w-4 mr-1" /> Ver conversas
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Conversations */}
@@ -108,20 +179,23 @@ export default function Dashboard() {
             <CardTitle className="text-base font-display">Últimas Conversas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentConversations.map((c, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => navigate("/conversations")}>
+            {conversations.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhuma conversa ainda</p>
+            )}
+            {conversations.map((c) => (
+              <div key={c.id} className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => navigate(`/conversations/${c.id}`)}>
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
-                    <span className="text-xs font-medium text-muted-foreground">{c.name.split(" ").map(n => n[0]).join("")}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{c.contact_name.split(" ").map(n => n[0]).join("")}</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{c.name}</p>
-                    <p className="text-xs text-muted-foreground">{c.action}</p>
+                    <p className="text-sm font-medium">{c.contact_name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{c.channel}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {statusBadge(c.status)}
-                  <span className="text-xs text-muted-foreground">{c.time}</span>
+                  <span className="text-xs text-muted-foreground">{timeAgo(c.started_at)}</span>
                 </div>
               </div>
             ))}
