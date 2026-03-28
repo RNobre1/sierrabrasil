@@ -3,8 +3,20 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import NotFound from "./pages/NotFound";
+import ClientLayout from "./components/layouts/ClientLayout";
+import AdminLayout from "./components/layouts/AdminLayout";
+import Dashboard from "./pages/Dashboard";
+import Conversations from "./pages/Conversations";
+import ConversationDetail from "./pages/ConversationDetail";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Placeholder from "./pages/Placeholder";
 
 const queryClient = new QueryClient();
 
@@ -14,11 +26,34 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+
+            {/* Client Routes */}
+            <Route element={<ProtectedRoute><ClientLayout /></ProtectedRoute>}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/conversations" element={<Conversations />} />
+              <Route path="/conversations/:id" element={<ConversationDetail />} />
+              <Route path="/attendant/config" element={<Placeholder />} />
+              <Route path="/attendant/playground" element={<Placeholder />} />
+              <Route path="/reports" element={<Placeholder />} />
+              <Route path="/account" element={<Placeholder />} />
+            </Route>
+
+            {/* Admin Routes */}
+            <Route element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/tenants" element={<Placeholder />} />
+              <Route path="/admin/attendants" element={<Placeholder />} />
+              <Route path="/admin/consumption" element={<Placeholder />} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
