@@ -76,10 +76,6 @@ export default function AdminDashboard() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <kpi.icon className="h-5 w-5 text-muted-foreground" />
-                <span className="flex items-center gap-1 text-xs font-medium text-meteora-success">
-                  <ArrowUpRight className="h-3 w-3" />
-                  {kpi.delta}
-                </span>
               </div>
               <p className="mt-3 font-display text-3xl font-light">{kpi.value}</p>
               <p className="mt-1 text-xs text-muted-foreground font-mono uppercase tracking-wider">{kpi.label}</p>

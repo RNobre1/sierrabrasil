@@ -117,10 +117,6 @@ export default function Dashboard() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <kpi.icon className="h-5 w-5 text-muted-foreground" />
-                <span className={`flex items-center gap-1 text-xs font-medium ${kpi.up ? "text-meteora-success" : "text-meteora-danger"}`}>
-                  {kpi.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                  {kpi.delta}
-                </span>
               </div>
               <p className="mt-3 font-display text-[40px] font-light leading-none text-foreground">{kpi.value}</p>
               <p className="mt-1 text-xs text-muted-foreground">{kpi.label}</p>
