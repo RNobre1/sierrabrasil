@@ -15,7 +15,10 @@ import AdminLayout from "./components/layouts/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Conversations from "./pages/Conversations";
 import ConversationDetail from "./pages/ConversationDetail";
+import AttendantConfig from "./pages/AttendantConfig";
+import AttendantPlayground from "./pages/AttendantPlayground";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminTenants from "./pages/admin/AdminTenants";
 import Placeholder from "./pages/Placeholder";
 
 const queryClient = new QueryClient();
