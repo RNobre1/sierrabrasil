@@ -45,11 +45,14 @@ export default function AdminDashboard() {
     return `${Math.floor(days / 30)} mês(es)`;
   };
 
+  const planPrices: Record<string, number> = { starter: 197, professional: 497, enterprise: 997 };
+  const mrr = tenants.reduce((sum, t) => sum + (planPrices[t.plan] || 197), 0);
+
   const adminKpis = [
-    { label: "MRR", value: `R$ ${(tenants.length * 297).toLocaleString("pt-BR")}`, delta: "+18%", icon: DollarSign },
-    { label: "Clientes ativos", value: String(tenants.filter(t => t.status === "active").length), delta: `+${tenants.length}`, icon: Users },
-    { label: "Agentes rodando", value: String(attendantCount), delta: "100%", icon: Bot },
-    { label: "Conversas totais", value: String(conversationCount), delta: "+22%", icon: Cpu },
+    { label: "MRR", value: `R$ ${mrr.toLocaleString("pt-BR")}`, icon: DollarSign },
+    { label: "Clientes ativos", value: String(tenants.filter(t => t.status === "active").length), icon: Users },
+    { label: "Agentes rodando", value: String(attendantCount), icon: Bot },
+    { label: "Conversas totais", value: String(conversationCount), icon: Cpu },
   ];
 
   if (loading) {
