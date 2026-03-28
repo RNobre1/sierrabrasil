@@ -92,8 +92,8 @@ export default function AttendantConfig() {
   if (!attendantId) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-        <p className="text-lg">Nenhum atendente configurado</p>
-        <p className="text-sm mt-2">Entre em contato com o suporte para criar seu atendente.</p>
+        <p className="text-lg">Nenhum atendente encontrado</p>
+        <p className="text-sm mt-2">Faça logout e login novamente para provisionar seu atendente automaticamente.</p>
       </div>
     );
   }
