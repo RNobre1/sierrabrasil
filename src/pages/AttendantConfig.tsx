@@ -27,7 +27,7 @@ export default function AttendantConfig() {
   const [name, setName] = useState("");
   const [persona, setPersona] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [model, setModel] = useState("gpt-4o-mini");
+  const [model, setModel] = useState("google/gemini-3-flash-preview");
   const [temperature, setTemperature] = useState(0.7);
   const [channels, setChannels] = useState<string[]>([]);
   const [status, setStatus] = useState("offline");
@@ -92,8 +92,8 @@ export default function AttendantConfig() {
   if (!attendantId) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-        <p className="text-lg">Nenhum atendente configurado</p>
-        <p className="text-sm mt-2">Entre em contato com o suporte para criar seu atendente.</p>
+        <p className="text-lg">Nenhum atendente encontrado</p>
+        <p className="text-sm mt-2">Faça logout e login novamente para provisionar seu atendente automaticamente.</p>
       </div>
     );
   }
@@ -168,9 +168,11 @@ export default function AttendantConfig() {
             <Select value={model} onValueChange={setModel}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="gpt-4o-mini">GPT-4o Mini (rápido, econômico)</SelectItem>
-                <SelectItem value="gpt-4o">GPT-4o (equilibrado)</SelectItem>
-                <SelectItem value="claude-sonnet">Claude Sonnet (conversacional)</SelectItem>
+                <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (rápido, equilibrado)</SelectItem>
+                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (econômico)</SelectItem>
+                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (avançado)</SelectItem>
+                <SelectItem value="openai/gpt-5-mini">GPT-5 Mini (versátil)</SelectItem>
+                <SelectItem value="openai/gpt-5">GPT-5 (máxima qualidade)</SelectItem>
               </SelectContent>
             </Select>
           </div>
