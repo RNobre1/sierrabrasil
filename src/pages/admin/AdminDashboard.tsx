@@ -1,25 +1,67 @@
+import { useEffect, useState } from "react";
 import { DollarSign, Users, Bot, Cpu, ArrowUpRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
-const adminKpis = [
-  { label: "MRR", value: "R$ 28.400", delta: "+18%", icon: DollarSign },
-  { label: "Clientes ativos", value: "42", delta: "+3", icon: Users },
-  { label: "Agentes rodando", value: "38", delta: "90%", icon: Bot },
-  { label: "Consumo IA (mês)", value: "1.2M tok", delta: "+22%", icon: Cpu },
-];
-
-const recentTenants = [
-  { name: "Clínica Sorriso", plan: "Professional", status: "active", agents: 2, created: "2 dias atrás" },
-  { name: "Pizzaria do Zé", plan: "Starter", status: "active", agents: 1, created: "5 dias atrás" },
-  { name: "Studio Beauty", plan: "Professional", status: "trial", agents: 1, created: "1 semana" },
-  { name: "Auto Peças Silva", plan: "Starter", status: "active", agents: 1, created: "2 semanas" },
-  { name: "Restaurante Mar", plan: "Enterprise", status: "active", agents: 3, created: "3 semanas" },
-];
+interface TenantRow {
+  id: string;
+  name: string;
+  plan: string;
+  status: string;
+  created_at: string;
+}
 
 export default function AdminDashboard() {
+  const [tenants, setTenants] = useState<TenantRow[]>([]);
+  const [attendantCount, setAttendantCount] = useState(0);
+  const [conversationCount, setConversationCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [tenantsRes, attendantsRes, convsRes] = await Promise.all([
+        supabase.from("tenants").select("id, name, plan, status, created_at").order("created_at", { ascending: false }),
+        supabase.from("attendants").select("id", { count: "exact", head: true }),
+        supabase.from("conversations").select("id", { count: "exact", head: true }),
+      ]);
+
+      setTenants(tenantsRes.data ?? []);
+      setAttendantCount(attendantsRes.count ?? 0);
+      setConversationCount(convsRes.count ?? 0);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const days = Math.floor(diff / 86400000);
+    if (days === 0) return "hoje";
+    if (days === 1) return "ontem";
+    if (days < 7) return `${days} dias atrás`;
+    if (days < 30) return `${Math.floor(days / 7)} semana(s)`;
+    return `${Math.floor(days / 30)} mês(es)`;
+  };
+
+  const adminKpis = [
+    { label: "MRR", value: `R$ ${(tenants.length * 297).toLocaleString("pt-BR")}`, delta: "+18%", icon: DollarSign },
+    { label: "Clientes ativos", value: String(tenants.filter(t => t.status === "active").length), delta: `+${tenants.length}`, icon: Users },
+    { label: "Agentes rodando", value: String(attendantCount), delta: "100%", icon: Bot },
+    { label: "Conversas totais", value: String(conversationCount), delta: "+22%", icon: Cpu },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 dark">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-display font-semibold">Mission Control</h1>
         <p className="text-sm text-muted-foreground mt-1 font-mono">Meteora Digital — Painel Administrativo</p>
@@ -45,25 +87,27 @@ export default function AdminDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-display">Clientes Recentes</CardTitle>
+          <CardTitle className="text-base font-display">Clientes ({tenants.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {recentTenants.map((t, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border border-border p-3">
+            {tenants.map((t) => (
+              <div key={t.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                 <div>
                   <p className="text-sm font-medium">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.created}</p>
+                  <p className="text-xs text-muted-foreground">{timeAgo(t.created_at)}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="font-mono text-[10px]">{t.plan}</Badge>
+                  <Badge variant="outline" className="font-mono text-[10px] capitalize">{t.plan}</Badge>
                   <Badge variant={t.status === "trial" ? "secondary" : "default"}>
                     {t.status === "trial" ? "Trial" : "Ativo"}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">{t.agents} agent{t.agents > 1 ? "s" : ""}</span>
                 </div>
               </div>
             ))}
+            {tenants.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhum cliente cadastrado</p>
+            )}
           </div>
         </CardContent>
       </Card>
