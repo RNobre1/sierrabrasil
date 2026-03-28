@@ -15,7 +15,10 @@ import AdminLayout from "./components/layouts/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Conversations from "./pages/Conversations";
 import ConversationDetail from "./pages/ConversationDetail";
+import AttendantConfig from "./pages/AttendantConfig";
+import AttendantPlayground from "./pages/AttendantPlayground";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminTenants from "./pages/admin/AdminTenants";
 import Placeholder from "./pages/Placeholder";
 
 const queryClient = new QueryClient();
@@ -37,8 +40,8 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/conversations" element={<Conversations />} />
               <Route path="/conversations/:id" element={<ConversationDetail />} />
-              <Route path="/attendant/config" element={<Placeholder />} />
-              <Route path="/attendant/playground" element={<Placeholder />} />
+              <Route path="/attendant/config" element={<AttendantConfig />} />
+              <Route path="/attendant/playground" element={<AttendantPlayground />} />
               <Route path="/reports" element={<Placeholder />} />
               <Route path="/account" element={<Placeholder />} />
             </Route>
@@ -46,7 +49,7 @@ const App = () => (
             {/* Admin Routes */}
             <Route element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/tenants" element={<Placeholder />} />
+              <Route path="/admin/tenants" element={<AdminTenants />} />
               <Route path="/admin/attendants" element={<Placeholder />} />
               <Route path="/admin/consumption" element={<Placeholder />} />
             </Route>
