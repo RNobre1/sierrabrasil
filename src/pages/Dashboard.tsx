@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MessageSquare, ShoppingCart, CalendarCheck, Star, Play, Pause, Settings, ArrowUpRight, ArrowDownRight, TrendingUp } from "lucide-react";
+import { MessageSquare, ShoppingCart, CalendarCheck, Star, Play, Pause, Settings, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
