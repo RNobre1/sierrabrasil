@@ -26,15 +26,15 @@ interface Conversation {
 
 function KPICard({ icon: Icon, label, value, sub, accentColor }: { icon: any; label: string; value: string; accentColor: string; sub?: string }) {
   return (
-    <div className="rounded-2xl border border-border/30 bg-card/50 p-5 backdrop-blur-sm hover:border-border/60 transition-all group">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: `${accentColor}15` }}>
-          <Icon className="w-4 h-4" style={{ color: accentColor }} />
+    <div className="rounded-2xl border border-border/30 bg-card/50 p-4 sm:p-5 backdrop-blur-sm hover:border-border/60 transition-all group">
+      <div className="flex items-center gap-2 mb-2 sm:mb-3">
+        <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center" style={{ background: `${accentColor}15` }}>
+          <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: accentColor }} />
         </div>
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">{label}</span>
       </div>
-      <span className="text-3xl font-bold text-foreground tracking-tight">{value}</span>
-      {sub && <p className="text-[11px] text-muted-foreground mt-1">{sub}</p>}
+      <span className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{value}</span>
+      {sub && <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 truncate">{sub}</p>}
     </div>
   );
 }
