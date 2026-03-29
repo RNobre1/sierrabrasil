@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, Plus, Play, Settings, Headphones, TrendingUp, Zap, ChevronRight, Wifi, WifiOff, Shield, Activity } from "lucide-react";
+import { Bot, Plus, Play, Settings, Headphones, TrendingUp, Zap, ChevronRight, Wifi, WifiOff, Shield, Activity, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +35,9 @@ export default function Agents() {
   const [agents, setAgents] = useState<Attendant[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenantPlan, setTenantPlan] = useState("starter");
+  const [search, setSearch] = useState("");
+  const [classFilters, setClassFilters] = useState<Set<string>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all");
 
   useEffect(() => {
     if (!user) return;
@@ -51,6 +54,32 @@ export default function Agents() {
   const maxAgents = tenantPlan === "starter" ? 1 : tenantPlan === "professional" ? 3 : tenantPlan === "enterprise" ? 100 : 10;
   const canCreate = agents.length < maxAgents;
   const online = agents.filter(a => a.status === "online").length;
+
+  const toggleClass = (cls: string) => {
+    setClassFilters(prev => {
+      const next = new Set(prev);
+      next.has(cls) ? next.delete(cls) : next.add(cls);
+      return next;
+    });
+  };
+
+  const filtered = useMemo(() => {
+    let result = agents;
+    if (search) {
+      const s = search.toLowerCase();
+      result = result.filter(a => a.name.toLowerCase().includes(s));
+    }
+    if (classFilters.size > 0) {
+      result = result.filter(a => classFilters.has(a.class || "support"));
+    }
+    if (statusFilter !== "all") {
+      result = result.filter(a => a.status === statusFilter);
+    }
+    return result;
+  }, [agents, search, classFilters, statusFilter]);
+
+  const hasFilters = search || classFilters.size > 0 || statusFilter !== "all";
+  const clearFilters = () => { setSearch(""); setClassFilters(new Set()); setStatusFilter("all"); };
 
   if (loading) return (
     <div className="space-y-5">
@@ -111,9 +140,75 @@ export default function Agents() {
         </div>
       )}
 
+      {/* ── Filter bar ── */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[180px] max-w-[280px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar agente..."
+            className="w-full h-8 pl-8 pr-3 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/70 placeholder:text-white/20 focus:outline-none focus:border-white/[0.12] transition-colors"
+          />
+        </div>
+
+        {/* Class toggles */}
+        {Object.entries(CLASS_CFG).map(([key, cfg]) => {
+          const active = classFilters.has(key);
+          return (
+            <button
+              key={key}
+              onClick={() => toggleClass(key)}
+              className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-semibold border transition-all ${
+                active
+                  ? `bg-gradient-to-r ${cfg.accent} ${cfg.text} border-current/20`
+                  : "bg-white/[0.02] text-white/30 border-white/[0.06] hover:bg-white/[0.04] hover:text-white/50"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${active ? cfg.dot : "bg-white/20"}`} />
+              {cfg.short}
+            </button>
+          );
+        })}
+
+        {/* Status toggles */}
+        {(["online", "offline"] as const).map(s => {
+          const active = statusFilter === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(active ? "all" : s)}
+              className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-semibold border transition-all ${
+                active
+                  ? s === "online"
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    : "bg-white/[0.06] text-white/50 border-white/[0.1]"
+                  : "bg-white/[0.02] text-white/30 border-white/[0.06] hover:bg-white/[0.04] hover:text-white/50"
+              }`}
+            >
+              {s === "online" ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+              {s === "online" ? "Online" : "Offline"}
+            </button>
+          );
+        })}
+
+        {/* Clear */}
+        {hasFilters && (
+          <button onClick={clearFilters} className="inline-flex items-center gap-1 px-2 h-8 rounded-lg text-[10px] text-white/30 hover:text-white/60 transition-colors">
+            <X className="h-3 w-3" /> Limpar
+          </button>
+        )}
+
+        {/* Count */}
+        {hasFilters && (
+          <span className="text-[10px] text-white/20 font-mono ml-auto">{filtered.length} de {agents.length}</span>
+        )}
+      </div>
+
       {/* ── Agent Grid ── */}
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {agents.map((a, i) => {
+        {filtered.map((a, i) => {
           const cls = CLASS_CFG[a.class || "support"] || CLASS_CFG.support;
           const model = a.model ? a.model.split("/").pop()?.replace("-preview", "") : "default";
 
