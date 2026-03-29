@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { MeteoraWatermark } from "@/components/MeteoraBrand";
 
-interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; }
+interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class: string | null; }
 interface Conversation { id: string; contact_name: string; status: string; started_at: string; channel: string; }
 
 /* ─── helpers ─── */
