@@ -124,19 +124,19 @@ export default function Login() {
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-background">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-background">
         <div className="w-full max-w-[380px]">
           {/* Mobile logo */}
           <div className="lg:hidden mb-12">
             <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
           </div>
 
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">Bem-vindo de volta</h2>
-          <p className="text-sm text-muted-foreground mt-2">Entre na sua conta para continuar</p>
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Bem-vindo de volta</h2>
+          <p className="text-sm text-muted-foreground mt-1.5">Entre na sua conta para continuar</p>
 
           <Button
             variant="outline"
-            className="w-full mt-10 h-12 gap-3 rounded-xl border-border/60 hover:bg-accent transition-all"
+            className="w-full mt-7 h-11 gap-3 rounded-xl border-border/60 hover:bg-accent transition-all"
             onClick={handleGoogleSSO}
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -148,7 +148,7 @@ export default function Login() {
             Continuar com Google
           </Button>
 
-          <div className="relative my-8">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border/40" />
             </div>
@@ -157,7 +157,7 @@ export default function Login() {
             </div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">E-mail</Label>
               <Input

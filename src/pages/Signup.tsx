@@ -144,16 +144,16 @@ export default function Signup() {
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-background overflow-y-auto">
-        <div className="w-full max-w-[380px] py-8">
-          <div className="lg:hidden mb-12">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-10 bg-background overflow-y-auto">
+        <div className="w-full max-w-[380px] py-4">
+          <div className="lg:hidden mb-8">
             <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
           </div>
 
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">Criar conta</h2>
-          <p className="text-sm text-muted-foreground mt-2">Comece a usar a Meteora Digital</p>
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Criar conta</h2>
+          <p className="text-sm text-muted-foreground mt-1.5">Comece a usar a Meteora Digital</p>
 
-          <Button variant="outline" className="w-full mt-10 h-12 gap-3 rounded-xl border-border/60 hover:bg-accent transition-all" onClick={handleGoogleSSO}>
+          <Button variant="outline" className="w-full mt-7 h-11 gap-3 rounded-xl border-border/60 hover:bg-accent transition-all" onClick={handleGoogleSSO}>
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -163,12 +163,12 @@ export default function Signup() {
             Continuar com Google
           </Button>
 
-          <div className="relative my-8">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/40" /></div>
             <div className="relative flex justify-center text-xs"><span className="bg-background px-4 text-muted-foreground/70">ou crie com e-mail</span></div>
           </div>
 
-          <form onSubmit={handleSignup} className="space-y-5">
+          <form onSubmit={handleSignup} className="space-y-3.5">
             <div className="space-y-1.5">
               <Label htmlFor="name" className="text-xs font-medium text-muted-foreground">Nome completo</Label>
               <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Seu nome completo" className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
