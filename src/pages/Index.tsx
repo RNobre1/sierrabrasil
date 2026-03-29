@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, Star, Bot, MessageSquare, Zap, Shield, Clock, BarChart3 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Star, Bot, MessageSquare, Zap, Shield, Clock, BarChart3, Crown, Send } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
 
 const features = [
@@ -18,6 +18,7 @@ const plans = [
   { name: "Essencial", price: "97", features: ["1 agente IA", "1.000 conversas/mês", "WhatsApp", "Dashboard básico"], popular: false },
   { name: "Profissional", price: "247", features: ["3 agentes IA", "5.000 conversas/mês", "WhatsApp + Instagram", "Relatórios avançados", "Explorer com insights", "Ações automáticas"], popular: true },
   { name: "Empresarial", price: "597", features: ["5 agentes IA", "Conversas ilimitadas", "Todos os canais", "API dedicada", "Suporte prioritário", "Onboarding assistido"], popular: false },
+  { name: "Enterprise", price: "2.497", features: ["Até 100 agentes IA", "Conversas ilimitadas", "Todos os canais + API", "Relatórios ilimitados + IA", "Manager dedicado", "Estratégias mensais de vendas", "SLA garantido", "Onboarding white-glove"], popular: false, enterprise: true },
 ];
 
 const testimonials = [
@@ -130,20 +131,36 @@ export default function Index() {
 
       {/* Pricing */}
       <section className="py-24 px-6 relative z-10">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Planos simples, resultado real</h2>
             <p className="mt-4 text-muted-foreground">Comece com 7 dias grátis. Sem surpresas.</p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan, i) => (
-              <div key={i} className={`relative rounded-2xl border p-6 pt-8 transition-all ${plan.popular ? "border-primary/40 bg-card/80 shadow-lg shadow-primary/10 scale-[1.02]" : "border-border/30 bg-card/30"}`}>
+              <div key={i} className={`relative rounded-2xl border p-6 pt-8 transition-all ${
+                (plan as any).enterprise
+                  ? "border-[hsl(var(--meteora-cyan))]/30 bg-gradient-to-b from-[hsl(var(--meteora-cyan))]/5 to-card/40 shadow-lg shadow-[hsl(var(--meteora-cyan))]/5"
+                  : plan.popular
+                    ? "border-primary/40 bg-card/80 shadow-lg shadow-primary/10 scale-[1.02]"
+                    : "border-border/30 bg-card/30"
+              }`}>
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className="rounded-full bg-gradient-to-r from-primary to-primary/80 px-4 py-1 text-[11px] font-medium text-primary-foreground shadow-lg shadow-primary/20">Mais popular</span>
                   </div>
                 )}
-                <h3 className="font-semibold text-foreground">{plan.name}</h3>
+                {(plan as any).enterprise && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[hsl(var(--meteora-cyan))] to-primary px-4 py-1 text-[11px] font-medium text-white shadow-lg shadow-primary/20">
+                      <Crown className="h-3 w-3" /> Exclusivo
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground">{plan.name}</h3>
+                  {(plan as any).enterprise && <Crown className="h-4 w-4 text-[hsl(var(--meteora-cyan))]" />}
+                </div>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-xs text-muted-foreground">R$</span>
                   <span className="text-4xl font-bold text-foreground">{plan.price}</span>
@@ -152,18 +169,37 @@ export default function Index() {
                 <ul className="mt-6 space-y-2.5">
                   {plan.features.map((f, j) => (
                     <li key={j} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-meteora-green shrink-0" />
+                      <CheckCircle2 className={`h-4 w-4 shrink-0 ${(plan as any).enterprise ? "text-[hsl(var(--meteora-cyan))]" : "text-meteora-green"}`} />
                       {f}
                     </li>
                   ))}
                 </ul>
                 <Link to="/signup">
-                  <Button className={`w-full mt-6 rounded-xl ${plan.popular ? "bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20" : ""}`} variant={plan.popular ? "default" : "outline"}>
-                    {plan.popular ? "Começar agora" : "Escolher plano"}
+                  <Button className={`w-full mt-6 rounded-xl ${
+                    (plan as any).enterprise
+                      ? "bg-gradient-to-r from-[hsl(var(--meteora-cyan))] to-primary text-white shadow-lg shadow-primary/20"
+                      : plan.popular
+                        ? "bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20"
+                        : ""
+                  }`} variant={plan.popular || (plan as any).enterprise ? "default" : "outline"}>
+                    {(plan as any).enterprise ? "Falar com especialista" : plan.popular ? "Começar agora" : "Escolher plano"}
                   </Button>
                 </Link>
               </div>
             ))}
+          </div>
+
+          {/* Custom Plan CTA */}
+          <div className="mt-12 rounded-2xl border border-border/30 bg-card/30 p-8 text-center backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-foreground">Precisa de mais escala ou um plano personalizado?</h3>
+            <p className="text-sm text-muted-foreground mt-2 max-w-lg mx-auto">
+              Empresas com alto volume de atendimento, múltiplos times ou necessidades específicas de integração podem ter um plano sob medida.
+            </p>
+            <Link to="/contact">
+              <Button variant="outline" className="mt-6 gap-2 rounded-xl border-primary/30 hover:bg-primary/5">
+                <Send className="h-4 w-4" /> Fale com nosso time
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

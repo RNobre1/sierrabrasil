@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { MessageSquare, CheckCircle2, Clock, TrendingUp, Play, Settings, Sparkles, ArrowRight, Zap, BarChart3 } from "lucide-react";
+import { MessageSquare, CheckCircle2, Clock, TrendingUp, Play, Settings, Sparkles, ArrowRight, Zap, BarChart3, Crown } from "lucide-react";
 import TrialTimer from "@/components/TrialTimer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,14 +71,16 @@ export default function Dashboard() {
   const [allConversations, setAllConversations] = useState<Conversation[]>([]);
   const [totalMessages, setTotalMessages] = useState(0);
   const [tenantCreatedAt, setTenantCreatedAt] = useState("");
+  const [tenantPlan, setTenantPlan] = useState("starter");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const { data: tenant } = await supabase.from("tenants").select("id, created_at").eq("owner_id", user.id).single();
+      const { data: tenant } = await supabase.from("tenants").select("id, created_at, plan").eq("owner_id", user.id).single();
       if (!tenant) { setLoading(false); return; }
       setTenantCreatedAt(tenant.created_at);
+      setTenantPlan(tenant.plan || "starter");
       const [attRes, convRes, allConvRes, msgRes] = await Promise.all([
         supabase.from("attendants").select("id, name, status, channels, model").eq("tenant_id", tenant.id).limit(1).single(),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id).order("started_at", { ascending: false }).limit(5),
@@ -127,8 +129,29 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Enterprise VIP Banner */}
+      {tenantPlan === "enterprise" && (
+        <div className="rounded-2xl border border-[hsl(var(--meteora-cyan))]/20 bg-gradient-to-r from-[hsl(var(--meteora-cyan))]/5 via-primary/5 to-transparent p-4 flex items-center gap-4">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[hsl(var(--meteora-cyan))] to-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <Crown className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-foreground">Enterprise</h2>
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[hsl(var(--meteora-cyan))]/20 to-primary/20 px-2.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[hsl(var(--meteora-cyan))]">
+                ✦ VIP
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Manager dedicado · Relatórios ilimitados · Até 100 agentes · Suporte prioritário</p>
+          </div>
+          <Button size="sm" variant="outline" className="shrink-0 text-xs gap-1.5 border-[hsl(var(--meteora-cyan))]/20 text-[hsl(var(--meteora-cyan))] hover:bg-[hsl(var(--meteora-cyan))]/5">
+            <MessageSquare className="h-3.5 w-3.5" /> Falar com Manager
+          </Button>
+        </div>
+      )}
+
       {/* Trial Timer */}
-      {tenantCreatedAt && <TrialTimer createdAt={tenantCreatedAt} />}
+      {tenantCreatedAt && tenantPlan !== "enterprise" && <TrialTimer createdAt={tenantCreatedAt} />}
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -136,9 +159,6 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-0.5">Visão geral do seu agente inteligente</p>
         </div>
-        <Button size="sm" className="gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20" onClick={() => navigate("/attendant/playground")}>
-          <Play className="h-3.5 w-3.5" /> Testar
-        </Button>
       </div>
 
       {/* KPIs */}
