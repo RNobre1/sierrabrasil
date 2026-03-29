@@ -101,11 +101,11 @@ export default function Login() {
         <div className="relative z-10 max-w-md">
           <img src={meteoraLogo} alt="Meteora Digital" className="h-8 mb-12" />
           <h1 className="text-4xl font-bold leading-tight tracking-tight text-white">
-            Construímos <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">sistemas</span> que fazem sua empresa{" "}
+            Entregamos <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">soluções</span> que fazem sua empresa{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">vender mais</span>.
           </h1>
           <p className="mt-6 text-white/60 leading-relaxed">
-            Atendente inteligente que conversa, vende, agenda e resolve pelo WhatsApp e Instagram. 24h por dia, 7 dias por semana.
+            Agente inteligente que conversa, vende, agenda e resolve pelo WhatsApp e Instagram. 24h por dia, 7 dias por semana.
           </p>
           <div className="mt-12 flex items-center gap-8">
             {[
