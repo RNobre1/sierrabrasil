@@ -92,6 +92,7 @@ export default function Index() {
           <p className="mt-5 text-xs text-muted-foreground/60">Setup em 5 minutos · Cancele quando quiser</p>
         </div>
       </section>
+      </MeteorTrail>
 
       {/* Stats */}
       <section className="border-y border-border/30 bg-card/30 backdrop-blur-sm py-10 relative z-10">
