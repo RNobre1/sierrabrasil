@@ -174,20 +174,7 @@ export default function Onboarding() {
     inputRef.current?.focus();
   };
 
-  const handleChoiceSubmit = (selected: string[]) => {
-    setActiveChoices(null);
-    const text = selected.join(", ");
-    sendMessage(undefined);
-    // Add user message then send
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
-    setInput("");
-    // Actually send
-    setTimeout(() => {
-      const userMsg: Msg = { role: "user", content: text };
-      setIsLoading(true);
-      fetchChat([...messages, { role: "assistant", content: messages[messages.length - 1]?.content || "" }, userMsg]);
-    }, 100);
-  };
+  // unused - remove dead code
 
   // Simplified choice handler - just send the text as a message
   const handleChoiceSelect = (selected: string[]) => {
