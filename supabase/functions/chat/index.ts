@@ -15,7 +15,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    let systemPrompt = "Você é um atendente virtual amigável e profissional. Responda em português brasileiro, de forma clara e concisa.";
+    let systemPrompt = "Você é um agente virtual amigável e profissional. Responda em português brasileiro, de forma clara e concisa.";
     let knowledgeContext = "";
 
     if (attendantId) {
@@ -50,7 +50,7 @@ serve(async (req) => {
         }
 
         systemPrompt = `## IDENTIDADE
-Você é ${attendant.name}, atendente virtual.
+Você é ${attendant.name}, agente virtual.
 ${attendant.persona ? `Personalidade: ${attendant.persona}` : ""}
 
 ## REGRAS INVIOLÁVEIS

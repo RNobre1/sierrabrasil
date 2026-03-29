@@ -9,7 +9,7 @@ import meteoraLogo from "@/assets/meteora-branca.png";
 const navItems = [
   { to: "/dashboard", icon: Home, label: "Início" },
   { to: "/conversations", icon: MessageSquare, label: "Conversas" },
-  { to: "/attendant/config", icon: Bot, label: "Atendente" },
+  { to: "/attendant/config", icon: Bot, label: "Agente" },
   { to: "/attendant/playground", icon: Play, label: "Playground" },
   { to: "/reports", icon: BarChart3, label: "Relatórios" },
 ];

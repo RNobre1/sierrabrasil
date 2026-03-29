@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle2, Star, Bot, MessageSquare, Zap, Shield, Clock,
 import meteoraLogo from "@/assets/meteora-branca.png";
 
 const features = [
-  { icon: Bot, title: "Atendente Autônomo", desc: "Não é chatbot. É um funcionário digital que conversa, vende, agenda e resolve." },
+  { icon: Bot, title: "Agente Autônomo", desc: "Não é chatbot. É um funcionário digital que conversa, vende, agenda e resolve." },
   { icon: MessageSquare, title: "WhatsApp + Instagram", desc: "Opera nos canais que seus clientes já usam. Sem apps novos, sem fricção." },
   { icon: Zap, title: "Ações Reais", desc: "Agenda compromissos, envia links de pagamento, faz follow-up automático." },
   { icon: BarChart3, title: "Insights Inteligentes", desc: "O Explorer analisa conversas e sugere melhorias toda semana." },
@@ -15,15 +15,15 @@ const features = [
 ];
 
 const plans = [
-  { name: "Essencial", price: "97", features: ["1 atendente IA", "1.000 conversas/mês", "WhatsApp", "Dashboard básico"], popular: false },
-  { name: "Profissional", price: "247", features: ["3 atendentes IA", "5.000 conversas/mês", "WhatsApp + Instagram", "Relatórios avançados", "Explorer com insights", "Ações automáticas"], popular: true },
-  { name: "Empresarial", price: "597", features: ["5 atendentes IA", "Conversas ilimitadas", "Todos os canais", "API dedicada", "Suporte prioritário", "Onboarding assistido"], popular: false },
+  { name: "Essencial", price: "97", features: ["1 agente IA", "1.000 conversas/mês", "WhatsApp", "Dashboard básico"], popular: false },
+  { name: "Profissional", price: "247", features: ["3 agentes IA", "5.000 conversas/mês", "WhatsApp + Instagram", "Relatórios avançados", "Explorer com insights", "Ações automáticas"], popular: true },
+  { name: "Empresarial", price: "597", features: ["5 agentes IA", "Conversas ilimitadas", "Todos os canais", "API dedicada", "Suporte prioritário", "Onboarding assistido"], popular: false },
 ];
 
 const testimonials = [
   { name: "Dr. Carlos Mendes", role: "Clínica Sorriso — Manaus", text: "Em 2 semanas, a Luna agendou mais consultas do que minha recepcionista em um mês." },
   { name: "Fernanda Lima", role: "Studio Beauty — São Paulo", text: "Meus clientes acham que é uma pessoa real atendendo. A taxa de agendamento subiu 40%." },
-  { name: "Roberto Silva", role: "Auto Peças Silva — BH", text: "Antes eu perdia cliente por não responder rápido. Agora o atendente responde em 3 segundos." },
+  { name: "Roberto Silva", role: "Auto Peças Silva — BH", text: "Antes eu perdia cliente por não responder rápido. Agora o agente responde em 3 segundos." },
 ];
 
 export default function Index() {
@@ -86,7 +86,7 @@ export default function Index() {
               Ver demonstração
             </Button>
           </div>
-          <p className="mt-5 text-xs text-muted-foreground/60">Sem cartão de crédito · Setup em 5 minutos · Cancele quando quiser</p>
+          <p className="mt-5 text-xs text-muted-foreground/60">Setup em 5 minutos · Cancele quando quiser</p>
         </div>
       </section>
 
@@ -112,7 +112,7 @@ export default function Index() {
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Tudo que seu negócio precisa</h2>
-            <p className="mt-4 text-muted-foreground">Não é mais um chatbot. É uma revolução no atendimento.</p>
+            <p className="mt-4 text-muted-foreground">Não é mais um chatbot. É uma revolução no seu negócio.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f, i) => (
@@ -194,11 +194,11 @@ export default function Index() {
       {/* CTA */}
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-3xl text-center rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-12 surface-glow">
-          <h2 className="text-3xl font-bold text-foreground tracking-tight">Pronto para transformar seu atendimento?</h2>
-          <p className="mt-4 text-muted-foreground">Em 5 minutos seu atendente está no ar. Teste grátis por 7 dias.</p>
+          <h2 className="text-3xl font-bold text-foreground tracking-tight">Pronto para transformar seu negócio?</h2>
+          <p className="mt-4 text-muted-foreground">Em 5 minutos seu agente está no ar. Teste grátis por 7 dias.</p>
           <Link to="/signup">
             <Button size="lg" className="mt-8 text-base px-8 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25">
-              Criar meu atendente agora <ArrowRight className="ml-2 h-4 w-4" />
+              Criar meu agente agora <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
         </div>

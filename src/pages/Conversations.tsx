@@ -103,7 +103,7 @@ export default function Conversations() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-display font-semibold">Conversas</h1>
-        <p className="text-sm text-muted-foreground mt-1">Acompanhe todas as interações do seu atendente</p>
+        <p className="text-sm text-muted-foreground mt-1">Acompanhe todas as interações do seu agente</p>
       </div>
 
       {/* Filters */}

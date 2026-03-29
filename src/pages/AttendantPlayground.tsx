@@ -21,7 +21,7 @@ export default function AttendantPlayground() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [attendantId, setAttendantId] = useState<string | null>(null);
-  const [attendantName, setAttendantName] = useState("Atendente");
+  const [attendantName, setAttendantName] = useState("Agente");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -118,7 +118,7 @@ export default function AttendantPlayground() {
       }
     } catch (e) {
       console.error(e);
-      toast({ title: "Erro de conexão", description: "Não foi possível conectar ao atendente.", variant: "destructive" });
+      toast({ title: "Erro de conexão", description: "Não foi possível conectar ao agente.", variant: "destructive" });
     }
 
     setIsLoading(false);
@@ -133,7 +133,7 @@ export default function AttendantPlayground() {
         </Button>
         <div className="flex-1">
           <h1 className="text-xl font-display font-semibold">Playground</h1>
-          <p className="text-xs text-muted-foreground">Teste seu atendente em tempo real</p>
+          <p className="text-xs text-muted-foreground">Teste seu agente em tempo real</p>
         </div>
         <Badge variant="outline" className="gap-1">
           <Bot className="h-3 w-3" /> {attendantName}

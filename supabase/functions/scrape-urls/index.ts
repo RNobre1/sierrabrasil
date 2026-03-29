@@ -342,7 +342,7 @@ REGRAS:
 - NÃO invente dados que não existem - deixe o campo vazio string "" se não encontrou
 - O businessName deve ser o nome da EMPRESA, não da pessoa física
 - Seja detalhista nos campos que encontrar informação
-- Capture TUDO que um atendente virtual precisaria saber`,
+- Capture TUDO que um agente virtual precisaria saber`,
           },
           { role: "user", content: combinedInput.slice(0, 15000) },
         ],

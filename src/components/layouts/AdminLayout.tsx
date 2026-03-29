@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 const adminNavItems = [
   { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/admin/tenants", icon: Users, label: "Clientes" },
-  { to: "/admin/attendants", icon: Bot, label: "Atendentes" },
+  { to: "/admin/attendants", icon: Bot, label: "Agentes" },
   { to: "/admin/consumption", icon: Cpu, label: "Consumo IA" },
 ];
 

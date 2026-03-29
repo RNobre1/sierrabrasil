@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Send, Sparkles, User, Loader2, ArrowRight, Rocket, FileText, Lock } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -88,12 +89,19 @@ export default function Onboarding() {
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
-    // Start with password collection
+    // Start with user intro message, then agent greeting with password request
     setTimeout(() => {
-      const greeting = userName
-        ? `Olá, ${userName.split(" ")[0]}! 👋 Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Antes de começarmos a configurar seu atendente, vamos criar uma senha para seu acesso, tudo bem?!\n\nPor ora só precisa ter **8 dígitos**. Digite sua senha abaixo:`
-        : `Olá! 👋 Antes de começarmos a configurar seu atendente, vamos criar uma senha para seu acesso, tudo bem?!\n\nPor ora só precisa ter **8 dígitos**. Digite sua senha abaixo:`;
-      setMessages([{ role: "assistant", content: greeting }]);
+      const firstName = userName ? userName.split(" ")[0] : "";
+      const introMsg = firstName
+        ? `Olá! Sou ${firstName}${companyName ? ` da ${companyName}` : ""} e quero configurar meu agente.`
+        : "Olá! Acabei de criar minha conta e quero configurar meu agente.";
+      const greeting = firstName
+        ? `Olá, ${firstName}! Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Antes de começarmos a configurar seu agente, vamos criar uma senha para seu acesso, tudo bem?!\n\nDigite sua senha abaixo:`
+        : `Olá! Antes de começarmos a configurar seu agente, vamos criar uma senha para seu acesso, tudo bem?!\n\nDigite sua senha abaixo:`;
+      setMessages([
+        { role: "user", content: introMsg },
+        { role: "assistant", content: greeting },
+      ]);
       setPasswordPhase("awaiting");
       setIsPasswordInput(true);
     }, 500);
@@ -181,8 +189,8 @@ export default function Onboarding() {
         });
       });
 
-      // Extract attendant name & persona from conversation context
-      const nameMatch = fullText.match(/(?:nome.*?atendente|atendente.*?(?:chamar|nome))[:\s]*["']?(\w+)["']?/i);
+      // Extract agent name & persona from conversation context
+      const nameMatch = fullText.match(/(?:nome.*?agente|agente.*?(?:chamar|nome))[:\s]*["']?(\w+)["']?/i);
       if (nameMatch) setAttendantNameFromChat(nameMatch[1]);
 
       const personaMatch = fullText.match(/(?:tom|persona)[:\s]*([^\n.!?]+)/i);
@@ -217,11 +225,11 @@ export default function Onboarding() {
     inputRef.current?.focus();
   };
 
-  // Also extract attendant name from user messages
+  // Also extract agent name from user messages
   useEffect(() => {
     const userMsgs = messages.filter(m => m.role === "user");
     for (const m of userMsgs) {
-      const match = m.content.match(/(?:atendente|assistente).*?(?:chamar|nome)[:\s]*["']?(\w+)["']?/i);
+      const match = m.content.match(/(?:agente|assistente).*?(?:chamar|nome)[:\s]*["']?(\w+)["']?/i);
       if (match) setAttendantNameFromChat(match[1]);
       // Also check "pode ser X", "quero que se chame X"
       const match2 = m.content.match(/(?:pode ser|se chame?|nome dele?|nome dela?)[:\s]*["']?(\w+)["']?/i);
@@ -280,13 +288,13 @@ export default function Onboarding() {
           return;
         }
         setPasswordPhase("done");
-        setMessages(prev => [...prev, { role: "assistant", content: "Senha definida com sucesso! 🔒✨\n\nAgora vamos ao que interessa — me conta sobre seu negócio!" }]);
+        setMessages(prev => [...prev, { role: "assistant", content: "Senha definida com sucesso! 🔒\n\nAgora vamos ao que interessa — me conta sobre seu negócio!" }]);
         setIsLoading(false);
-        // Kick off AI chat
+        // Kick off AI chat — send a silent trigger to the AI
         setTimeout(() => {
           const introMsg = userName
-            ? `Olá! Sou ${userName.split(" ")[0]}${companyName ? ` da ${companyName}` : ""} e quero configurar meu atendente.`
-            : "Olá! Acabei de criar minha conta e quero configurar meu atendente.";
+            ? `Olá! Sou ${userName.split(" ")[0]}${companyName ? ` da ${companyName}` : ""} e quero configurar meu agente.`
+            : "Olá! Acabei de criar minha conta e quero configurar meu agente.";
           sendToChat(introMsg);
         }, 1000);
       });
@@ -413,7 +421,7 @@ export default function Onboarding() {
       ...prev,
       {
         role: "assistant",
-        content: "Ótimo! Agora, você tem algum material que pode nos ajudar a treinar melhor seu atendente? 📄\n\nPode ser catálogo, cardápio, tabela de preços, apresentação da empresa, FAQ... qualquer documento que descreva seu negócio.\n\nVocê também pode colar texto direto!",
+        content: "Ótimo! Agora, você tem algum material que pode nos ajudar a treinar melhor seu agente? 📄\n\nPode ser catálogo, cardápio, tabela de preços, apresentação da empresa, FAQ... qualquer documento que descreva seu negócio.\n\nVocê também pode colar texto direto!",
       },
     ]);
     setShowDocUpload(true);
@@ -456,8 +464,8 @@ export default function Onboarding() {
         overviewData.highlights ? `DIFERENCIAIS E INFORMAÇÕES IMPORTANTES:\n${overviewData.highlights}` : "",
       ].filter(Boolean).join("\n\n");
 
-      // Use attendant name from chat, fallback to business name
-      const finalAttendantName = attendantNameFromChat || overviewData.businessName || "Meu Atendente";
+      // Use agent name from chat, fallback to business name
+      const finalAttendantName = attendantNameFromChat || overviewData.businessName || "Meu Agente";
       const finalPersona = personaFromChat || overviewData.tone || "Simpático, profissional e direto";
 
       await supabase.from("attendants").update({
@@ -508,7 +516,7 @@ export default function Onboarding() {
         }).catch(e => console.error("Process knowledge error:", e));
       }
 
-      toast({ title: "Atendente configurado! 🎉", description: "Seu atendente está online." });
+      toast({ title: "Agente configurado! 🎉", description: "Seu agente está online." });
       navigate("/dashboard");
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
@@ -566,7 +574,7 @@ export default function Onboarding() {
   if (phase === "docs") {
     return (
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
-        <OnboardingHeader title="Documentos da empresa" subtitle="Envie materiais para turbinar seu atendente" progress={85} />
+        <OnboardingHeader title="Documentos da empresa" subtitle="Envie materiais para turbinar seu agente" progress={85} />
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             {messages.slice(-3).map((msg, i) => (
@@ -639,7 +647,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
       <OnboardingHeader
-        title="Configuração do seu Atendente"
+        title="Configuração do seu Agente"
         subtitle="Conte sobre seu negócio — por texto ou áudio"
         progress={Number(progressPct)}
       />
@@ -767,7 +775,9 @@ function ChatBubble({ msg }: { msg: Msg }) {
               : "bg-card border border-border text-foreground rounded-bl-md shadow-sm"
           }`}
         >
-          <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
+          <div className="text-sm leading-relaxed prose prose-sm prose-invert max-w-none [&_p]:m-0 [&_p+p]:mt-2">
+            <ReactMarkdown>{msg.content}</ReactMarkdown>
+          </div>
         </div>
         {isUser && (
           <div className="h-8 w-8 rounded-xl bg-muted flex items-center justify-center shrink-0 mt-0.5">

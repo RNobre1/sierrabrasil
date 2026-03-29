@@ -87,8 +87,8 @@ export default function AdminAttendants() {
   return (
     <div className="space-y-5 max-w-[1600px] mx-auto">
       <div>
-        <h1 className="text-xl font-display font-bold tracking-tight">Atendentes</h1>
-        <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider mt-0.5">{attendants.length} atendentes no sistema</p>
+        <h1 className="text-xl font-display font-bold tracking-tight">Agentes</h1>
+        <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider mt-0.5">{attendants.length} agentes no sistema</p>
       </div>
 
       {/* Stats */}
@@ -131,7 +131,7 @@ export default function AdminAttendants() {
         <div className="flex flex-wrap gap-2">
           <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input placeholder="Nome do atendente ou tenant..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-background border-border text-xs h-8" />
+            <Input placeholder="Nome do agente ou tenant..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-background border-border text-xs h-8" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[130px] bg-background border-border h-8 text-[11px]"><SelectValue /></SelectTrigger>
@@ -201,7 +201,7 @@ export default function AdminAttendants() {
               </tbody>
             </table>
           </div>
-          {filtered.length === 0 && <p className="text-center text-xs text-muted-foreground py-12">Nenhum atendente encontrado</p>}
+          {filtered.length === 0 && <p className="text-center text-xs text-muted-foreground py-12">Nenhum agente encontrado</p>}
         </CardContent>
       </Card>
     </div>

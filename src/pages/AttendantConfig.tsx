@@ -115,8 +115,8 @@ export default function AttendantConfig() {
   if (!attendantId) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-        <p className="text-lg">Nenhum atendente encontrado</p>
-        <p className="text-sm mt-2">Faça logout e login novamente para provisionar seu atendente automaticamente.</p>
+        <p className="text-lg">Nenhum agente encontrado</p>
+        <p className="text-sm mt-2">Faça logout e login novamente para provisionar seu agente automaticamente.</p>
       </div>
     );
   }
@@ -129,8 +129,8 @@ export default function AttendantConfig() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-display font-semibold">Configurar Atendente</h1>
-            <p className="text-sm text-muted-foreground mt-1">Personalize o comportamento do seu atendente IA</p>
+            <h1 className="text-2xl font-display font-semibold">Configurar Agente</h1>
+            <p className="text-sm text-muted-foreground mt-1">Personalize o comportamento do seu agente IA</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -147,11 +147,11 @@ export default function AttendantConfig() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-display">Identidade</CardTitle>
-          <CardDescription>Nome e personalidade do atendente</CardDescription>
+          <CardDescription>Nome e personalidade do agente</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome do atendente</Label>
+            <Label htmlFor="name">Nome do agente</Label>
             <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Luna, Sofia, Max" />
           </div>
           <div className="space-y-2">
@@ -165,13 +165,13 @@ export default function AttendantConfig() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-display">Instruções</CardTitle>
-          <CardDescription>Regras e contexto para o atendente. Descreva seu negócio, produtos, horários e regras de atendimento.</CardDescription>
+          <CardDescription>Regras e contexto para o agente. Descreva seu negócio, produtos, horários e regras de atendimento.</CardDescription>
         </CardHeader>
         <CardContent>
           <Textarea
             value={instructions}
             onChange={e => setInstructions(e.target.value)}
-            placeholder="Você é a atendente virtual da minha clínica de estética. Nossos serviços são: limpeza de pele (R$120), peeling (R$250)..."
+            placeholder="Você é o agente virtual da minha clínica de estética. Nossos serviços são: limpeza de pele (R$120), peeling (R$250)..."
             rows={8}
             className="font-mono text-sm"
           />
@@ -214,7 +214,7 @@ export default function AttendantConfig() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-display">Canais</CardTitle>
-          <CardDescription>Em quais canais o atendente opera</CardDescription>
+          <CardDescription>Em quais canais o agente opera</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-3">
