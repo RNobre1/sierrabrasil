@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard";
 import Conversations from "./pages/Conversations";
 import ConversationDetail from "./pages/ConversationDetail";
 import AttendantConfig from "./pages/AttendantConfig";
+import AgentDetail from "./pages/AgentDetail";
 import AttendantPlayground from "./pages/AttendantPlayground";
 import Reports from "./pages/Reports";
 import Account from "./pages/Account";
