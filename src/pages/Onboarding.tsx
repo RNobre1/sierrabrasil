@@ -221,7 +221,7 @@ export default function Onboarding() {
     Object.entries(links).forEach(([platform, val]) => {
       if (!val) return;
       let url = val;
-      if (platform === "instagram" && !url.startsWith("http")) url = `https://instagram.com/${url.replace("@", "")}`;
+      if (platform === "instagram" && !url.startsWith("http")) url = `https://instagram.com/${url.replace(/^@+/, "")}`;
       if (platform === "facebook" && !url.startsWith("http")) url = `https://facebook.com/${url}`;
       if (platform === "tiktok" && !url.startsWith("http")) url = `https://tiktok.com/${url.replace("@", "@")}`;
       if (platform === "youtube" && !url.startsWith("http")) url = `https://youtube.com/${url}`;
