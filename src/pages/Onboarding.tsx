@@ -516,7 +516,7 @@ export default function Onboarding() {
         }).catch(e => console.error("Process knowledge error:", e));
       }
 
-      toast({ title: "Atendente configurado! 🎉", description: "Seu atendente está online." });
+      toast({ title: "Agente configurado! 🎉", description: "Seu agente está online." });
       navigate("/dashboard");
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
