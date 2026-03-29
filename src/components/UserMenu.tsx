@@ -23,10 +23,16 @@ function getTheme(): Theme {
 function applyTheme(t: Theme) {
   localStorage.setItem("theme", t);
   const root = document.documentElement;
-  if (t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+  root.classList.remove("light", "dark");
+  if (t === "light") {
+    root.classList.add("light");
+  } else if (t === "dark") {
     root.classList.add("dark");
   } else {
-    root.classList.remove("dark");
+    // System — default is dark-first, so only add light if prefers light
+    if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+      root.classList.add("light");
+    }
   }
 }
 
@@ -44,7 +50,7 @@ export default function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all">
+        <button className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-border/50 overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all">
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
           ) : (
@@ -52,29 +58,29 @@ export default function UserMenu() {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <p className="text-sm font-medium truncate">{profile?.full_name || "Usuário"}</p>
-          <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+      <DropdownMenuContent align="end" sideOffset={8} className="w-56 ml-2 mr-2">
+        <DropdownMenuLabel className="font-normal px-3 py-2.5">
+          <p className="text-sm font-medium truncate text-foreground">{profile?.full_name || "Usuário"}</p>
+          <p className="text-xs text-muted-foreground truncate mt-0.5">{user?.email}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => navigate("/account")} className="gap-2 cursor-pointer">
-          <User className="h-4 w-4" /> Perfil
+        <DropdownMenuItem onClick={() => navigate("/account")} className="gap-2.5 cursor-pointer px-3 py-2">
+          <User className="h-4 w-4 text-muted-foreground" /> Perfil
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/attendant/config")} className="gap-2 cursor-pointer">
-          <Settings className="h-4 w-4" /> Configurações
+        <DropdownMenuItem onClick={() => navigate("/attendant/config")} className="gap-2.5 cursor-pointer px-3 py-2">
+          <Settings className="h-4 w-4 text-muted-foreground" /> Configurações
         </DropdownMenuItem>
 
         {isAdmin && (
-          <DropdownMenuItem onClick={() => navigate("/admin/dashboard")} className="gap-2 cursor-pointer">
-            <Shield className="h-4 w-4" /> Painel Admin
+          <DropdownMenuItem onClick={() => navigate("/admin/dashboard")} className="gap-2.5 cursor-pointer px-3 py-2">
+            <Shield className="h-4 w-4 text-muted-foreground" /> Painel Admin
           </DropdownMenuItem>
         )}
 
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="gap-2">
-            {theme === "dark" ? <Moon className="h-4 w-4" /> : theme === "light" ? <Sun className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
+          <DropdownMenuSubTrigger className="gap-2.5 px-3 py-2">
+            {theme === "dark" ? <Moon className="h-4 w-4 text-muted-foreground" /> : theme === "light" ? <Sun className="h-4 w-4 text-muted-foreground" /> : <Monitor className="h-4 w-4 text-muted-foreground" />}
             Aparência
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
@@ -92,22 +98,22 @@ export default function UserMenu() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => navigate("/account")} className="gap-2 cursor-pointer">
-          <CreditCard className="h-4 w-4" /> Meu Plano
+        <DropdownMenuItem onClick={() => navigate("/account")} className="gap-2.5 cursor-pointer px-3 py-2">
+          <CreditCard className="h-4 w-4 text-muted-foreground" /> Meu Plano
         </DropdownMenuItem>
-        <DropdownMenuItem className="gap-2 cursor-pointer" disabled>
-          <LifeBuoy className="h-4 w-4" /> Suporte
+        <DropdownMenuItem className="gap-2.5 cursor-pointer px-3 py-2" disabled>
+          <LifeBuoy className="h-4 w-4 text-muted-foreground" /> Suporte
         </DropdownMenuItem>
-        <DropdownMenuItem className="gap-2 cursor-pointer" disabled>
-          <FileText className="h-4 w-4" /> Documentação
+        <DropdownMenuItem className="gap-2.5 cursor-pointer px-3 py-2" disabled>
+          <FileText className="h-4 w-4 text-muted-foreground" /> Documentação
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/dashboard")} className="gap-2 cursor-pointer">
-          <Home className="h-4 w-4" /> Página Inicial
+        <DropdownMenuItem onClick={() => navigate("/dashboard")} className="gap-2.5 cursor-pointer px-3 py-2">
+          <Home className="h-4 w-4 text-muted-foreground" /> Página Inicial
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={signOut} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+        <DropdownMenuItem onClick={signOut} className="gap-2.5 cursor-pointer px-3 py-2 text-destructive focus:text-destructive">
           <LogOut className="h-4 w-4" /> Sair
         </DropdownMenuItem>
       </DropdownMenuContent>
