@@ -231,6 +231,67 @@ export default function Onboarding() {
   const sendMessage = () => {
     const text = input.trim();
     if (!text || isLoading) return;
+
+    // Handle password collection flow
+    if (passwordPhase === "awaiting") {
+      if (text.length < 8) {
+        setMessages(prev => [...prev,
+          { role: "user", content: "•".repeat(text.length) },
+          { role: "assistant", content: "A senha precisa ter pelo menos **8 caracteres**. Tente novamente:" }
+        ]);
+        setInput("");
+        return;
+      }
+      setTempPassword(text);
+      setMessages(prev => [...prev,
+        { role: "user", content: "•".repeat(text.length) },
+        { role: "assistant", content: "Perfeito! Agora confirme digitando a mesma senha novamente:" }
+      ]);
+      setInput("");
+      setPasswordPhase("confirming");
+      return;
+    }
+
+    if (passwordPhase === "confirming") {
+      if (text !== tempPassword) {
+        setMessages(prev => [...prev,
+          { role: "user", content: "•".repeat(text.length) },
+          { role: "assistant", content: "As senhas não conferem 😅 Tente digitar a senha novamente:" }
+        ]);
+        setInput("");
+        setPasswordPhase("awaiting");
+        setTempPassword("");
+        return;
+      }
+      // Password confirmed — update via supabase auth
+      setMessages(prev => [...prev, { role: "user", content: "•".repeat(text.length) }]);
+      setInput("");
+      setIsLoading(true);
+      setIsPasswordInput(false);
+      supabase.auth.updateUser({ password: text }).then(({ error }) => {
+        if (error) {
+          toast({ title: "Erro ao definir senha", description: error.message, variant: "destructive" });
+          setMessages(prev => [...prev, { role: "assistant", content: "Ops, houve um erro ao salvar a senha. Tente novamente:" }]);
+          setPasswordPhase("awaiting");
+          setTempPassword("");
+          setIsPasswordInput(true);
+          setIsLoading(false);
+          return;
+        }
+        setPasswordPhase("done");
+        setMessages(prev => [...prev, { role: "assistant", content: "Senha definida com sucesso! 🔒✨\n\nAgora vamos ao que interessa — me conta sobre seu negócio!" }]);
+        setIsLoading(false);
+        // Kick off AI chat
+        setTimeout(() => {
+          const introMsg = userName
+            ? `Olá! Sou ${userName.split(" ")[0]}${companyName ? ` da ${companyName}` : ""} e quero configurar meu atendente.`
+            : "Olá! Acabei de criar minha conta e quero configurar meu atendente.";
+          sendToChat(introMsg);
+        }, 1000);
+      });
+      return;
+    }
+
     sendToChat(text);
   };
 
