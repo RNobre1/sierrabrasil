@@ -113,17 +113,17 @@ export default function AgentDetail() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-muted/50 border border-border/30 h-9 sm:h-10 w-full sm:w-auto flex-nowrap overflow-x-auto">
-          <TabsTrigger value="config" className="text-xs gap-1.5 data-[state=active]:bg-background">
-            <Settings className="h-3.5 w-3.5" /> Configuração
+          <TabsTrigger value="config" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
+            <Settings className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Configuração</span><span className="xs:hidden">Config</span>
           </TabsTrigger>
-          <TabsTrigger value="skills" className="text-xs gap-1.5 data-[state=active]:bg-background">
-            <Zap className="h-3.5 w-3.5" /> Superpoderes
+          <TabsTrigger value="skills" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
+            <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden sm:inline">Superpoderes</span><span className="sm:hidden">Skills</span>
           </TabsTrigger>
-          <TabsTrigger value="knowledge" className="text-xs gap-1.5 data-[state=active]:bg-background">
-            <BookOpen className="h-3.5 w-3.5" /> Base de Conhecimento
+          <TabsTrigger value="knowledge" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
+            <BookOpen className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden sm:inline">Conhecimento</span><span className="sm:hidden">KB</span>
           </TabsTrigger>
-          <TabsTrigger value="memory" className="text-xs gap-1.5 data-[state=active]:bg-background">
-            <Brain className="h-3.5 w-3.5" /> Memória
+          <TabsTrigger value="memory" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
+            <Brain className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Memória
           </TabsTrigger>
         </TabsList>
 
