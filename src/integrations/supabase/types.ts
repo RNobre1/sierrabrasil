@@ -17,6 +17,7 @@ export type Database = {
       attendants: {
         Row: {
           channels: string[] | null
+          class: string | null
           created_at: string
           id: string
           instructions: string | null
@@ -30,6 +31,7 @@ export type Database = {
         }
         Insert: {
           channels?: string[] | null
+          class?: string | null
           created_at?: string
           id?: string
           instructions?: string | null
@@ -43,6 +45,7 @@ export type Database = {
         }
         Update: {
           channels?: string[] | null
+          class?: string | null
           created_at?: string
           id?: string
           instructions?: string | null
