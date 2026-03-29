@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Star, Bot, MessageSquare, Zap, Shield, Clock, BarChart3 } from "lucide-react";
+import meteoraLogo from "@/assets/meteora-branca.png";
 
 const features = [
   { icon: Bot, title: "Atendente Autônomo", desc: "Não é chatbot. É um funcionário digital que conversa, vende, agenda e resolve." },
@@ -47,10 +48,7 @@ export default function Index() {
       <header className="fixed top-0 inset-x-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-meteora-cyan flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs tracking-tighter">M</span>
-            </div>
-            <span className="font-semibold text-foreground tracking-tight">METEORA</span>
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Entrar</Button></Link>
@@ -210,9 +208,7 @@ export default function Index() {
       <footer className="border-t border-border/30 py-8 px-6 relative z-10">
         <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-[8px]">M</span>
-            </div>
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-5" />
             <span className="text-xs text-muted-foreground">© 2026 Meteora Digital. Todos os direitos reservados.</span>
           </div>
           <div className="flex gap-6 text-xs text-muted-foreground">
