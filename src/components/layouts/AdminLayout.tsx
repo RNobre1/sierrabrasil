@@ -14,6 +14,7 @@ const adminNavItems = [
 
 export default function AdminLayout() {
   const { signOut } = useAuth();
+  const nav = useNavigate();
 
   return (
     <div className="flex min-h-screen w-full bg-background dark">
