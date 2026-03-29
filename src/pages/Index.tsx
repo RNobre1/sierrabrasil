@@ -64,6 +64,7 @@ export default function Index() {
       </header>
 
       {/* Hero */}
+      <MeteorTrail interval={6000}>
       <section className="pt-36 pb-24 px-6 relative z-10">
         <div className="mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-card/50 px-4 py-1.5 text-xs text-muted-foreground mb-8 backdrop-blur-sm">
