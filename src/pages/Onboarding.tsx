@@ -319,8 +319,14 @@ export default function Onboarding() {
       return;
     }
 
+    // Handle post-scrape chat questions
+    if (phase === "post-scrape-chat") {
+      handlePostScrapeAnswer(text);
+      setInput("");
+      return;
+    }
+
     sendToChat(text);
-  };
 
   const handleAudioTranscribed = (text: string) => {
     sendToChat(`🎤 ${text}`);
