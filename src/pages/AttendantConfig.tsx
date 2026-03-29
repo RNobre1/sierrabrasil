@@ -129,8 +129,8 @@ export default function AttendantConfig() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-display font-semibold">Configurar Atendente</h1>
-            <p className="text-sm text-muted-foreground mt-1">Personalize o comportamento do seu atendente IA</p>
+            <h1 className="text-2xl font-display font-semibold">Configurar Agente</h1>
+            <p className="text-sm text-muted-foreground mt-1">Personalize o comportamento do seu agente IA</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
