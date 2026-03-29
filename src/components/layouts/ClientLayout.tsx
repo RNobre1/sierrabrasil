@@ -51,8 +51,16 @@ const mobileNavItems = [
 ];
 
 export default function ClientLayout() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const isMobile = useIsMobile();
+  const [tenantPlan, setTenantPlan] = useState("starter");
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("tenants").select("plan").eq("owner_id", user.id).single().then(({ data }) => {
+      if (data) setTenantPlan(data.plan || "starter");
+    });
+  }, [user]);
 
   // Dark-first: root is dark by default, light only if .light class present
   const isLightMode = typeof document !== "undefined" && document.documentElement.classList.contains("light");
