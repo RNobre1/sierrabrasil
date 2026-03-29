@@ -1,0 +1,206 @@
+import { useState } from "react";
+import { Zap, Lock, Info, Check, ShoppingCart, Crown, MessageSquare, Calendar, FileText, Globe, BarChart3, Users, Mail, Bell, Shield, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  detail: string;
+  icon: React.ReactNode;
+  category: "core" | "advanced" | "premium";
+  includedIn: string[]; // plans that include it
+  addonPrice?: string;
+}
+
+const SKILLS: Skill[] = [
+  // Core — included in all plans
+  { id: "auto-reply", name: "Resposta Automática", description: "Responde perguntas automaticamente via IA", detail: "O agente utiliza inteligência artificial para entender a pergunta do cliente e gerar uma resposta contextualizada, usando sua base de conhecimento e instruções configuradas.", icon: <MessageSquare className="h-4 w-4" />, category: "core", includedIn: ["starter", "professional", "business", "enterprise"] },
+  { id: "faq", name: "FAQ Inteligente", description: "Respostas instantâneas para perguntas frequentes", detail: "Identifica automaticamente perguntas recorrentes e responde instantaneamente sem precisar processar via IA generativa, economizando tokens e tempo de resposta.", icon: <FileText className="h-4 w-4" />, category: "core", includedIn: ["starter", "professional", "business", "enterprise"] },
+  { id: "escalation", name: "Escalonamento Humano", description: "Transfere para atendente quando necessário", detail: "Detecta quando o cliente precisa de ajuda humana (frustração, pedido explícito, assunto fora do escopo) e transfere automaticamente para um atendente real, notificando via WhatsApp.", icon: <Users className="h-4 w-4" />, category: "core", includedIn: ["starter", "professional", "business", "enterprise"] },
+  { id: "greeting", name: "Saudação Personalizada", description: "Mensagem de boas-vindas customizada", detail: "Envia uma saudação personalizada quando o cliente inicia uma conversa, usando o nome dele e adaptando o tom conforme horário e contexto.", icon: <Sparkles className="h-4 w-4" />, category: "core", includedIn: ["starter", "professional", "business", "enterprise"] },
+
+  // Advanced — Professional+
+  { id: "lead-capture", name: "Captura de Leads", description: "Coleta dados do cliente automaticamente", detail: "Durante a conversa, o agente identifica oportunidades para coletar nome, email, telefone e interesse do cliente, salvando tudo estruturado no CRM.", icon: <Users className="h-4 w-4" />, category: "advanced", includedIn: ["professional", "business", "enterprise"], addonPrice: "R$47/mês" },
+  { id: "scheduling", name: "Agendamento Inteligente", description: "Agenda reuniões e compromissos pelo chat", detail: "Integra com Google Calendar e permite que o agente sugira horários disponíveis, confirme agendamentos e envie lembretes automáticos.", icon: <Calendar className="h-4 w-4" />, category: "advanced", includedIn: ["professional", "business", "enterprise"], addonPrice: "R$67/mês" },
+  { id: "sentiment", name: "Análise de Sentimento", description: "Detecta emoções e adapta respostas", detail: "Analisa o tom da mensagem do cliente em tempo real (feliz, frustrado, urgente) e ajusta automaticamente o tom e prioridade da resposta.", icon: <BarChart3 className="h-4 w-4" />, category: "advanced", includedIn: ["professional", "business", "enterprise"], addonPrice: "R$37/mês" },
+  { id: "follow-up", name: "Follow-up Automático", description: "Reengaja clientes após inatividade", detail: "Envia mensagens de acompanhamento inteligentes para clientes que não responderam, lembretes de carrinho abandonado e check-ins pós-venda.", icon: <Bell className="h-4 w-4" />, category: "advanced", includedIn: ["professional", "business", "enterprise"], addonPrice: "R$57/mês" },
+
+  // Premium — Business/Enterprise
+  { id: "multi-language", name: "Multilíngue", description: "Atende em português, inglês, espanhol e mais", detail: "Detecta automaticamente o idioma do cliente e responde no mesmo idioma, com tradução em tempo real de toda a base de conhecimento.", icon: <Globe className="h-4 w-4" />, category: "premium", includedIn: ["business", "enterprise"], addonPrice: "R$97/mês" },
+  { id: "email-integration", name: "Integração com Email", description: "Envia emails transacionais e follow-ups", detail: "O agente pode enviar emails formatados profissionalmente — confirmações, propostas, resumos de conversa — tudo integrado ao fluxo do chat.", icon: <Mail className="h-4 w-4" />, category: "premium", includedIn: ["business", "enterprise"], addonPrice: "R$77/mês" },
+  { id: "advanced-analytics", name: "Analytics Avançado", description: "Relatórios detalhados de performance", detail: "Painel com métricas granulares: tempo de resposta por skill, taxa de resolução por tipo de pergunta, heatmap de horários e funil de conversão completo.", icon: <BarChart3 className="h-4 w-4" />, category: "premium", includedIn: ["business", "enterprise"], addonPrice: "R$87/mês" },
+  { id: "custom-actions", name: "Ações Customizadas", description: "Webhooks e integrações via API", detail: "Crie ações personalizadas que o agente pode executar durante a conversa: consultar estoque, verificar status de pedido, criar ticket no seu sistema.", icon: <Zap className="h-4 w-4" />, category: "premium", includedIn: ["enterprise"], addonPrice: "R$147/mês" },
+];
+
+const categoryLabels = {
+  core: { label: "Habilidades Base", color: "text-primary" },
+  advanced: { label: "Avançado", color: "text-[hsl(var(--meteora-cyan))]" },
+  premium: { label: "Premium", color: "text-amber-400" },
+};
+
+interface Props {
+  agentId: string;
+  agentClass: string;
+  plan: string;
+}
+
+export default function AgentSkillsTab({ agentId, agentClass, plan }: Props) {
+  const [enabledSkills, setEnabledSkills] = useState<Set<string>>(
+    new Set(SKILLS.filter(s => s.includedIn.includes(plan)).map(s => s.id))
+  );
+  const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
+
+  const isIncluded = (skill: Skill) => skill.includedIn.includes(plan);
+  const isEnabled = (id: string) => enabledSkills.has(id);
+
+  const toggleSkill = (skill: Skill) => {
+    if (!isIncluded(skill)) return; // locked
+    setEnabledSkills(prev => {
+      const next = new Set(prev);
+      if (next.has(skill.id)) next.delete(skill.id); else next.add(skill.id);
+      return next;
+    });
+  };
+
+  const grouped = {
+    core: SKILLS.filter(s => s.category === "core"),
+    advanced: SKILLS.filter(s => s.category === "advanced"),
+    premium: SKILLS.filter(s => s.category === "premium"),
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" /> Superpoderes do Agente
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Ative ou desative as habilidades do seu agente · {enabledSkills.size} de {SKILLS.length} ativas
+          </p>
+        </div>
+        <Badge variant="outline" className="text-[10px] font-mono capitalize border-border/40">
+          Plano {plan}
+        </Badge>
+      </div>
+
+      {(["core", "advanced", "premium"] as const).map(cat => {
+        const catInfo = categoryLabels[cat];
+        return (
+          <div key={cat} className="space-y-3">
+            <h3 className={`text-xs font-mono uppercase tracking-wider ${catInfo.color} flex items-center gap-2`}>
+              {cat === "premium" && <Crown className="h-3 w-3" />}
+              {catInfo.label}
+            </h3>
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {grouped[cat].map((skill, i) => {
+                const included = isIncluded(skill);
+                const enabled = isEnabled(skill.id);
+                const expanded = expandedSkill === skill.id;
+                return (
+                  <motion.div
+                    key={skill.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    className={`relative rounded-xl border p-4 transition-all ${
+                      included
+                        ? enabled
+                          ? "border-primary/20 bg-primary/5"
+                          : "border-border/30 bg-card/50"
+                        : "border-border/20 bg-card/20 opacity-60"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className={`h-9 w-9 shrink-0 rounded-lg flex items-center justify-center ${
+                          included && enabled ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                        }`}>
+                          {skill.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-medium text-foreground truncate">{skill.name}</h4>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  className="shrink-0 h-4 w-4 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors"
+                                  onClick={(e) => { e.stopPropagation(); setExpandedSkill(expanded ? null : skill.id); }}
+                                >
+                                  <Info className="h-2.5 w-2.5 text-muted-foreground" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[280px] text-xs">
+                                {skill.detail}
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{skill.description}</p>
+                        </div>
+                      </div>
+                      <div className="shrink-0">
+                        {included ? (
+                          <Switch
+                            checked={enabled}
+                            onCheckedChange={() => toggleSkill(skill)}
+                            className="scale-90"
+                          />
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-[10px] gap-1 border-[hsl(var(--meteora-cyan))]/20 text-[hsl(var(--meteora-cyan))] hover:bg-[hsl(var(--meteora-cyan))]/5"
+                          >
+                            <ShoppingCart className="h-3 w-3" /> {skill.addonPrice}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expanded detail */}
+                    <AnimatePresence>
+                      {expanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-3 pt-3 border-t border-border/20">
+                            <p className="text-xs text-muted-foreground leading-relaxed">{skill.detail}</p>
+                            {!included && (
+                              <div className="mt-3 flex items-center gap-2">
+                                <Button size="sm" className="h-7 text-[10px] gap-1.5 bg-gradient-to-r from-[hsl(var(--meteora-cyan))] to-primary text-white">
+                                  <Zap className="h-3 w-3" /> Ativar por {skill.addonPrice}
+                                </Button>
+                                <span className="text-[9px] text-muted-foreground">Cobrança imediata no cartão cadastrado</span>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Lock overlay for non-included */}
+                    {!included && (
+                      <div className="absolute top-2 right-2">
+                        <Lock className="h-3 w-3 text-muted-foreground/40" />
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
