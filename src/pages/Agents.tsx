@@ -35,6 +35,9 @@ export default function Agents() {
   const [agents, setAgents] = useState<Attendant[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenantPlan, setTenantPlan] = useState("starter");
+  const [search, setSearch] = useState("");
+  const [classFilters, setClassFilters] = useState<Set<string>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all");
 
   useEffect(() => {
     if (!user) return;
@@ -51,6 +54,32 @@ export default function Agents() {
   const maxAgents = tenantPlan === "starter" ? 1 : tenantPlan === "professional" ? 3 : tenantPlan === "enterprise" ? 100 : 10;
   const canCreate = agents.length < maxAgents;
   const online = agents.filter(a => a.status === "online").length;
+
+  const toggleClass = (cls: string) => {
+    setClassFilters(prev => {
+      const next = new Set(prev);
+      next.has(cls) ? next.delete(cls) : next.add(cls);
+      return next;
+    });
+  };
+
+  const filtered = useMemo(() => {
+    let result = agents;
+    if (search) {
+      const s = search.toLowerCase();
+      result = result.filter(a => a.name.toLowerCase().includes(s));
+    }
+    if (classFilters.size > 0) {
+      result = result.filter(a => classFilters.has(a.class || "support"));
+    }
+    if (statusFilter !== "all") {
+      result = result.filter(a => a.status === statusFilter);
+    }
+    return result;
+  }, [agents, search, classFilters, statusFilter]);
+
+  const hasFilters = search || classFilters.size > 0 || statusFilter !== "all";
+  const clearFilters = () => { setSearch(""); setClassFilters(new Set()); setStatusFilter("all"); };
 
   if (loading) return (
     <div className="space-y-5">
