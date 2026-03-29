@@ -163,7 +163,7 @@ export default function Index() {
                 </div>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-xs text-muted-foreground">R$</span>
-                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                  <span className="text-3xl sm:text-4xl font-bold text-foreground">{plan.price}</span>
                   <span className="text-xs text-muted-foreground">/mês</span>
                 </div>
                 <ul className="mt-6 space-y-2.5">
