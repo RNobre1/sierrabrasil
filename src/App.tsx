@@ -53,6 +53,7 @@ const App = () => (
               <Route path="/conversations/:id" element={<ConversationDetail />} />
               <Route path="/agents" element={<Agents />} />
               <Route path="/attendant/config" element={<AttendantConfig />} />
+              <Route path="/agents/detail" element={<AgentDetail />} />
               <Route path="/attendant/playground" element={<AttendantPlayground />} />
               <Route path="/channels" element={<Channels />} />
               <Route path="/reports" element={<Reports />} />
