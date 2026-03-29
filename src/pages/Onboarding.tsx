@@ -62,6 +62,10 @@ export default function Onboarding() {
   const [pastedTexts, setPastedTexts] = useState<string[]>([]);
   const [attendantNameFromChat, setAttendantNameFromChat] = useState("");
   const [personaFromChat, setPersonaFromChat] = useState("");
+  // Password collection state
+  const [passwordPhase, setPasswordPhase] = useState<"none" | "awaiting" | "confirming" | "done">("none");
+  const [tempPassword, setTempPassword] = useState("");
+  const [isPasswordInput, setIsPasswordInput] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasStarted = useRef(false);
