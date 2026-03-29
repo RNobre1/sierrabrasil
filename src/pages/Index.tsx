@@ -211,10 +211,15 @@ export default function Index() {
             <img src={meteoraLogo} alt="Meteora Digital" className="h-5" />
             <span className="text-xs text-muted-foreground">© 2026 Meteora Digital. Todos os direitos reservados.</span>
           </div>
-          <div className="flex gap-6 text-xs text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Termos</a>
-            <a href="#" className="hover:text-foreground transition-colors">Privacidade</a>
-            <a href="#" className="hover:text-foreground transition-colors">Suporte</a>
+          <div className="flex items-center gap-6">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[10px] font-mono text-primary/80 tracking-wider">
+              ✦ AI POWERED BY METEORA
+            </span>
+            <div className="flex gap-6 text-xs text-muted-foreground">
+              <a href="#" className="hover:text-foreground transition-colors">Termos</a>
+              <a href="#" className="hover:text-foreground transition-colors">Privacidade</a>
+              <a href="#" className="hover:text-foreground transition-colors">Suporte</a>
+            </div>
           </div>
         </div>
       </footer>
