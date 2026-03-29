@@ -254,7 +254,8 @@ export default function Index() {
       <footer className="border-t border-border/30 py-8 px-6 relative z-10">
         <div className="mx-auto max-w-6xl flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <img src={meteoraLogo} alt="Meteora Digital" className="h-5" />
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-5 dark:block hidden" />
+            <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-5 dark:hidden block" />
             <span className="text-[10px] sm:text-xs text-muted-foreground">© 2026 Meteora Digital</span>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
