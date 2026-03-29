@@ -79,6 +79,10 @@ export default function Onboarding() {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         chatEndRef.current?.scrollIntoView({ behavior, block: "end" });
+        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior });
+
+        const scrollRoot = document.scrollingElement ?? document.documentElement;
+        window.scrollTo({ top: scrollRoot.scrollHeight, behavior });
       });
     });
   }, []);
@@ -580,8 +584,8 @@ export default function Onboarding() {
     return (
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Documentos da empresa" subtitle="Envie materiais para turbinar seu agente" progress={85} />
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+        <div ref={scrollRef} className="flex-1">
+          <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-32 space-y-4">
             {messages.slice(-3).map((msg, i) => (
               <ChatBubble key={i} msg={msg} />
             ))}
@@ -644,8 +648,8 @@ export default function Onboarding() {
       />
 
       {/* Chat */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+      <div ref={scrollRef} className="flex-1">
+        <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-32 space-y-4">
           {messages.map((msg, i) => (
             <ChatBubble key={i} msg={msg} />
           ))}
@@ -694,7 +698,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          <div ref={chatEndRef} />
+          <div ref={chatEndRef} className="scroll-mb-32 md:scroll-mb-40" />
         </div>
       </div>
 
