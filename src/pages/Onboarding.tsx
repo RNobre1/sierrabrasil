@@ -586,7 +586,7 @@ export default function Onboarding() {
 
   // ========== CHAT PHASE ==========
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
       <OnboardingHeader
         title="Configuração do seu Atendente"
         subtitle="Conte sobre seu negócio — por texto ou áudio"
