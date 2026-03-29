@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap, Brain, MessageSquare, Phone } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
 
 function formatWhatsApp(value: string) {
@@ -125,12 +125,12 @@ export default function Signup() {
           </p>
           <div className="mt-12 grid grid-cols-3 gap-4">
             {[
-              { emoji: "⚡", label: "Setup em 5min" },
-              { emoji: "🤖", label: "IA Avançada" },
-              { emoji: "📱", label: "WhatsApp + IG" },
+              { icon: <Zap className="h-5 w-5" />, label: "Setup em 5min" },
+              { icon: <Brain className="h-5 w-5" />, label: "IA Avançada" },
+              { icon: <MessageSquare className="h-5 w-5" />, label: "WhatsApp + IG" },
             ].map((item, i) => (
-              <div key={i} className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 text-center">
-                <div className="text-2xl mb-2">{item.emoji}</div>
+              <div key={i} className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 text-center flex flex-col items-center gap-2">
+                <div className="text-white/40">{item.icon}</div>
                 <p className="text-xs text-white/50">{item.label}</p>
               </div>
             ))}
@@ -182,7 +182,7 @@ export default function Signup() {
             <div className="space-y-1.5">
               <Label htmlFor="whatsapp" className="text-xs font-medium text-muted-foreground">WhatsApp</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">🇧🇷 +55</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs text-muted-foreground"><Phone className="h-3.5 w-3.5" /> +55</span>
                 <Input id="whatsapp" value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))} required placeholder="(00) 00000-0000" className="h-11 rounded-xl bg-secondary/50 border-border/50 pl-16 text-sm placeholder:text-muted-foreground/50" />
               </div>
             </div>
