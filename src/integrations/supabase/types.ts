@@ -118,6 +118,48 @@ export type Database = {
           },
         ]
       }
+      knowledge_base: {
+        Row: {
+          attendant_id: string | null
+          chunk_index: number | null
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          search_vector: unknown
+          source_name: string | null
+          source_type: string
+          source_url: string | null
+          tenant_id: string
+        }
+        Insert: {
+          attendant_id?: string | null
+          chunk_index?: number | null
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          search_vector?: unknown
+          source_name?: string | null
+          source_type?: string
+          source_url?: string | null
+          tenant_id: string
+        }
+        Update: {
+          attendant_id?: string | null
+          chunk_index?: number | null
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          search_vector?: unknown
+          source_name?: string | null
+          source_type?: string
+          source_url?: string | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -242,6 +284,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_attendant_knowledge: {
+        Args: { p_attendant_id: string; p_limit?: number }
+        Returns: {
+          content: string
+          source_name: string
+          source_type: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
