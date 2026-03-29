@@ -131,8 +131,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Enterprise VIP Banner */}
       {tenantPlan === "enterprise" && (
-        <div className="rounded-2xl border border-[hsl(var(--meteora-cyan))]/20 bg-gradient-to-r from-[hsl(var(--meteora-cyan))]/5 via-primary/5 to-transparent p-4 flex items-center gap-4">
-          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[hsl(var(--meteora-cyan))] to-primary flex items-center justify-center shadow-lg shadow-primary/20">
+        <div className="rounded-2xl border border-[hsl(var(--meteora-cyan))]/20 bg-gradient-to-r from-[hsl(var(--meteora-cyan))]/5 via-primary/5 to-transparent p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+          <div className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl bg-gradient-to-br from-[hsl(var(--meteora-cyan))] to-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <Crown className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -142,9 +142,9 @@ export default function Dashboard() {
                 ✦ VIP
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Manager dedicado · Relatórios ilimitados · Até 100 agentes · Suporte prioritário</p>
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 leading-relaxed">Manager dedicado · Relatórios ilimitados · Até 100 agentes</p>
           </div>
-          <Button size="sm" variant="outline" className="shrink-0 text-xs gap-1.5 border-[hsl(var(--meteora-cyan))]/20 text-[hsl(var(--meteora-cyan))] hover:bg-[hsl(var(--meteora-cyan))]/5">
+          <Button size="sm" variant="outline" className="shrink-0 text-[10px] sm:text-xs gap-1.5 border-[hsl(var(--meteora-cyan))]/20 text-[hsl(var(--meteora-cyan))] hover:bg-[hsl(var(--meteora-cyan))]/5 w-full sm:w-auto">
             <MessageSquare className="h-3.5 w-3.5" /> Falar com Manager
           </Button>
         </div>
