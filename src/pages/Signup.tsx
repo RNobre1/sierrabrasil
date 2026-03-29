@@ -168,36 +168,34 @@ export default function Signup() {
             <div className="relative flex justify-center text-xs"><span className="bg-background px-3 text-muted-foreground">ou crie com e-mail</span></div>
           </div>
 
-          <form onSubmit={handleSignup} className="space-y-3.5">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-xs font-medium text-muted-foreground">Nome completo</Label>
-                <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Seu nome" className="h-10 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="company" className="text-xs font-medium text-muted-foreground">Empresa</Label>
-                <Input id="company" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Sua empresa" className="h-10 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
-              </div>
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-xs font-medium text-muted-foreground">Nome completo</Label>
+              <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Seu nome completo" className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">E-mail</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="seu@email.com" className="h-10 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="whatsapp" className="text-xs font-medium text-muted-foreground">WhatsApp</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">🇧🇷 +55</span>
-                  <Input id="whatsapp" value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))} required placeholder="(00) 00000-0000" className="h-10 rounded-xl bg-secondary/50 border-border/50 pl-[72px] text-sm font-mono placeholder:text-muted-foreground/50" />
-                </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="company" className="text-xs font-medium text-muted-foreground">Empresa</Label>
+              <Input id="company" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Nome da sua empresa" className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">E-mail</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="seu@email.com" className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="whatsapp" className="text-xs font-medium text-muted-foreground">WhatsApp</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">🇧🇷 +55</span>
+                <Input id="whatsapp" value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))} required placeholder="(00) 00000-0000" className="h-11 rounded-xl bg-secondary/50 border-border/50 pl-16 text-sm placeholder:text-muted-foreground/50" />
               </div>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">Senha</Label>
               <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" className="h-10 rounded-xl bg-secondary/50 border-border/50 pr-10 text-sm placeholder:text-muted-foreground/50" />
+                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" className="h-11 rounded-xl bg-secondary/50 border-border/50 pr-10 text-sm placeholder:text-muted-foreground/50" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                   {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
@@ -206,7 +204,7 @@ export default function Signup() {
 
             <div className="space-y-1.5">
               <Label htmlFor="confirm-password" className="text-xs font-medium text-muted-foreground">Confirmar senha</Label>
-              <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} placeholder="Repita a senha" className="h-10 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
+              <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} placeholder="Repita a senha" className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
               {confirmPassword && password !== confirmPassword && (
                 <p className="text-xs text-destructive">As senhas não conferem</p>
               )}
