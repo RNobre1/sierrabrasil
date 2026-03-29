@@ -9,12 +9,12 @@ const corsHeaders = {
 
 // Apify actor IDs for each platform
 const APIFY_ACTORS: Record<string, string> = {
-  instagram: "apify/instagram-profile-scraper",
-  facebook: "apify/facebook-pages-scraper",
-  tiktok: "clockworks/tiktok-profile-scraper",
-  youtube: "streamers/youtube-channel-scraper",
-  linkedin: "anchor/linkedin-company-scraper",
-  website: "apify/website-content-crawler",
+  instagram: "apify~instagram-scraper",
+  facebook: "apify~facebook-pages-scraper",
+  tiktok: "clockworks~free-tiktok-scraper",
+  youtube: "streamers~youtube-channel-scraper",
+  linkedin: "anchor~linkedin-company-scraper",
+  website: "apify~website-content-crawler",
 };
 
 function detectPlatform(url: string): string {
