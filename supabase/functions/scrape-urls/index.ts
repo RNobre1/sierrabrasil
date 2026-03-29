@@ -102,8 +102,8 @@ async function simpleScrape(url: string): Promise<string> {
 async function runApifyActor(actorId: string, input: any, apiKey: string): Promise<any[]> {
   console.log(`Starting Apify actor: ${actorId}`);
   const runResp = await fetch(
-    `https://api.apify.com/v2/acts/${actorId}/runs?token=${apiKey}&waitForFinish=120`,
-    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) }
+    `https://api.apify.com/v2/acts/${actorId}/runs?token=${apiKey}&waitForFinish=60`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input), signal: AbortSignal.timeout(70000) }
   );
   if (!runResp.ok) {
     const err = await runResp.text();
@@ -114,7 +114,7 @@ async function runApifyActor(actorId: string, input: any, apiKey: string): Promi
   const datasetId = runData.data?.defaultDatasetId;
   if (!datasetId) throw new Error("No dataset returned");
   console.log(`Apify run completed, fetching dataset: ${datasetId}`);
-  const dataResp = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${apiKey}&limit=50`);
+  const dataResp = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${apiKey}&limit=50`, { signal: AbortSignal.timeout(15000) });
   if (!dataResp.ok) throw new Error(`Dataset fetch failed: ${dataResp.status}`);
   return await dataResp.json();
 }
