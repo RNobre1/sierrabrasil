@@ -165,7 +165,7 @@ export default function AttendantConfig() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-display">Instruções</CardTitle>
-          <CardDescription>Regras e contexto para o atendente. Descreva seu negócio, produtos, horários e regras de atendimento.</CardDescription>
+          <CardDescription>Regras e contexto para o agente. Descreva seu negócio, produtos, horários e regras de atendimento.</CardDescription>
         </CardHeader>
         <CardContent>
           <Textarea
