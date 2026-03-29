@@ -69,6 +69,12 @@ export default function Onboarding() {
   const scrapeDataRef = useRef<{ results: any[]; overview: any; sourcePreviews: any[]; done: boolean }>({ results: [], overview: null, sourcePreviews: [], done: false });
   const [postScrapeStep, setPostScrapeStep] = useState(0);
   const [waitingForScrape, setWaitingForScrape] = useState(false);
+  const waitingForScrapeRef = useRef(false);
+  const phaseRef = useRef<OnboardingPhase>("chat");
+  const scrapeStartedAtRef = useRef<number | null>(null);
+  const scrapeTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrapeDeadlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrapeAbortControllerRef = useRef<AbortController | null>(null);
   // Password collection state
   const [passwordPhase, setPasswordPhase] = useState<"none" | "awaiting" | "confirming" | "done">("none");
   const [tempPassword, setTempPassword] = useState("");
@@ -102,6 +108,14 @@ export default function Onboarding() {
       sensitiveInputRef.current?.focus();
     }
   }, [isPasswordInput, passwordPhase]);
+
+  useEffect(() => {
+    waitingForScrapeRef.current = waitingForScrape;
+  }, [waitingForScrape]);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   const userName = user?.user_metadata?.full_name || profile?.full_name || "";
   const companyName = user?.user_metadata?.company_name || "";
@@ -187,6 +201,51 @@ export default function Onboarding() {
       .replace(/```social_links\s*```/g, "")
       .replace(/```docs_upload\s*```/g, "")
       .trim();
+
+  const clearScrapeTimers = useCallback(() => {
+    if (scrapeTransitionTimerRef.current) {
+      clearTimeout(scrapeTransitionTimerRef.current);
+      scrapeTransitionTimerRef.current = null;
+    }
+
+    if (scrapeDeadlineTimerRef.current) {
+      clearTimeout(scrapeDeadlineTimerRef.current);
+      scrapeDeadlineTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearScrapeTimers();
+      scrapeAbortControllerRef.current?.abort();
+    };
+  }, [clearScrapeTimers]);
+
+  const buildFallbackOverview = useCallback((links: Record<string, string>): OverviewData => {
+    const firstValidLink = Object.values(links).find(Boolean) || "";
+
+    return {
+      businessName: companyName || profile?.full_name || userName || "Seu negócio",
+      sector: "",
+      address: "",
+      hours: "",
+      products: "",
+      prices: "",
+      highlights: "",
+      description: "Preparei um diagnóstico inicial para você revisar e ajustar antes de continuar.",
+      contactInfo: firstValidLink,
+      tone: personaFromChat || "Profissional, claro e útil",
+      socialLinks: links,
+    };
+  }, [companyName, personaFromChat, profile?.full_name, userName]);
+
+  const completeWaitingFlow = useCallback(() => {
+    if (waitingForScrapeRef.current) {
+      waitingForScrapeRef.current = false;
+      setWaitingForScrape(false);
+      setPhase("overview");
+    }
+  }, []);
 
   const sendToChat = async (text: string) => {
     const userMsg: Msg = { role: "user", content: text };
@@ -344,6 +403,17 @@ export default function Onboarding() {
   // Social links confirmed
   const handleSocialLinksSubmit = (links: Record<string, string>) => {
     setSocialLinks(links);
+    setScrapeResults([]);
+    setSourcePreviews([]);
+    setOverviewData({});
+    setScrapeComplete(false);
+    setPostScrapeStep(0);
+    setWaitingForScrape(false);
+    waitingForScrapeRef.current = false;
+    scrapeDataRef.current = { results: [], overview: null, sourcePreviews: [], done: false };
+    scrapeStartedAtRef.current = Date.now();
+    clearScrapeTimers();
+    scrapeAbortControllerRef.current?.abort();
 
     const urls: string[] = [];
     Object.entries(links).forEach(([platform, val]) => {
@@ -368,17 +438,31 @@ export default function Onboarding() {
     startScrapingBackground(urls, links);
 
     // After 30s max, transition to post-scrape chat regardless
-    setTimeout(() => {
+    scrapeTransitionTimerRef.current = setTimeout(() => {
       transitionToPostScrapeChat();
     }, 30000);
+
+    // Hard deadline: never let the diagnosis exceed 1min30 total
+    scrapeDeadlineTimerRef.current = setTimeout(() => {
+      scrapeAbortControllerRef.current?.abort();
+
+      const fallbackOverview = buildFallbackOverview(links);
+      scrapeDataRef.current.overview = fallbackOverview;
+      scrapeDataRef.current.done = true;
+
+      setOverviewData(fallbackOverview);
+      setScrapeComplete(true);
+
+      if (waitingForScrapeRef.current) {
+        completeWaitingFlow();
+      }
+    }, 90000);
   };
 
   const transitionToPostScrapeChat = () => {
-    // Only transition if we're still on the scraping screen
-    setPhase((current) => {
-      if (current !== "scraping") return current;
-      return "post-scrape-chat";
-    });
+    if (phaseRef.current !== "scraping") return;
+
+    setPhase("post-scrape-chat");
     setScrapeComplete(true);
     setPostScrapeStep(0);
 
@@ -393,12 +477,70 @@ export default function Onboarding() {
   };
 
   const startScrapingBackground = async (urls: string[], links: Record<string, string>) => {
-    if (!user) return;
+    const fallbackOverview = buildFallbackOverview(links);
+
+    const finalizeScrape = ({
+      results = [],
+      overview,
+      previews = [],
+      autoAdvance = true,
+    }: {
+      results?: any[];
+      overview?: Partial<OverviewData> | null;
+      previews?: any[];
+      autoAdvance?: boolean;
+    } = {}) => {
+      clearScrapeTimers();
+
+      const mergedOverview: OverviewData = {
+        ...fallbackOverview,
+        ...(overview || {}),
+        socialLinks: links,
+      };
+
+      scrapeDataRef.current = {
+        results,
+        overview: mergedOverview,
+        sourcePreviews: previews,
+        done: true,
+      };
+
+      setScrapeResults(results);
+      setOverviewData(mergedOverview);
+      setSourcePreviews(previews);
+      setScrapeComplete(true);
+
+      if (autoAdvance && phaseRef.current === "scraping") {
+        setTimeout(() => {
+          if (phaseRef.current === "scraping") {
+            transitionToPostScrapeChat();
+          }
+        }, 1200);
+      }
+
+      completeWaitingFlow();
+    };
+
+    if (!user) {
+      finalizeScrape({ overview: fallbackOverview });
+      return;
+    }
+
     try {
       const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).single();
-      if (!tenant) throw new Error("Tenant not found");
+      if (!tenant) {
+        finalizeScrape({ overview: fallbackOverview });
+        return;
+      }
+
       const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).single();
-      if (!att) throw new Error("Attendant not found");
+      if (!att) {
+        finalizeScrape({ overview: fallbackOverview });
+        return;
+      }
+
+      const controller = new AbortController();
+      scrapeAbortControllerRef.current = controller;
 
       const resp = await fetch(SCRAPE_URL, {
         method: "POST",
@@ -412,70 +554,37 @@ export default function Onboarding() {
           attendantId: att.id,
           pastedText: pastedTexts.join("\n\n---\n\n"),
         }),
-        signal: AbortSignal.timeout(150000),
+        signal: controller.signal,
       });
 
-      const data = await resp.json();
-
-      if (data.results) {
-        setScrapeResults(data.results);
-        scrapeDataRef.current.results = data.results;
-
-        const overview: OverviewData = { socialLinks: links };
-        if (data.overview) {
-          overview.businessName = data.overview.businessName || "";
-          overview.sector = data.overview.sector || "";
-          overview.address = data.overview.address || "";
-          overview.hours = data.overview.hours || "";
-          overview.products = data.overview.products || "";
-          overview.prices = data.overview.prices || "";
-          overview.highlights = data.overview.highlights || "";
-          overview.description = data.overview.description || "";
-          overview.contactInfo = data.overview.contactInfo || "";
-          overview.tone = data.overview.tone || "";
-        }
-        scrapeDataRef.current.overview = overview;
-        setOverviewData(overview);
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(data?.error || `Erro ${resp.status}`);
       }
 
-      if (data.sourcePreviews) {
-        scrapeDataRef.current.sourcePreviews = data.sourcePreviews;
-        setSourcePreviews(data.sourcePreviews);
-      }
+      const overview: Partial<OverviewData> | null = data.overview ? {
+        businessName: data.overview.businessName || "",
+        sector: data.overview.sector || "",
+        address: data.overview.address || "",
+        hours: data.overview.hours || "",
+        products: data.overview.products || "",
+        prices: data.overview.prices || "",
+        highlights: data.overview.highlights || "",
+        description: data.overview.description || "",
+        contactInfo: data.overview.contactInfo || "",
+        tone: data.overview.tone || "",
+      } : null;
 
-      scrapeDataRef.current.done = true;
-      setScrapeComplete(true);
-
-      // If still on scraping screen (< 30s), transition early
-      setPhase((current) => {
-        if (current === "scraping") {
-          // Scraping finished before 30s — show briefly then transition
-          setTimeout(() => transitionToPostScrapeChat(), 2000);
-        }
-        return current;
+      finalizeScrape({
+        results: data.results || [],
+        overview,
+        previews: data.sourcePreviews || [],
       });
-
-      // If user already finished post-scrape questions and is waiting
-      if (waitingForScrape) {
-        setWaitingForScrape(false);
-        setPhase("overview");
-      }
     } catch (e) {
       console.error("Scrape error:", e);
-      scrapeDataRef.current.done = true;
-      setScrapeComplete(true);
-
-      setPhase((current) => {
-        if (current === "scraping") {
-          setTimeout(() => transitionToPostScrapeChat(), 1000);
-        }
-        return current;
-      });
-
-      if (waitingForScrape) {
-        setWaitingForScrape(false);
-        setPhase("overview");
-      }
+      finalizeScrape({ overview: fallbackOverview });
+    } finally {
+      scrapeAbortControllerRef.current = null;
     }
   };
 
@@ -515,19 +624,36 @@ export default function Onboarding() {
   };
 
   const showOverviewWhenReady = () => {
+    const totalElapsed = scrapeStartedAtRef.current ? Date.now() - scrapeStartedAtRef.current : 0;
+
     if (scrapeDataRef.current.done) {
-      // Scraping already done — go straight to overview
+      waitingForScrapeRef.current = false;
+      setWaitingForScrape(false);
+      setPhase("overview");
+    } else if (totalElapsed >= 90000) {
+      const fallbackOverview = buildFallbackOverview(socialLinks);
+      scrapeDataRef.current = {
+        ...scrapeDataRef.current,
+        overview: fallbackOverview,
+        done: true,
+      };
+      waitingForScrapeRef.current = false;
+      setWaitingForScrape(false);
+      setOverviewData(fallbackOverview);
+      setScrapeComplete(true);
       setPhase("overview");
     } else {
-      // Still scraping — show a brief "finalizing" message and wait
-      setWaitingForScrape(true);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Quase lá! ⏳ Finalizando a análise das suas redes sociais...",
-        },
-      ]);
+      if (!waitingForScrapeRef.current) {
+        waitingForScrapeRef.current = true;
+        setWaitingForScrape(true);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Quase lá! ⏳ Finalizando a análise das suas redes sociais...",
+          },
+        ]);
+      }
     }
   };
 
