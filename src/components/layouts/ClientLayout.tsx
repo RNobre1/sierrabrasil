@@ -47,7 +47,7 @@ const mobileNavItems = [
   { to: "/dashboard", icon: Home, label: "Início" },
   { to: "/conversations", icon: MessageSquare, label: "Conversas" },
   { to: "/agents", icon: Bot, label: "Agentes" },
-  { to: "/channels", icon: Radio, label: "Canais" },
+  { to: "/reports", icon: BarChart3, label: "Relatórios" },
 ];
 
 export default function ClientLayout() {
