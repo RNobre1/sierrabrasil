@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Zap, Brain, MessageSquare, Phone } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
+import meteoraLogoPreta from "@/assets/meteora-preta.png";
 import WhatsAppOTPStep from "@/components/signup/WhatsAppOTPStep";
 import GoogleCompanyStep from "@/components/signup/GoogleCompanyStep";
 
