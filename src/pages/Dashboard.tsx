@@ -77,9 +77,10 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const { data: tenant } = await supabase.from("tenants").select("id, created_at").eq("owner_id", user.id).single();
+      const { data: tenant } = await supabase.from("tenants").select("id, created_at, plan").eq("owner_id", user.id).single();
       if (!tenant) { setLoading(false); return; }
       setTenantCreatedAt(tenant.created_at);
+      setTenantPlan(tenant.plan || "starter");
       const [attRes, convRes, allConvRes, msgRes] = await Promise.all([
         supabase.from("attendants").select("id, name, status, channels, model").eq("tenant_id", tenant.id).limit(1).single(),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id).order("started_at", { ascending: false }).limit(5),
