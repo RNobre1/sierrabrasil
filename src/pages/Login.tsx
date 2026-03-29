@@ -131,8 +131,8 @@ export default function Login() {
             <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
           </div>
 
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">Bem-vindo de volta</h2>
-          <p className="text-sm text-muted-foreground mt-2">Entre na sua conta para continuar</p>
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Bem-vindo de volta</h2>
+          <p className="text-sm text-muted-foreground mt-1.5">Entre na sua conta para continuar</p>
 
           <Button
             variant="outline"
