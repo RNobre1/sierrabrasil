@@ -574,7 +574,7 @@ export default function Onboarding() {
   if (phase === "docs") {
     return (
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
-        <OnboardingHeader title="Documentos da empresa" subtitle="Envie materiais para turbinar seu atendente" progress={85} />
+        <OnboardingHeader title="Documentos da empresa" subtitle="Envie materiais para turbinar seu agente" progress={85} />
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             {messages.slice(-3).map((msg, i) => (
