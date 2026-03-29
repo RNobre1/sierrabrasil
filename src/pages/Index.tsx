@@ -242,18 +242,18 @@ export default function Index() {
 
       {/* Footer */}
       <footer className="border-t border-border/30 py-8 px-6 relative z-10">
-        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mx-auto max-w-6xl flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <img src={meteoraLogo} alt="Meteora Digital" className="h-5" />
-            <span className="text-xs text-muted-foreground">© 2026 Meteora Digital. Todos os direitos reservados.</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">© 2026 Meteora Digital</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[10px] font-mono text-primary/80 tracking-wider">
               ✦ AI POWERED BY METEORA
             </span>
             <div className="flex gap-6 text-xs text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Termos</a>
-              <a href="#" className="hover:text-foreground transition-colors">Privacidade</a>
+              <Link to="/termos" className="hover:text-foreground transition-colors">Termos</Link>
+              <Link to="/privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
               <a href="#" className="hover:text-foreground transition-colors">Suporte</a>
             </div>
           </div>
