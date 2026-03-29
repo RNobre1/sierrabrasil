@@ -22,6 +22,7 @@ import Reports from "./pages/Reports";
 import Account from "./pages/Account";
 import Agents from "./pages/Agents";
 import Channels from "./pages/Channels";
+import Integrations from "./pages/Integrations";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTenants from "./pages/admin/AdminTenants";
 import AdminAttendants from "./pages/admin/AdminAttendants";
