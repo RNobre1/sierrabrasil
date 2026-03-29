@@ -112,7 +112,7 @@ export default function AgentDetail() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-muted/50 border border-border/30 h-10">
+        <TabsList className="bg-muted/50 border border-border/30 h-9 sm:h-10 w-full sm:w-auto flex-nowrap overflow-x-auto">
           <TabsTrigger value="config" className="text-xs gap-1.5 data-[state=active]:bg-background">
             <Settings className="h-3.5 w-3.5" /> Configuração
           </TabsTrigger>
