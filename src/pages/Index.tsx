@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Star, Bot, MessageSquare, Zap, Shield, Clock, BarChart3 } from "lucide-react";
+import meteoraLogo from "@/assets/meteora-branca.png";
 
 const features = [
   { icon: Bot, title: "Atendente Autônomo", desc: "Não é chatbot. É um funcionário digital que conversa, vende, agenda e resolve." },
