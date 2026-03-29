@@ -95,7 +95,7 @@ function StBadge({ st }: { st: string }) {
 export default function Dashboard() {
   const nav = useNavigate();
   const { user } = useAuth();
-  const [attendant, setAttendant] = useState<Attendant | null>(null);
+  const [attendants, setAttendants] = useState<Attendant[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [allConversations, setAllConversations] = useState<Conversation[]>([]);
   const [totalMessages, setTotalMessages] = useState(0);
