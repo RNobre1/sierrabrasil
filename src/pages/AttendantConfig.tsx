@@ -147,7 +147,7 @@ export default function AttendantConfig() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-display">Identidade</CardTitle>
-          <CardDescription>Nome e personalidade do atendente</CardDescription>
+          <CardDescription>Nome e personalidade do agente</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
