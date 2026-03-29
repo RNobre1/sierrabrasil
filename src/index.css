@@ -1,88 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Meteora Client (Light Mode) */
-    --background: 0 0% 98%;
-    --foreground: 240 10% 3.9%;
+    /* Meteora Client — Light Mode (Clarivus-inspired elegance) */
+    --background: 220 14% 96%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 207 97% 55%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 207 97% 95%;
-    --accent-foreground: 207 97% 35%;
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 93%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 217 91% 95%;
+    --accent-foreground: 217 91% 40%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 207 97% 55%;
-    --radius: 0.5rem;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+    --radius: 0.625rem;
 
     /* Meteora semantic */
-    --meteora-blue: 207 97% 55%;
-    --meteora-success: 142 76% 36%;
+    --meteora-blue: 217 91% 60%;
+    --meteora-success: 152 69% 31%;
     --meteora-warning: 38 92% 50%;
     --meteora-danger: 0 84% 60%;
-    --meteora-info: 207 97% 55%;
+    --meteora-info: 217 91% 60%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%), hsl(260 67% 60%));
+    --gradient-success: linear-gradient(135deg, hsl(152 69% 31%), hsl(168 76% 36%));
+    --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%), hsl(24 95% 53%));
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
 
     /* Surfaces */
-    --surface-page: 0 0% 98%;
+    --surface-page: 220 14% 96%;
     --surface-card: 0 0% 100%;
     --surface-elevated: 0 0% 100%;
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 207 97% 55%;
+    --sidebar-foreground: 222 47% 20%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 207 97% 95%;
-    --sidebar-accent-foreground: 207 97% 35%;
-    --sidebar-border: 240 5.9% 93%;
-    --sidebar-ring: 207 97% 55%;
+    --sidebar-accent: 217 91% 96%;
+    --sidebar-accent-foreground: 217 91% 40%;
+    --sidebar-border: 220 13% 93%;
+    --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
-    /* Meteora Admin (Dark Mode / MCC) */
-    --background: 240 6% 9%;
-    --foreground: 0 0% 85%;
-    --card: 240 4% 13%;
-    --card-foreground: 0 0% 85%;
-    --popover: 240 4% 13%;
-    --popover-foreground: 0 0% 85%;
-    --primary: 207 97% 55%;
+    /* Meteora Admin — Dark Mode / MCC (Dominação Digital-inspired) */
+    --background: 228 12% 7%;
+    --foreground: 210 20% 90%;
+    --card: 225 11% 11%;
+    --card-foreground: 210 20% 90%;
+    --popover: 225 11% 11%;
+    --popover-foreground: 210 20% 90%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 18%;
-    --secondary-foreground: 0 0% 85%;
-    --muted: 240 4% 18%;
-    --muted-foreground: 0 0% 67%;
-    --accent: 240 4% 18%;
-    --accent-foreground: 0 0% 85%;
-    --destructive: 0 62.8% 30.6%;
+    --secondary: 225 11% 15%;
+    --secondary-foreground: 210 20% 90%;
+    --muted: 225 11% 15%;
+    --muted-foreground: 220 9% 55%;
+    --accent: 225 11% 18%;
+    --accent-foreground: 210 20% 90%;
+    --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 4% 22%;
-    --input: 240 4% 22%;
-    --ring: 207 97% 55%;
+    --border: 225 11% 16%;
+    --input: 225 11% 16%;
+    --ring: 217 91% 60%;
 
-    --surface-page: 240 6% 9%;
-    --surface-card: 240 4% 13%;
-    --surface-elevated: 240 4% 18%;
+    --meteora-blue: 217 91% 60%;
+    --meteora-success: 152 69% 41%;
+    --meteora-warning: 38 92% 55%;
+    --meteora-danger: 0 70% 50%;
+    --meteora-info: 217 91% 60%;
 
-    --sidebar-background: 240 6% 9%;
-    --sidebar-foreground: 0 0% 85%;
-    --sidebar-primary: 207 97% 55%;
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 50%), hsl(260 67% 50%));
+    --gradient-success: linear-gradient(135deg, hsl(152 69% 35%), hsl(168 76% 40%));
+    --gradient-warm: linear-gradient(135deg, hsl(38 92% 45%), hsl(24 95% 48%));
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+
+    --surface-page: 228 12% 7%;
+    --surface-card: 225 11% 11%;
+    --surface-elevated: 225 11% 15%;
+
+    --sidebar-background: 228 12% 7%;
+    --sidebar-foreground: 210 20% 80%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4% 18%;
-    --sidebar-accent-foreground: 0 0% 85%;
-    --sidebar-border: 240 4% 18%;
-    --sidebar-ring: 207 97% 55%;
+    --sidebar-accent: 225 11% 15%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 225 11% 14%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -100,12 +119,65 @@
   }
 }
 
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-hero);
+  }
+
+  .glass-card {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px -5px hsl(217 91% 60% / 0.3);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 20px -5px hsl(152 69% 31% / 0.3);
+  }
+}
+
 /* Pulse animation for status dot */
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.3); }
+  50% { opacity: 0.5; transform: scale(1.4); }
 }
 
 .animate-pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Typing dots for chat */
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1); }
+}
+
+.typing-dot:nth-child(1) { animation: typing-dot 1.2s infinite 0s; }
+.typing-dot:nth-child(2) { animation: typing-dot 1.2s infinite 0.2s; }
+.typing-dot:nth-child(3) { animation: typing-dot 1.2s infinite 0.4s; }
+
+/* Dashboard page transition */
+@keyframes dash-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dash-page-enter {
+  animation: dash-fade-in 250ms ease-out;
+}
+
+/* Gradient border glow */
+@keyframes border-glow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-border-glow {
+  background-size: 200% 200%;
+  animation: border-glow 3s ease infinite;
 }
