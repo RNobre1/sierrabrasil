@@ -194,8 +194,8 @@ export default function Index() {
       {/* CTA */}
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-3xl text-center rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-12 surface-glow">
-          <h2 className="text-3xl font-bold text-foreground tracking-tight">Pronto para transformar seu atendimento?</h2>
-          <p className="mt-4 text-muted-foreground">Em 5 minutos seu atendente está no ar. Teste grátis por 7 dias.</p>
+          <h2 className="text-3xl font-bold text-foreground tracking-tight">Pronto para transformar seu negócio?</h2>
+          <p className="mt-4 text-muted-foreground">Em 5 minutos seu agente está no ar. Teste grátis por 7 dias.</p>
           <Link to="/signup">
             <Button size="lg" className="mt-8 text-base px-8 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25">
               Criar meu atendente agora <ArrowRight className="ml-2 h-4 w-4" />
