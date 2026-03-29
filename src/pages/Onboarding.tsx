@@ -65,6 +65,10 @@ export default function Onboarding() {
   const [pastedTexts, setPastedTexts] = useState<string[]>([]);
   const [attendantNameFromChat, setAttendantNameFromChat] = useState("");
   const [personaFromChat, setPersonaFromChat] = useState("");
+  // Background scraping state
+  const scrapeDataRef = useRef<{ results: any[]; overview: any; sourcePreviews: any[]; done: boolean }>({ results: [], overview: null, sourcePreviews: [], done: false });
+  const [postScrapeStep, setPostScrapeStep] = useState(0);
+  const [waitingForScrape, setWaitingForScrape] = useState(false);
   // Password collection state
   const [passwordPhase, setPasswordPhase] = useState<"none" | "awaiting" | "confirming" | "done">("none");
   const [tempPassword, setTempPassword] = useState("");
