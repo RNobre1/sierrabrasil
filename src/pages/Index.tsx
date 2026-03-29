@@ -198,7 +198,7 @@ export default function Index() {
           <p className="mt-4 text-muted-foreground">Em 5 minutos seu agente está no ar. Teste grátis por 7 dias.</p>
           <Link to="/signup">
             <Button size="lg" className="mt-8 text-base px-8 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25">
-              Criar meu atendente agora <ArrowRight className="ml-2 h-4 w-4" />
+              Criar meu agente agora <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
         </div>
