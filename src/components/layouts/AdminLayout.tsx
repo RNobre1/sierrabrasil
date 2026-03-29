@@ -9,6 +9,7 @@ const adminNavItems = [
   { to: "/admin/tenants", icon: Users, label: "Clientes" },
   { to: "/admin/attendants", icon: Bot, label: "Agentes" },
   { to: "/admin/consumption", icon: Cpu, label: "Consumo IA" },
+  { to: "/admin/integrations", icon: Puzzle, label: "Integrações" },
 ];
 
 export default function AdminLayout() {

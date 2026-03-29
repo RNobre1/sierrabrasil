@@ -33,6 +33,12 @@ const navSections = [
       { to: "/reports", icon: BarChart3, label: "Relatórios" },
     ],
   },
+  {
+    label: "Configurações",
+    items: [
+      { to: "/integrations", icon: Puzzle, label: "Integrações" },
+    ],
+  },
 ];
 
 const mobileNavItems = [
