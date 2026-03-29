@@ -86,7 +86,7 @@ export default function Index() {
               Ver demonstração
             </Button>
           </div>
-          <p className="mt-5 text-xs text-muted-foreground/60">Sem cartão de crédito · Setup em 5 minutos · Cancele quando quiser</p>
+          <p className="mt-5 text-xs text-muted-foreground/60">Setup em 5 minutos · Cancele quando quiser</p>
         </div>
       </section>
 
