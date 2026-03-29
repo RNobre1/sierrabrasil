@@ -318,6 +318,10 @@ export default function Onboarding() {
         setOverviewData(overview);
       }
 
+      if (data.sourcePreviews) {
+        setSourcePreviews(data.sourcePreviews);
+      }
+
       setScrapeComplete(true);
       setTimeout(() => setPhase("overview"), 2000);
     } catch (e) {
