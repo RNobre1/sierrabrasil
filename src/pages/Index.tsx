@@ -136,7 +136,7 @@ export default function Index() {
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Planos simples, resultado real</h2>
             <p className="mt-4 text-muted-foreground">Comece com 7 dias grátis. Sem surpresas.</p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan, i) => (
               <div key={i} className={`relative rounded-2xl border p-6 pt-8 transition-all ${
                 (plan as any).enterprise
