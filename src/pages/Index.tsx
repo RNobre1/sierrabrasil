@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle2, Star, Bot, MessageSquare, Zap, Shield, Clock,
 import meteoraLogo from "@/assets/meteora-branca.png";
 
 const features = [
-  { icon: Bot, title: "Atendente Autônomo", desc: "Não é chatbot. É um funcionário digital que conversa, vende, agenda e resolve." },
+  { icon: Bot, title: "Agente Autônomo", desc: "Não é chatbot. É um funcionário digital que conversa, vende, agenda e resolve." },
   { icon: MessageSquare, title: "WhatsApp + Instagram", desc: "Opera nos canais que seus clientes já usam. Sem apps novos, sem fricção." },
   { icon: Zap, title: "Ações Reais", desc: "Agenda compromissos, envia links de pagamento, faz follow-up automático." },
   { icon: BarChart3, title: "Insights Inteligentes", desc: "O Explorer analisa conversas e sugere melhorias toda semana." },
