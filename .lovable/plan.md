@@ -1,129 +1,58 @@
 
 
 ## Plataforma de Atendentes Inteligentes — Meteora Digital
-### Sprint 1: Fundação + Auth + Dashboard + Conversas
+### Sprint 1: Fundação + Auth + Dashboard + Conversas ✅
+### Sprint 2: Evolução Profissional ✅
 
 ---
 
-### 1. Design System (Fundação Visual)
+### Sprint 2 — Implementado
 
-**Fontes:** Outfit (display/KPIs), DM Sans (body), JetBrains Mono (dados técnicos) via Google Fonts.
+#### Bloco 1 — Fixes Visuais ✅
+- URLs lowercase em SocialLinksSelector e BusinessOverview
+- Logo modo claro (meteora-preta.png) no ClientLayout
+- Menu "Agente" → "Agentes" (plural)
 
-**Tokens CSS:** Implementar todas as variáveis do systemDesign.md:
-- Paleta do Cliente (light mode): superfícies (#FAFAFA, #FFFFFF), textos (#18181B, #52525B), acento azul Meteora (#1A93FE), semânticas (success, warning, danger)
-- Paleta Admin (dark mode): superfícies (#161618, #383739), textos (#DADADA, #ACACAC)
-- Espaçamento (base 4px), border-radius (mínimo 6px), sombras, escala tipográfica
+#### Bloco 2 — Redesign Sidebar ✅
+- Seções agrupadas: Principal, Agentes, Canais, Análise
+- Novas rotas: /channels, /agents
+- Playground removido do menu (acessível dentro do agente)
 
-**Tailwind config:** Estender com todas as cores customizadas, fontes, e tokens do design system.
+#### Bloco 3 — Canais de Conexão ✅
+- Página /channels com tabs WhatsApp e Instagram
+- WhatsApp: status LED, templates CRUD, métricas, envio em massa
+- Instagram: conexão simplificada, métricas básicas
+- Upgrade gates em funcionalidades premium
 
----
+#### Bloco 4 — Sistema de Agentes com Classes ✅
+- Coluna `class` adicionada à tabela attendants
+- Página /agents com listagem, contador, badges de classe
+- Limite por plano + upgrade gate
+- Classes: support (Atendimento/Suporte), sales (Vendas/Acompanhamento)
 
-### 2. Estrutura de Rotas
+#### Bloco 5 — Trial Timer ✅
+- Componente TrialTimer no Dashboard
+- Countdown baseado em created_at do tenant + 7 dias
+- Botão de upgrade integrado
 
-```
-/login                    → Página de login
-/signup                   → Página de cadastro
-/dashboard                → Dashboard do cliente
-/conversations            → Lista de conversas
-/conversations/:id        → Detalhe da conversa
-/attendant/config          → Configuração do atendente
-/attendant/playground      → Playground de teste
-/reports                  → Relatórios
-/account                  → Minha conta
-/admin/dashboard           → Dashboard admin Meteora
-/admin/tenants             → Gestão de tenants
-/admin/attendants          → Gestão de atendentes
-/admin/consumption         → Consumo de IA
-```
+#### Bloco 6 — Upgrade Gates ✅
+- Overlay UpgradeGate reutilizável
+- Aplicado em envio em massa e limite de agentes
 
----
+#### Bloco 7 — AgentClassSelector ✅
+- Componente de seleção de classe no onboarding
+- Duas opções visuais com skills listadas
 
-### 3. Autenticação (Lovable Cloud)
-
-- Login com email + senha
-- Proteção de rotas (redirecionar para /login se não autenticado)
-- Separação de rotas admin vs cliente
-- Tabela `profiles` com dados do usuário
-- Tabela `user_roles` para roles (admin, client) — seguindo as melhores práticas de segurança
-
----
-
-### 4. Layouts
-
-**Layout Cliente (Light Mode):**
-- Sidebar 220px fixa no desktop (branca, borda sutil)
-- 5 itens de navegação: Início, Conversas, Atendente, Relatórios, Minha Conta
-- Item ativo com fundo azul sutil + texto azul Meteora
-- Bottom navigation no mobile (< 768px) com 5 ícones
-- Content area com max-width 1200px, fundo #FAFAFA
-
-**Layout Admin (Dark Mode):**
-- Sidebar dark mode com cores MCC Design System
-- Itens: Dashboard, Clientes, Atendentes, Consumo IA, Financeiro, Configurações
-- Estilo cockpit/mission control
+#### Bloco 8 — Cleanup ✅
+- Seção "Canais" removida do AttendantConfig
+- Canais gerenciados exclusivamente em /channels
 
 ---
 
-### 5. Dashboard do Cliente
+### Próximos Passos (Sprint 3)
 
-**KPI Cards** (4 cards no topo):
-- Conversas hoje
-- Vendas realizadas
-- Agendamentos
-- Satisfação média
-- Cada card com valor grande (Outfit light 40px), label, e delta (variação %)
-
-**Card Hero do Atendente:**
-- Status dot com animação pulse (🟢 Online)
-- Nome do atendente + canais ativos
-- Botões: Testar, Pausar, Configurar, Ver conversas
-
-**Insights do Explorer** (seção inferior):
-- Cards com insights mockados e botão "Aceitar"
-
-**Últimas Conversas:**
-- Lista das conversas mais recentes com nome, ação e horário
-
----
-
-### 6. Tela de Conversas
-
-**Lista de conversas:**
-- Filtros por status (ativa, resolvida, escalada)
-- Busca por nome/telefone
-- Card de cada conversa: nome do contato, última mensagem, status badge, timestamp
-- Responsivo: cards empilhados no mobile
-
-**Detalhe da conversa:**
-- Chat view com mensagens do contato e do atendente
-- Bolhas de chat estilizadas (contato à esquerda, atendente à direita)
-- Metadata: canal, duração, ações executadas
-
----
-
-### 7. Dashboard Admin (básico)
-
-- KPIs globais: MRR, clientes ativos, agentes rodando, consumo IA
-- Lista de tenants recentes
-- Estilo dark mode com dados densos
-
----
-
-### 8. Database (Lovable Cloud)
-
-Tabelas iniciais com RLS:
-- `profiles` (vinculada a auth.users)
-- `user_roles` (admin, client)
-- `tenants` (empresa do cliente, plano, status)
-- `attendants` (atendente IA, nome, status, config)
-- `conversations` (conversas com contatos)
-- `messages` (mensagens de cada conversa)
-
-Todas com RLS habilitado e policies de tenant isolation.
-
----
-
-### Dados Mockados Iniciais
-
-Para a demonstração funcionar sem integrações externas (WhatsApp, Stripe), o dashboard e conversas usarão dados seed no banco para visualização.
-
+- Integrar AgentClassSelector no fluxo de onboarding
+- Fluxo "Criar Novo Agente" com leitura de últimas 50 conversas
+- Integração real com API do WhatsApp Business
+- Stripe checkout nos botões de upgrade
+- Página de preços / planos
