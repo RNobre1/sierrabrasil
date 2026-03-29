@@ -1,5 +1,5 @@
-import { Outlet } from "react-router-dom";
-import { LayoutDashboard, Users, Bot, Cpu, Puzzle } from "lucide-react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Users, Bot, Cpu, Puzzle, ArrowLeftRight, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ const adminNavItems = [
 
 export default function AdminLayout() {
   const { signOut } = useAuth();
+  const nav = useNavigate();
 
   return (
     <div className="flex min-h-screen w-full bg-background dark">
@@ -41,9 +42,12 @@ export default function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-border p-3">
-          <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={signOut}>
-            Sair
+        <div className="border-t border-border p-3 space-y-1">
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground" onClick={() => nav("/dashboard")}>
+            <ArrowLeftRight className="h-4 w-4" /> Painel do Cliente
+          </Button>
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive" onClick={signOut}>
+            <LogOut className="h-4 w-4" /> Sair
           </Button>
         </div>
       </aside>
