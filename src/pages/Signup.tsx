@@ -125,12 +125,12 @@ export default function Signup() {
           </p>
           <div className="mt-12 grid grid-cols-3 gap-4">
             {[
-              { emoji: "⚡", label: "Setup em 5min" },
-              { emoji: "🤖", label: "IA Avançada" },
-              { emoji: "📱", label: "WhatsApp + IG" },
+              { icon: <Zap className="h-5 w-5" />, label: "Setup em 5min" },
+              { icon: <Brain className="h-5 w-5" />, label: "IA Avançada" },
+              { icon: <MessageSquare className="h-5 w-5" />, label: "WhatsApp + IG" },
             ].map((item, i) => (
-              <div key={i} className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 text-center">
-                <div className="text-2xl mb-2">{item.emoji}</div>
+              <div key={i} className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 text-center flex flex-col items-center gap-2">
+                <div className="text-white/40">{item.icon}</div>
                 <p className="text-xs text-white/50">{item.label}</p>
               </div>
             ))}
