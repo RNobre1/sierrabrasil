@@ -288,13 +288,13 @@ export default function Onboarding() {
           return;
         }
         setPasswordPhase("done");
-        setMessages(prev => [...prev, { role: "assistant", content: "Senha definida com sucesso! 🔒✨\n\nAgora vamos ao que interessa — me conta sobre seu negócio!" }]);
+        setMessages(prev => [...prev, { role: "assistant", content: "Senha definida com sucesso! 🔒\n\nAgora vamos ao que interessa — me conta sobre seu negócio!" }]);
         setIsLoading(false);
-        // Kick off AI chat
+        // Kick off AI chat — send a silent trigger to the AI
         setTimeout(() => {
           const introMsg = userName
-            ? `Olá! Sou ${userName.split(" ")[0]}${companyName ? ` da ${companyName}` : ""} e quero configurar meu atendente.`
-            : "Olá! Acabei de criar minha conta e quero configurar meu atendente.";
+            ? `Olá! Sou ${userName.split(" ")[0]}${companyName ? ` da ${companyName}` : ""} e quero configurar meu agente.`
+            : "Olá! Acabei de criar minha conta e quero configurar meu agente.";
           sendToChat(introMsg);
         }, 1000);
       });
