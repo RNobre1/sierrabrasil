@@ -229,17 +229,22 @@ export default function Index() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-6 relative z-10">
-        <div className="mx-auto max-w-3xl text-center rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-12 surface-glow">
-          <h2 className="text-3xl font-bold text-foreground tracking-tight">Pronto para transformar seu negócio?</h2>
-          <p className="mt-4 text-muted-foreground">Em 5 minutos seu agente está no ar. Teste grátis por 7 dias.</p>
-          <Link to="/signup">
-            <Button size="lg" className="mt-8 text-base px-8 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25">
-              Criar meu agente agora <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </section>
+      <MeteorTrail>
+        <section className="py-24 px-6 relative z-10">
+          <div className="mx-auto max-w-3xl text-center rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-12 surface-glow">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">Pronto para transformar seu negócio?</h2>
+            <p className="mt-4 text-muted-foreground">Em 5 minutos seu agente está no ar. Teste grátis por 7 dias.</p>
+            <Link to="/signup">
+              <Button size="lg" className="mt-8 text-base px-8 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25">
+                Criar meu agente agora <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="mt-6 flex justify-center">
+              <MeteoraSeal />
+            </div>
+          </div>
+        </section>
+      </MeteorTrail>
 
       {/* Footer */}
       <footer className="border-t border-border/30 py-8 px-6 relative z-10">
@@ -249,9 +254,7 @@ export default function Index() {
             <span className="text-[10px] sm:text-xs text-muted-foreground">© 2026 Meteora Digital</span>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[10px] font-mono text-primary/80 tracking-wider">
-              ✦ AI POWERED BY METEORA
-            </span>
+            <MeteoraSeal size="small" />
             <div className="flex gap-6 text-xs text-muted-foreground">
               <Link to="/termos" className="hover:text-foreground transition-colors">Termos</Link>
               <Link to="/privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
