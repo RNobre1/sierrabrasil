@@ -528,6 +528,46 @@ export default function Onboarding() {
     }
   };
 
+  // Scraping phase - full screen progress
+  if (scrapingPhase) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-base font-display font-semibold text-foreground">Treinando seu Atendente</h1>
+              <p className="text-xs text-muted-foreground">Buscando dados reais do seu negócio na web...</p>
+            </div>
+          </div>
+          <div className="h-0.5 bg-muted">
+            <div className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-700" style={{ width: "100%" }} />
+          </div>
+        </header>
+
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-xl space-y-6">
+            <ScrapingProgress urls={scrapeUrls} results={scrapeResults} isComplete={scrapeComplete} />
+            
+            {scrapeComplete && (
+              <div className="text-center animate-in fade-in duration-500">
+                <Button
+                  onClick={() => navigate("/dashboard")}
+                  className="bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20"
+                >
+                  <Rocket className="h-4 w-4 mr-2" />
+                  Ir para o Dashboard
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
