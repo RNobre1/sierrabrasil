@@ -20,6 +20,8 @@ import AttendantConfig from "./pages/AttendantConfig";
 import AttendantPlayground from "./pages/AttendantPlayground";
 import Reports from "./pages/Reports";
 import Account from "./pages/Account";
+import Agents from "./pages/Agents";
+import Channels from "./pages/Channels";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTenants from "./pages/admin/AdminTenants";
 import AdminAttendants from "./pages/admin/AdminAttendants";
@@ -45,8 +47,10 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/conversations" element={<Conversations />} />
               <Route path="/conversations/:id" element={<ConversationDetail />} />
+              <Route path="/agents" element={<Agents />} />
               <Route path="/attendant/config" element={<AttendantConfig />} />
               <Route path="/attendant/playground" element={<AttendantPlayground />} />
+              <Route path="/channels" element={<Channels />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/account" element={<Account />} />
             </Route>
