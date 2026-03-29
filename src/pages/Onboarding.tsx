@@ -405,6 +405,9 @@ export default function Onboarding() {
       });
   };
 
+  const PROCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-knowledge`;
+  const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
+
   const applyConfig = async () => {
     if (!extractedConfig || !user) return;
     setSaving(true);
@@ -416,6 +419,7 @@ export default function Onboarding() {
       const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).single();
       if (!att) throw new Error("Attendant not found");
 
+      // 1. Save attendant config
       await supabase.from("attendants").update({
         name: extractedConfig.attendant_name || "Meu Atendente",
         persona: extractedConfig.persona || "",
@@ -424,6 +428,7 @@ export default function Onboarding() {
         status: "online",
       }).eq("id", att.id);
 
+      // 2. Update tenant name
       if (extractedConfig.instructions) {
         const bizMatch = extractedConfig.instructions.match(/SOBRE O NEG[ÓO]CIO[:\s]*([^\n]+)/i);
         if (bizMatch) {
@@ -431,7 +436,69 @@ export default function Onboarding() {
         }
       }
 
-      toast({ title: "Atendente configurado! 🎉", description: "Seu atendente já está online e pronto para atender." });
+      // 3. Scrape social media URLs in background (don't block)
+      const socialLinks = extractedConfig.social_links || {};
+      const urlsToScrape = Object.values(socialLinks).filter((v): v is string => !!v && String(v).startsWith("http"));
+      if (urlsToScrape.length > 0) {
+        fetch(SCRAPE_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            urls: urlsToScrape,
+            tenantId: tenant.id,
+            attendantId: att.id,
+          }),
+        }).then(r => r.json()).then(d => {
+          console.log("Scrape results:", d);
+        }).catch(e => console.error("Scrape error:", e));
+      }
+
+      // 4. Process any document content collected during conversation
+      const docMessages = messages.filter(m => m.role === "user" && m.content.startsWith("📎"));
+      if (docMessages.length > 0) {
+        for (const dm of docMessages) {
+          const fullContent = messages.find(m => m === dm);
+          if (fullContent) {
+            fetch(PROCESS_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({
+                tenantId: tenant.id,
+                attendantId: att.id,
+                content: fullContent.content,
+                sourceName: fullContent.content.split("\n")[0].replace("📎 ", ""),
+                sourceType: "document",
+              }),
+            }).catch(e => console.error("Process knowledge error:", e));
+          }
+        }
+      }
+
+      // 5. Also store the full instructions as knowledge
+      if (extractedConfig.instructions) {
+        fetch(PROCESS_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            tenantId: tenant.id,
+            attendantId: att.id,
+            content: extractedConfig.instructions,
+            sourceName: "Instruções do Onboarding",
+            sourceType: "manual",
+          }),
+        }).catch(e => console.error("Process instructions error:", e));
+      }
+
+      toast({ title: "Atendente configurado! 🎉", description: "Seu atendente já está online. Redes sociais e documentos sendo processados em segundo plano." });
       navigate("/dashboard");
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
