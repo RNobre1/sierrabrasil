@@ -81,7 +81,7 @@ export default function Dashboard() {
       const [attRes, convRes, allConvRes, msgRes] = await Promise.all([
         supabase.from("attendants").select("id, name, status, channels, model").eq("tenant_id", tenant.id).limit(1).single(),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id).order("started_at", { ascending: false }).limit(5),
-        supabase.from("conversations").select("id, status, started_at").eq("tenant_id", tenant.id),
+        supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id),
         supabase.from("messages").select("id", { count: "exact", head: true }),
       ]);
 
