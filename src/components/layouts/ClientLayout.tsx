@@ -4,6 +4,7 @@ import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import UserMenu from "@/components/UserMenu";
+import meteoraLogo from "@/assets/meteora-branca.png";
 
 const navItems = [
   { to: "/dashboard", icon: Home, label: "Início" },
@@ -23,14 +24,8 @@ export default function ClientLayout() {
       {!isMobile && (
         <aside className="fixed inset-y-0 left-0 z-30 flex w-[220px] flex-col border-r border-border/50 bg-sidebar">
           {/* Logo */}
-          <div className="flex h-16 items-center gap-3 border-b border-border/50 px-5">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-meteora-cyan flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs tracking-tighter">M</span>
-            </div>
-            <div>
-              <span className="font-semibold text-foreground text-sm tracking-tight">METEORA</span>
-              <p className="text-[9px] text-muted-foreground font-mono leading-none tracking-wider">AI ATTENDANT</p>
-            </div>
+          <div className="flex h-16 items-center border-b border-border/50 px-5">
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-6" />
           </div>
 
           {/* Nav */}
