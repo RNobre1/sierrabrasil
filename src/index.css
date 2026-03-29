@@ -59,12 +59,8 @@
     --sidebar-ring: 225 80% 56%;
   }
 
-  .dark {
-    /* Same as root — dark-first */
-  }
-
-  /* Light mode override for people who want it */
-  .light {
+  @media (prefers-color-scheme: light) {
+    :root:not(.dark) {
     --background: 220 14% 96%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
