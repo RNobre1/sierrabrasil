@@ -259,3 +259,153 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(222 15% 30%);
 }
+
+/* ═══ METEORA BRAND SIGNATURE ═══ */
+
+/* The Seal — holographic badge */
+.meteora-seal {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    hsl(225 80% 56% / 0.08),
+    hsl(190 90% 50% / 0.04),
+    hsl(225 80% 56% / 0.08)
+  );
+  border: 1px solid hsl(225 80% 56% / 0.15);
+  color: hsl(225 80% 70%);
+  overflow: hidden;
+  transition: border-color 0.4s ease, color 0.4s ease;
+}
+
+.meteora-seal:hover {
+  border-color: hsl(225 80% 56% / 0.35);
+  color: hsl(225 80% 80%);
+}
+
+/* Light sweep — the holographic shimmer */
+.meteora-seal::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -100%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    hsl(225 80% 80% / 0.12) 45%,
+    hsl(190 90% 80% / 0.08) 50%,
+    hsl(225 80% 80% / 0.12) 55%,
+    transparent 70%
+  );
+  animation: seal-shimmer 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes seal-shimmer {
+  0%, 100% { left: -100%; }
+  40%, 60% { left: 150%; }
+}
+
+/* Star symbol — subtle breathing */
+.meteora-seal__star {
+  display: inline-block;
+  font-size: 1.1em;
+  color: hsl(225 80% 60%);
+  animation: star-breathe 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px hsl(225 80% 56% / 0.4));
+}
+
+@keyframes star-breathe {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Dot — tiny status pulse */
+.meteora-seal__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: hsl(190 90% 50%);
+  box-shadow: 0 0 6px hsl(190 90% 50% / 0.6);
+  animation: dot-pulse 3s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.4; box-shadow: 0 0 4px hsl(190 90% 50% / 0.3); }
+  50% { opacity: 1; box-shadow: 0 0 8px hsl(190 90% 50% / 0.8); }
+}
+
+/* Meteor particle — shooting star */
+.meteora-meteor {
+  position: absolute;
+  width: 30px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(190 90% 70% / 0.6), hsl(225 80% 80% / 0.3));
+  border-radius: 1px;
+  animation: meteor-fly 1.6s ease-out forwards;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.meteora-meteor::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -1px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: hsl(190 90% 80%);
+  box-shadow: 0 0 6px hsl(190 90% 60% / 0.8);
+}
+
+@keyframes meteor-fly {
+  0% {
+    transform: translateX(0) scaleX(0.3);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(40px) scaleX(1);
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(calc(100vw + 40px)) scaleX(0.5);
+    opacity: 0;
+  }
+}
+
+/* Watermark entrance */
+@keyframes watermark-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Light mode overrides */
+.light .meteora-seal {
+  background: linear-gradient(
+    135deg,
+    hsl(225 80% 56% / 0.06),
+    hsl(190 90% 50% / 0.03),
+    hsl(225 80% 56% / 0.06)
+  );
+  border-color: hsl(225 80% 56% / 0.12);
+  color: hsl(225 60% 45%);
+}
+
+.light .meteora-seal__star {
+  color: hsl(225 80% 50%);
+  filter: drop-shadow(0 0 2px hsl(225 80% 56% / 0.3));
+}
+
+.light .meteora-meteor {
+  background: linear-gradient(90deg, transparent, hsl(225 80% 56% / 0.3), hsl(190 90% 50% / 0.2));
+}
+
+.light .meteora-meteor::after {
+  background: hsl(225 80% 56%);
+  box-shadow: 0 0 4px hsl(225 80% 56% / 0.5);
+}
