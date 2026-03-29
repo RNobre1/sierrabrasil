@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,66 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import meteoraLogo from "@/assets/meteora-branca.png";
+
+function Particles({ count = 40 }: { count?: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    const dpr = window.devicePixelRatio || 1;
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const particles = Array.from({ length: count }, () => ({
+      x: Math.random() * canvas.width / dpr,
+      y: Math.random() * canvas.height / dpr,
+      r: Math.random() * 1.5 + 0.5,
+      dx: (Math.random() - 0.5) * 0.3,
+      dy: (Math.random() - 0.5) * 0.3,
+      opacity: Math.random() * 0.4 + 0.1,
+    }));
+
+    const draw = () => {
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+      ctx.clearRect(0, 0, w, h);
+      for (const p of particles) {
+        p.x += p.dx;
+        p.y += p.dy;
+        if (p.x < 0) p.x = w;
+        if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h;
+        if (p.y > h) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
+        ctx.fill();
+      }
+      animId = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resize);
+    };
+  }, [count]);
+
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
+}
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -32,61 +92,48 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen relative overflow-hidden">
-      {/* Ambient glows */}
-      <div className="ambient-glow" style={{ background: "hsl(225 80% 56%)", top: "-200px", left: "-200px" }} />
-      <div className="ambient-glow" style={{ background: "hsl(190 90% 50%)", bottom: "-300px", right: "-200px", animationDelay: "4s" }} />
-
-      {/* Left branding panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12">
+    <div className="flex min-h-screen">
+      {/* Left branding panel — static gradient */}
+      <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12 overflow-hidden"
+        style={{ background: "linear-gradient(160deg, hsl(225 80% 28%), hsl(225 75% 18%), hsl(222 30% 8%))" }}
+      >
+        <Particles />
         <div className="relative z-10 max-w-md">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-meteora-cyan flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg tracking-tighter">M</span>
-            </div>
-            <span className="text-xl font-semibold tracking-tight text-foreground">METEORA</span>
-          </div>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground">
-            Construímos <span className="text-gradient">sistemas</span> que fazem sua empresa{" "}
-            <span className="text-gradient">vender mais</span>.
+          <img src={meteoraLogo} alt="Meteora Digital" className="h-8 mb-12" />
+          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white">
+            Construímos <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">sistemas</span> que fazem sua empresa{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">vender mais</span>.
           </h1>
-          <p className="mt-6 text-muted-foreground leading-relaxed">
+          <p className="mt-6 text-white/60 leading-relaxed">
             Atendente inteligente que conversa, vende, agenda e resolve pelo WhatsApp e Instagram. 24h por dia, 7 dias por semana.
           </p>
           <div className="mt-12 flex items-center gap-8">
-            <div>
-              <p className="text-2xl font-bold text-foreground">150+</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Empresas ativas</p>
-            </div>
-            <div className="h-8 w-px bg-border" />
-            <div>
-              <p className="text-2xl font-bold text-foreground">50K+</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Conversas/mês</p>
-            </div>
-            <div className="h-8 w-px bg-border" />
-            <div>
-              <p className="text-2xl font-bold text-foreground">3s</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Tempo resposta</p>
-            </div>
+            {[
+              { value: "150+", label: "Empresas ativas" },
+              { value: "50K+", label: "Conversas/mês" },
+              { value: "3s", label: "Tempo resposta" },
+            ].map((s, i) => (
+              <div key={i} className="flex-1">
+                <p className="text-2xl font-bold text-white">{s.value}</p>
+                <p className="text-xs text-white/40 mt-0.5">{s.label}</p>
+                {i < 2 && <div className="hidden" />}
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative z-10">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-background">
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-meteora-cyan flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-base">M</span>
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-foreground">METEORA</span>
+          <div className="lg:hidden mb-10">
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
           </div>
 
           <h2 className="text-2xl font-bold tracking-tight text-foreground">Bem-vindo de volta</h2>
           <p className="text-sm text-muted-foreground mt-1.5">Entre na sua conta para continuar</p>
 
-          {/* Google SSO */}
           <Button
             variant="outline"
             className="w-full mt-8 h-11 gap-3 rounded-xl border-border hover:bg-accent transition-all"
@@ -101,7 +148,6 @@ export default function Login() {
             Continuar com Google
           </Button>
 
-          {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border" />
@@ -115,12 +161,8 @@ export default function Login() {
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">E-mail</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="seu@email.com"
+                id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                required placeholder="seu@email.com"
                 className="h-11 rounded-xl bg-secondary/50 border-border/50 focus:border-primary/50 placeholder:text-muted-foreground/50"
               />
             </div>
@@ -128,28 +170,19 @@ export default function Login() {
               <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">Senha</Label>
               <div className="relative">
                 <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
+                  id="password" type={showPassword ? "text" : "password"} value={password}
+                  onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••"
                   className="h-11 rounded-xl bg-secondary/50 border-border/50 focus:border-primary/50 pr-10 placeholder:text-muted-foreground/50"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
-            <Button
-              type="submit"
+            <Button type="submit"
               className="w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 font-medium shadow-lg shadow-primary/20 transition-all"
-              disabled={loading}
-            >
+              disabled={loading}>
               {loading ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
               ) : (
