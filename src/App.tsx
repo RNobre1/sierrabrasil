@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard";
 import Conversations from "./pages/Conversations";
 import ConversationDetail from "./pages/ConversationDetail";
 import AttendantConfig from "./pages/AttendantConfig";
+import AgentDetail from "./pages/AgentDetail";
 import AttendantPlayground from "./pages/AttendantPlayground";
 import Reports from "./pages/Reports";
 import Account from "./pages/Account";
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/conversations/:id" element={<ConversationDetail />} />
               <Route path="/agents" element={<Agents />} />
               <Route path="/attendant/config" element={<AttendantConfig />} />
+              <Route path="/agents/detail" element={<AgentDetail />} />
               <Route path="/attendant/playground" element={<AttendantPlayground />} />
               <Route path="/channels" element={<Channels />} />
               <Route path="/reports" element={<Reports />} />
