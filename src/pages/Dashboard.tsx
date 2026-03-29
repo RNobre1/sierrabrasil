@@ -111,12 +111,12 @@ export default function Dashboard() {
       setTenantCreatedAt(tenant.created_at);
       setTenantPlan(tenant.plan || "starter");
       const [attRes, convRes, allConvRes, msgRes] = await Promise.all([
-        supabase.from("attendants").select("id, name, status, channels, model").eq("tenant_id", tenant.id).limit(1).single(),
+        supabase.from("attendants").select("id, name, status, channels, model, class").eq("tenant_id", tenant.id).order("status", { ascending: true }),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id).order("started_at", { ascending: false }).limit(6),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id),
         supabase.from("messages").select("id", { count: "exact", head: true }),
       ]);
-      setAttendant(attRes.data);
+      setAttendants(attRes.data ?? []);
       setConversations(convRes.data ?? []);
       setAllConversations(allConvRes.data ?? []);
       setTotalMessages(msgRes.count ?? 0);
