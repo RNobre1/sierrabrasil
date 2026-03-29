@@ -1,24 +1,16 @@
 import { useState } from "react";
-import { Instagram, Facebook, Linkedin, Globe, Youtube, Check, X } from "lucide-react";
+import { Instagram, Facebook, Linkedin, Globe, Youtube, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 
-type SocialPlatform = {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  placeholder: string;
-  gradient: string;
-};
-
-const platforms: SocialPlatform[] = [
-  { id: "instagram", label: "Instagram", icon: <Instagram className="h-4 w-4" />, placeholder: "@seuuser", gradient: "from-pink-500 to-purple-600" },
-  { id: "facebook", label: "Facebook", icon: <Facebook className="h-4 w-4" />, placeholder: "facebook.com/suapagina", gradient: "from-blue-600 to-blue-700" },
-  { id: "linkedin", label: "LinkedIn", icon: <Linkedin className="h-4 w-4" />, placeholder: "linkedin.com/company/sua-empresa", gradient: "from-blue-500 to-cyan-600" },
-  { id: "tiktok", label: "TikTok", icon: <span className="text-xs font-bold leading-none">TT</span>, placeholder: "@seuuser", gradient: "from-gray-800 to-gray-900" },
-  { id: "youtube", label: "YouTube", icon: <Youtube className="h-4 w-4" />, placeholder: "youtube.com/@seucanal", gradient: "from-red-500 to-red-600" },
-  { id: "website", label: "Site próprio", icon: <Globe className="h-4 w-4" />, placeholder: "https://seusite.com.br", gradient: "from-emerald-500 to-teal-600" },
+const platforms = [
+  { id: "instagram", label: "Instagram", icon: <Instagram className="h-4 w-4" />, placeholder: "@seuuser" },
+  { id: "facebook", label: "Facebook", icon: <Facebook className="h-4 w-4" />, placeholder: "facebook.com/suapagina" },
+  { id: "linkedin", label: "LinkedIn", icon: <Linkedin className="h-4 w-4" />, placeholder: "linkedin.com/company/sua-empresa" },
+  { id: "tiktok", label: "TikTok", icon: <span className="text-[10px] font-bold leading-none tracking-tight">TT</span>, placeholder: "@seuuser" },
+  { id: "youtube", label: "YouTube", icon: <Youtube className="h-4 w-4" />, placeholder: "youtube.com/@seucanal" },
+  { id: "website", label: "Site próprio", icon: <Globe className="h-4 w-4" />, placeholder: "https://seusite.com.br" },
 ];
 
 export default function SocialLinksSelector({
@@ -79,7 +71,7 @@ export default function SocialLinksSelector({
                   disabled:opacity-50 disabled:cursor-not-allowed
                 `}
               >
-                <div className={`h-7 w-7 rounded-lg bg-gradient-to-br ${p.gradient} flex items-center justify-center text-white shrink-0`}>
+                <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"} transition-colors`}>
                   {p.icon}
                 </div>
                 <span className="flex-1">{p.label}</span>
