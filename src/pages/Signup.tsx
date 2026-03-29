@@ -144,14 +144,14 @@ export default function Signup() {
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-background overflow-y-auto">
-        <div className="w-full max-w-[380px] py-8">
-          <div className="lg:hidden mb-12">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-10 bg-background overflow-y-auto">
+        <div className="w-full max-w-[380px] py-4">
+          <div className="lg:hidden mb-8">
             <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
           </div>
 
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">Criar conta</h2>
-          <p className="text-sm text-muted-foreground mt-2">Comece a usar a Meteora Digital</p>
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Criar conta</h2>
+          <p className="text-sm text-muted-foreground mt-1.5">Comece a usar a Meteora Digital</p>
 
           <Button variant="outline" className="w-full mt-10 h-12 gap-3 rounded-xl border-border/60 hover:bg-accent transition-all" onClick={handleGoogleSSO}>
             <svg className="h-4 w-4" viewBox="0 0 24 24">
