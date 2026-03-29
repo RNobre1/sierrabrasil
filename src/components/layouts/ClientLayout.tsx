@@ -102,18 +102,25 @@ export default function ClientLayout() {
 
           {/* User section */}
           <div className="border-t border-border/30 p-3 space-y-2">
-            <a
-              href="/integrations"
-              className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-[hsl(190,90%,50%)] px-3 py-2 text-xs font-semibold text-white transition-all hover:shadow-[0_0_20px_-4px_hsl(var(--primary)/0.4)]"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              Fazer Upgrade
-            </a>
+            {tenantPlan === "enterprise" ? (
+              <div className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[hsl(190,90%,50%)]/10 to-primary/10 border border-[hsl(190,90%,50%)]/20 px-3 py-2">
+                <Crown className="h-3.5 w-3.5 text-[hsl(190,90%,50%)]" />
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[hsl(190,90%,50%)]">✦ Enterprise</span>
+              </div>
+            ) : (
+              <a
+                href="/integrations"
+                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-[hsl(190,90%,50%)] px-3 py-2 text-xs font-semibold text-white transition-all hover:shadow-[0_0_20px_-4px_hsl(var(--primary)/0.4)]"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Fazer Upgrade
+              </a>
+            )}
             <div className="flex items-center gap-2.5 px-2 py-2">
               <UserMenu />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate text-sidebar-foreground/90">{profile?.full_name || "Usuário"}</p>
-                <p className="text-[10px] text-muted-foreground/60 font-mono">Starter</p>
+                <p className="text-[10px] text-muted-foreground/60 font-mono capitalize">{tenantPlan}</p>
               </div>
             </div>
           </div>
