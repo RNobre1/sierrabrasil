@@ -52,9 +52,11 @@ function Particles({ count = 40 }: { count?: number }) {
 }
 
 type Step = "form" | "google-company" | "otp";
+type SignupMethod = "email" | "google";
 
 export default function Signup() {
   const [step, setStep] = useState<Step>("form");
+  const [signupMethod, setSignupMethod] = useState<SignupMethod>("email");
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -70,24 +72,40 @@ export default function Signup() {
       toast({ title: "WhatsApp inválido", description: "Digite um número válido.", variant: "destructive" });
       return;
     }
+    setSignupMethod("email");
     setStep("otp");
   };
 
-  // After OTP verified for email signup
-  const handleEmailOTPVerified = async () => {
+  const createAccountAndEnterOnboarding = async () => {
     setLoading(true);
     const tempPassword = crypto.randomUUID() + "Aa1!";
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password: tempPassword,
       options: {
         data: { full_name: fullName, company_name: companyName, whatsapp: `+55${whatsapp.replace(/\D/g, "")}` },
         emailRedirectTo: window.location.origin,
       },
     });
+
+    let authError = error;
+
+    if (!authError && !data.session) {
+      const signInResult = await supabase.auth.signInWithPassword({
+        email,
+        password: tempPassword,
+      });
+      authError = signInResult.error;
+    }
+
     setLoading(false);
-    if (error) {
-      toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
-      setStep("form");
+
+    if (authError) {
+      toast({
+        title: "Erro ao criar conta",
+        description: authError.message,
+        variant: "destructive",
+      });
+      setStep(signupMethod === "google" ? "google-company" : "form");
     } else {
       toast({ title: "Conta criada!", description: "Vamos configurar seu agente!" });
       navigate("/onboarding");
@@ -97,6 +115,7 @@ export default function Signup() {
   // Google SSO - first step
   const handleGoogleSSO = () => {
     // Mock: simulate Google returning user data, then ask for company + whatsapp
+    setSignupMethod("google");
     setFullName("Usuário Google");
     setEmail("usuario@gmail.com");
     setStep("google-company");
@@ -107,12 +126,6 @@ export default function Signup() {
     setCompanyName(company);
     setWhatsapp(wpp);
     setStep("otp");
-  };
-
-  // After OTP verified for Google SSO
-  const handleGoogleOTPVerified = () => {
-    toast({ title: "Conta criada!", description: "Vamos configurar seu agente!" });
-    navigate("/onboarding");
   };
 
   return (
@@ -223,8 +236,8 @@ export default function Signup() {
           {step === "otp" && (
             <WhatsAppOTPStep
               phone={whatsapp.replace(/\D/g, "")}
-              onVerified={step === "otp" && companyName ? handleGoogleOTPVerified : handleEmailOTPVerified}
-              onBack={() => setStep(fullName === "Usuário Google" ? "google-company" : "form")}
+              onVerified={createAccountAndEnterOnboarding}
+              onBack={() => setStep(signupMethod === "google" ? "google-company" : "form")}
             />
           )}
         </div>

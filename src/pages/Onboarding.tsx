@@ -47,7 +47,7 @@ type OverviewData = {
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -521,20 +521,32 @@ export default function Onboarding() {
       completeWaitingFlow();
     };
 
+    if (authLoading) {
+      window.setTimeout(() => {
+        if (!scrapeDataRef.current.done && phaseRef.current === "scraping") {
+          startScrapingBackground(urls, links);
+        }
+      }, 800);
+      return;
+    }
+
     if (!user) {
+      console.warn("Scraping skipped: no authenticated user/session found.");
       finalizeScrape({ overview: fallbackOverview });
       return;
     }
 
     try {
-      const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).single();
+      const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).maybeSingle();
       if (!tenant) {
+        console.warn("Scraping fallback: tenant not found for user", user.id);
         finalizeScrape({ overview: fallbackOverview });
         return;
       }
 
-      const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).single();
+      const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).maybeSingle();
       if (!att) {
+        console.warn("Scraping fallback: attendant not found for tenant", tenant.id);
         finalizeScrape({ overview: fallbackOverview });
         return;
       }
@@ -685,7 +697,15 @@ export default function Onboarding() {
   };
 
   const finalizeOnboarding = async () => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Sessão não encontrada",
+        description: "Refaça o cadastro/login para concluir a configuração do agente.",
+        variant: "destructive",
+      });
+      navigate("/signup");
+      return;
+    }
     setSaving(true);
 
     try {
