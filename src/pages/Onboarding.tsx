@@ -484,7 +484,7 @@ export default function Onboarding() {
   // ========== SCRAPING PHASE ==========
   if (phase === "scraping") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Vasculhando a web..." subtitle="Nossos robôs estão trabalhando — relaxe e aproveite o show" progress={55} />
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-xl space-y-6">
