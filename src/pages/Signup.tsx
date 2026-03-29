@@ -99,7 +99,7 @@ export default function Signup() {
     if (error) {
       toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Conta criada!", description: "Vamos configurar seu atendente!" });
+      toast({ title: "Conta criada!", description: "Vamos configurar seu agente!" });
       navigate("/onboarding");
     }
   };
@@ -121,7 +121,7 @@ export default function Signup() {
             Seu melhor <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">funcionário digital</span>. Trabalha 24h.
           </h1>
           <p className="mt-6 text-white/60 leading-relaxed">
-            Configure seu atendente em 5 minutos. Ele conversa, vende, agenda e resolve — sem parar, sem faltar.
+            Configure seu agente em 5 minutos. Ele conversa, vende, agenda e resolve — sem parar, sem faltar.
           </p>
           <div className="mt-12 grid grid-cols-3 gap-4">
             {[
