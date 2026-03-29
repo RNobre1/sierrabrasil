@@ -221,7 +221,7 @@ export default function Onboarding() {
     Object.entries(links).forEach(([platform, val]) => {
       if (!val) return;
       let url = val;
-      if (platform === "instagram" && !url.startsWith("http")) url = `https://instagram.com/${url.replace("@", "")}`;
+      if (platform === "instagram" && !url.startsWith("http")) url = `https://instagram.com/${url.replace(/^@+/, "")}`;
       if (platform === "facebook" && !url.startsWith("http")) url = `https://facebook.com/${url}`;
       if (platform === "tiktok" && !url.startsWith("http")) url = `https://tiktok.com/${url.replace("@", "@")}`;
       if (platform === "youtube" && !url.startsWith("http")) url = `https://youtube.com/${url}`;
@@ -484,7 +484,7 @@ export default function Onboarding() {
   // ========== SCRAPING PHASE ==========
   if (phase === "scraping") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Vasculhando a web..." subtitle="Nossos robôs estão trabalhando — relaxe e aproveite o show" progress={55} />
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-xl space-y-6">
@@ -498,7 +498,7 @@ export default function Onboarding() {
   // ========== OVERVIEW PHASE ==========
   if (phase === "overview") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Revisão dos dados" subtitle="Confira o que encontramos e ajuste o que precisar" progress={70} />
         <div className="flex-1 overflow-y-auto p-6">
           <BusinessOverview
@@ -515,7 +515,7 @@ export default function Onboarding() {
   // ========== DOCS PHASE ==========
   if (phase === "docs") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Documentos da empresa" subtitle="Envie materiais para turbinar seu atendente" progress={85} />
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
@@ -573,7 +573,7 @@ export default function Onboarding() {
   // ========== SOCIAL LINKS PHASE ==========
   if (phase === "social-links") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Redes sociais e presença online" subtitle="Selecione as redes e insira os links ou @" progress={35} />
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-xl mx-auto">
@@ -586,7 +586,7 @@ export default function Onboarding() {
 
   // ========== CHAT PHASE ==========
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
       <OnboardingHeader
         title="Configuração do seu Atendente"
         subtitle="Conte sobre seu negócio — por texto ou áudio"

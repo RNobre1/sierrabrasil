@@ -9,12 +9,12 @@ const corsHeaders = {
 
 // Apify actor IDs for each platform
 const APIFY_ACTORS: Record<string, string> = {
-  instagram: "apify/instagram-profile-scraper",
-  facebook: "apify/facebook-pages-scraper",
-  tiktok: "clockworks/tiktok-profile-scraper",
-  youtube: "streamers/youtube-channel-scraper",
-  linkedin: "anchor/linkedin-company-scraper",
-  website: "apify/website-content-crawler",
+  instagram: "apify~instagram-scraper",
+  facebook: "apify~facebook-pages-scraper",
+  tiktok: "clockworks~free-tiktok-scraper",
+  youtube: "streamers~youtube-channel-scraper",
+  linkedin: "anchor~linkedin-company-scraper",
+  website: "apify~website-content-crawler",
 };
 
 function detectPlatform(url: string): string {
@@ -28,8 +28,10 @@ function detectPlatform(url: string): string {
 
 function buildApifyInput(platform: string, url: string): any {
   switch (platform) {
-    case "instagram":
-      return { usernames: [url.replace(/.*instagram\.com\//, "").replace(/[\/?#].*/, "")], resultsLimit: 30 };
+    case "instagram": {
+      const username = url.replace(/.*instagram\.com\//, "").replace(/[\/?#@].*/, "").replace(/^@/, "");
+      return { directUrls: [`https://www.instagram.com/${username}/`], resultsType: "posts", resultsLimit: 20 };
+    }
     case "facebook":
       return { startUrls: [{ url }], maxPagesPerQuery: 1 };
     case "tiktok":
