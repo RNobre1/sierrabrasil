@@ -198,16 +198,16 @@ export default function Reports() {
   return (
     <div className="space-y-8">
       {/* Header + Agent Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl font-display font-semibold">Relatórios</h1>
-          <p className="text-sm text-muted-foreground mt-1">Métricas, análises e relatórios automáticos</p>
+          <h1 className="text-xl sm:text-2xl font-display font-semibold">Relatórios</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Métricas, análises e relatórios automáticos</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="space-y-1">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+          <div className="space-y-1 w-full sm:w-auto">
             <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">Agente</Label>
             <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-              <SelectTrigger className="w-[200px] h-9 text-sm bg-card border-border/40">
+              <SelectTrigger className="w-full sm:w-[200px] h-9 text-sm bg-card border-border/40">
                 <Bot className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                 <SelectValue placeholder="Selecionar agente" />
               </SelectTrigger>
@@ -219,7 +219,7 @@ export default function Reports() {
               </SelectContent>
             </Select>
           </div>
-          <Badge variant="outline" className="text-[10px] font-mono border-primary/20 text-primary h-6 mt-5">
+          <Badge variant="outline" className="text-[10px] font-mono border-primary/20 text-primary h-6">
             {plan === "starter" ? "Starter" : plan === "professional" ? "Professional" : "Enterprise"}
           </Badge>
         </div>

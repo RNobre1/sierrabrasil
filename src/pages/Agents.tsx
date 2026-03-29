@@ -156,10 +156,10 @@ export default function Agents() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Seus Agentes</h1>
-          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Seus Agentes</h1>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 flex items-center gap-2 sm:gap-3 flex-wrap">
             <span>{agents.length}/{maxAgents} agentes</span>
             <span className="text-muted-foreground/30">|</span>
             <span className="flex items-center gap-1"><Wifi className="h-3 w-3 text-emerald-400" /> {onlineCount} online</span>
@@ -197,8 +197,8 @@ export default function Agents() {
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList className="bg-muted/30 border border-border/30 h-9">
+      <Tabs defaultValue="all" className="space-y-4 overflow-x-auto">
+        <TabsList className="bg-muted/30 border border-border/30 h-9 w-full sm:w-auto flex-nowrap overflow-x-auto">
           <TabsTrigger value="all" className="text-[11px] gap-1.5 data-[state=active]:bg-background">
             <Bot className="h-3.5 w-3.5" /> Todos <Badge variant="secondary" className="text-[9px] h-4 px-1.5 ml-1">{agents.length}</Badge>
           </TabsTrigger>
@@ -216,7 +216,7 @@ export default function Agents() {
           const filtered = tab === "all" ? agents : agents.filter(a => (a.class || "support") === tab);
           return (
             <TabsContent key={tab} value={tab}>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {filtered.map((agent, i) => renderAgentCard(agent, i))}
                 {filtered.length === 0 && (
                   <div className="col-span-full text-center py-16">

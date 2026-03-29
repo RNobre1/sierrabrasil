@@ -99,7 +99,7 @@ export default function AgentSkillsTab({ agentId, agentClass, plan }: Props) {
               {cat === "premium" && <Crown className="h-3 w-3" />}
               {catInfo.label}
             </h3>
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2">
               {grouped[cat].map((skill, i) => {
                 const included = isIncluded(skill);
                 const enabled = isEnabled(skill.id);

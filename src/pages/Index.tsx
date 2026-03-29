@@ -93,16 +93,16 @@ export default function Index() {
 
       {/* Stats */}
       <section className="border-y border-border/30 bg-card/30 backdrop-blur-sm py-10 relative z-10">
-        <div className="mx-auto max-w-4xl flex items-center justify-center gap-12 px-6 text-center">
+        <div className="mx-auto max-w-4xl grid grid-cols-2 gap-6 sm:grid-cols-4 px-6 text-center">
           {[
             { value: "+R$42M", label: "Gerados para clientes" },
             { value: "84%", label: "Taxa de conversão" },
             { value: "12x", label: "ROI médio" },
             { value: "3s", label: "Tempo de resposta" },
           ].map((s, i) => (
-            <div key={i} className="flex-1">
-              <p className="text-2xl sm:text-3xl font-bold text-foreground">{s.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">{s.label}</p>
+            <div key={i}>
+              <p className="text-xl sm:text-3xl font-bold text-foreground">{s.value}</p>
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1">{s.label}</p>
             </div>
           ))}
         </div>
@@ -136,7 +136,7 @@ export default function Index() {
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Planos simples, resultado real</h2>
             <p className="mt-4 text-muted-foreground">Comece com 7 dias grátis. Sem surpresas.</p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan, i) => (
               <div key={i} className={`relative rounded-2xl border p-6 pt-8 transition-all ${
                 (plan as any).enterprise
@@ -163,7 +163,7 @@ export default function Index() {
                 </div>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-xs text-muted-foreground">R$</span>
-                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                  <span className="text-3xl sm:text-4xl font-bold text-foreground">{plan.price}</span>
                   <span className="text-xs text-muted-foreground">/mês</span>
                 </div>
                 <ul className="mt-6 space-y-2.5">
@@ -242,18 +242,18 @@ export default function Index() {
 
       {/* Footer */}
       <footer className="border-t border-border/30 py-8 px-6 relative z-10">
-        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mx-auto max-w-6xl flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <img src={meteoraLogo} alt="Meteora Digital" className="h-5" />
-            <span className="text-xs text-muted-foreground">© 2026 Meteora Digital. Todos os direitos reservados.</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">© 2026 Meteora Digital</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[10px] font-mono text-primary/80 tracking-wider">
               ✦ AI POWERED BY METEORA
             </span>
             <div className="flex gap-6 text-xs text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Termos</a>
-              <a href="#" className="hover:text-foreground transition-colors">Privacidade</a>
+              <Link to="/termos" className="hover:text-foreground transition-colors">Termos</Link>
+              <Link to="/privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
               <a href="#" className="hover:text-foreground transition-colors">Suporte</a>
             </div>
           </div>

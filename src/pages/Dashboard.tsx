@@ -26,15 +26,15 @@ interface Conversation {
 
 function KPICard({ icon: Icon, label, value, sub, accentColor }: { icon: any; label: string; value: string; accentColor: string; sub?: string }) {
   return (
-    <div className="rounded-2xl border border-border/30 bg-card/50 p-5 backdrop-blur-sm hover:border-border/60 transition-all group">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: `${accentColor}15` }}>
-          <Icon className="w-4 h-4" style={{ color: accentColor }} />
+    <div className="rounded-2xl border border-border/30 bg-card/50 p-4 sm:p-5 backdrop-blur-sm hover:border-border/60 transition-all group">
+      <div className="flex items-center gap-2 mb-2 sm:mb-3">
+        <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center" style={{ background: `${accentColor}15` }}>
+          <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: accentColor }} />
         </div>
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">{label}</span>
       </div>
-      <span className="text-3xl font-bold text-foreground tracking-tight">{value}</span>
-      {sub && <p className="text-[11px] text-muted-foreground mt-1">{sub}</p>}
+      <span className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{value}</span>
+      {sub && <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 truncate">{sub}</p>}
     </div>
   );
 }
@@ -131,8 +131,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Enterprise VIP Banner */}
       {tenantPlan === "enterprise" && (
-        <div className="rounded-2xl border border-[hsl(var(--meteora-cyan))]/20 bg-gradient-to-r from-[hsl(var(--meteora-cyan))]/5 via-primary/5 to-transparent p-4 flex items-center gap-4">
-          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[hsl(var(--meteora-cyan))] to-primary flex items-center justify-center shadow-lg shadow-primary/20">
+        <div className="rounded-2xl border border-[hsl(var(--meteora-cyan))]/20 bg-gradient-to-r from-[hsl(var(--meteora-cyan))]/5 via-primary/5 to-transparent p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+          <div className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl bg-gradient-to-br from-[hsl(var(--meteora-cyan))] to-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <Crown className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -142,9 +142,9 @@ export default function Dashboard() {
                 ✦ VIP
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Manager dedicado · Relatórios ilimitados · Até 100 agentes · Suporte prioritário</p>
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 leading-relaxed">Manager dedicado · Relatórios ilimitados · Até 100 agentes</p>
           </div>
-          <Button size="sm" variant="outline" className="shrink-0 text-xs gap-1.5 border-[hsl(var(--meteora-cyan))]/20 text-[hsl(var(--meteora-cyan))] hover:bg-[hsl(var(--meteora-cyan))]/5">
+          <Button size="sm" variant="outline" className="shrink-0 text-[10px] sm:text-xs gap-1.5 border-[hsl(var(--meteora-cyan))]/20 text-[hsl(var(--meteora-cyan))] hover:bg-[hsl(var(--meteora-cyan))]/5 w-full sm:w-auto">
             <MessageSquare className="h-3.5 w-3.5" /> Falar com Manager
           </Button>
         </div>

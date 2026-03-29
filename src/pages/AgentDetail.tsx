@@ -71,40 +71,40 @@ export default function AgentDetail() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/agents")} className="shrink-0">
-            <ArrowLeft className="h-5 w-5" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/agents")} className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
-                <Bot className="h-6 w-6 text-primary" />
+              <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
+                <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
-              <span className={`absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-card ${agent.status === "online" ? "bg-meteora-green animate-pulse-dot" : "bg-muted-foreground/50"}`} />
-              <span className={`absolute -left-0.5 -bottom-0.5 h-3.5 w-3.5 rounded-full border-2 border-card flex items-center justify-center ${isSupport ? "bg-blue-500" : "bg-emerald-500"}`}>
-                {isSupport ? <Headphones className="h-2 w-2 text-white" /> : <TrendingUp className="h-2 w-2 text-white" />}
+              <span className={`absolute -right-0.5 -top-0.5 h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full border-2 border-card ${agent.status === "online" ? "bg-meteora-green animate-pulse-dot" : "bg-muted-foreground/50"}`} />
+              <span className={`absolute -left-0.5 -bottom-0.5 h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full border-2 border-card flex items-center justify-center ${isSupport ? "bg-blue-500" : "bg-emerald-500"}`}>
+                {isSupport ? <Headphones className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" /> : <TrendingUp className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" />}
               </span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground tracking-tight">{agent.name}</h1>
-              <p className={`text-xs ${cls.color} mt-0.5`}>{cls.label}</p>
+              <h1 className="text-base sm:text-xl font-bold text-foreground tracking-tight">{agent.name}</h1>
+              <p className={`text-[10px] sm:text-xs ${cls.color} mt-0.5`}>{cls.label}</p>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => navigate("/attendant/playground")}>
-            <Play className="h-3.5 w-3.5" /> Testar
+        <div className="flex items-center gap-2 pl-11 sm:pl-0">
+          <Button variant="ghost" size="sm" className="gap-1.5 text-[10px] sm:text-xs h-8" onClick={() => navigate("/attendant/playground")}>
+            <Play className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Testar
           </Button>
           <Button
             variant={agent.status === "online" ? "destructive" : "default"}
             size="sm"
-            className="gap-1.5 text-xs"
+            className="gap-1.5 text-[10px] sm:text-xs h-8"
             onClick={toggleStatus}
           >
-            {agent.status === "online" ? <><PowerOff className="h-3.5 w-3.5" /> Pausar</> : <><Power className="h-3.5 w-3.5" /> Ativar</>}
+            {agent.status === "online" ? <><PowerOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Pausar</> : <><Power className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Ativar</>}
           </Button>
-          <Badge variant={agent.status === "online" ? "default" : "secondary"} className="text-[10px]">
+          <Badge variant={agent.status === "online" ? "default" : "secondary"} className="text-[9px] sm:text-[10px] hidden sm:inline-flex">
             {agent.status === "online" ? "● Online" : "○ Offline"}
           </Badge>
         </div>
@@ -112,18 +112,18 @@ export default function AgentDetail() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-muted/50 border border-border/30 h-10">
-          <TabsTrigger value="config" className="text-xs gap-1.5 data-[state=active]:bg-background">
-            <Settings className="h-3.5 w-3.5" /> Configuração
+        <TabsList className="bg-muted/50 border border-border/30 h-9 sm:h-10 w-full sm:w-auto flex-nowrap overflow-x-auto">
+          <TabsTrigger value="config" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
+            <Settings className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Configuração</span><span className="xs:hidden">Config</span>
           </TabsTrigger>
-          <TabsTrigger value="skills" className="text-xs gap-1.5 data-[state=active]:bg-background">
-            <Zap className="h-3.5 w-3.5" /> Superpoderes
+          <TabsTrigger value="skills" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
+            <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden sm:inline">Superpoderes</span><span className="sm:hidden">Skills</span>
           </TabsTrigger>
-          <TabsTrigger value="knowledge" className="text-xs gap-1.5 data-[state=active]:bg-background">
-            <BookOpen className="h-3.5 w-3.5" /> Base de Conhecimento
+          <TabsTrigger value="knowledge" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
+            <BookOpen className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden sm:inline">Conhecimento</span><span className="sm:hidden">KB</span>
           </TabsTrigger>
-          <TabsTrigger value="memory" className="text-xs gap-1.5 data-[state=active]:bg-background">
-            <Brain className="h-3.5 w-3.5" /> Memória
+          <TabsTrigger value="memory" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
+            <Brain className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Memória
           </TabsTrigger>
         </TabsList>
 
