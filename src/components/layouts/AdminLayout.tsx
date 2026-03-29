@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { LayoutDashboard, Users, Bot, Cpu, DollarSign, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Bot, Cpu, Puzzle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ const adminNavItems = [
   { to: "/admin/tenants", icon: Users, label: "Clientes" },
   { to: "/admin/attendants", icon: Bot, label: "Agentes" },
   { to: "/admin/consumption", icon: Cpu, label: "Consumo IA" },
+  { to: "/admin/integrations", icon: Puzzle, label: "Integrações" },
 ];
 
 export default function AdminLayout() {

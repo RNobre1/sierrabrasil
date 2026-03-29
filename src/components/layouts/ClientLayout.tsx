@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { Home, MessageSquare, Bot, BarChart3, Radio, ChevronRight } from "lucide-react";
+import { Home, MessageSquare, Bot, BarChart3, Radio, Puzzle, ChevronRight } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,6 +31,12 @@ const navSections = [
     label: "Análise",
     items: [
       { to: "/reports", icon: BarChart3, label: "Relatórios" },
+    ],
+  },
+  {
+    label: "Configurações",
+    items: [
+      { to: "/integrations", icon: Puzzle, label: "Integrações" },
     ],
   },
 ];

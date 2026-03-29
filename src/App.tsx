@@ -22,6 +22,7 @@ import Reports from "./pages/Reports";
 import Account from "./pages/Account";
 import Agents from "./pages/Agents";
 import Channels from "./pages/Channels";
+import Integrations from "./pages/Integrations";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTenants from "./pages/admin/AdminTenants";
 import AdminAttendants from "./pages/admin/AdminAttendants";
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/attendant/playground" element={<AttendantPlayground />} />
               <Route path="/channels" element={<Channels />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/integrations" element={<Integrations />} />
               <Route path="/account" element={<Account />} />
             </Route>
 
@@ -61,6 +63,7 @@ const App = () => (
               <Route path="/admin/tenants" element={<AdminTenants />} />
               <Route path="/admin/attendants" element={<AdminAttendants />} />
               <Route path="/admin/consumption" element={<AdminConsumption />} />
+              <Route path="/admin/integrations" element={<Integrations />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
