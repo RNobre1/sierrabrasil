@@ -387,6 +387,7 @@ export default function Onboarding() {
           attendantId: att.id,
           pastedText: pastedTexts.join("\n\n---\n\n"),
         }),
+        signal: AbortSignal.timeout(180000), // 3 min max
       });
 
       clearInterval(fakeProgressInterval);
