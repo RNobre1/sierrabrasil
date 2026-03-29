@@ -22,12 +22,12 @@ const platformIcons: Record<string, React.ReactNode> = {
 };
 
 const platformColors: Record<string, string> = {
-  instagram: "from-pink-500 to-purple-600",
-  facebook: "from-blue-600 to-blue-700",
-  linkedin: "from-blue-500 to-blue-600",
-  youtube: "from-red-500 to-red-600",
-  tiktok: "from-gray-900 to-gray-800",
-  website: "from-primary to-primary/70",
+  instagram: "from-primary/80 to-primary/50",
+  facebook: "from-primary/80 to-primary/50",
+  linkedin: "from-primary/80 to-primary/50",
+  youtube: "from-primary/80 to-primary/50",
+  tiktok: "from-primary/80 to-primary/50",
+  website: "from-primary/80 to-primary/50",
 };
 
 const wittyMessages: Record<Phase, string[]> = {

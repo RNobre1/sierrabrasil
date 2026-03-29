@@ -1,6 +1,10 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Building2, Clock, MapPin, ShoppingBag, DollarSign, Globe, Pencil, Check, ArrowLeft, ArrowRight, Sparkles, Phone, MessageCircle, Star, Instagram, Youtube, Linkedin, Globe2, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Building2, Clock, MapPin, ShoppingBag, DollarSign, Globe, Pencil, Check,
+  ArrowRight, Sparkles, Phone, MessageCircle, Star, Instagram, Youtube,
+  Linkedin, Globe2, ExternalLink, ChevronLeft, X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,141 +34,314 @@ type SourcePreview = {
   thumbnails?: string[];
 };
 
-type InfoCardProps = {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  editKey: string;
-  editing: string | null;
-  onEdit: (key: string) => void;
-  onSave: (key: string, val: string) => void;
-  multiline?: boolean;
-};
-
 const platformIcons: Record<string, React.ReactNode> = {
-  instagram: <Instagram className="h-4 w-4" />,
-  youtube: <Youtube className="h-4 w-4" />,
-  linkedin: <Linkedin className="h-4 w-4" />,
-  tiktok: <Globe2 className="h-4 w-4" />,
-  facebook: <Globe2 className="h-4 w-4" />,
-  twitter: <Globe2 className="h-4 w-4" />,
-  website: <Globe className="h-4 w-4" />,
+  instagram: <Instagram className="h-5 w-5" />,
+  youtube: <Youtube className="h-5 w-5" />,
+  linkedin: <Linkedin className="h-5 w-5" />,
+  tiktok: <Globe2 className="h-5 w-5" />,
+  facebook: <Globe2 className="h-5 w-5" />,
+  twitter: <Globe2 className="h-5 w-5" />,
+  website: <Globe className="h-5 w-5" />,
 };
 
-const platformColors: Record<string, string> = {
-  instagram: "from-pink-500 to-purple-500",
-  youtube: "from-red-500 to-red-600",
-  linkedin: "from-blue-600 to-blue-700",
-  tiktok: "from-black to-gray-800",
-  facebook: "from-blue-500 to-blue-600",
-  twitter: "from-sky-400 to-sky-500",
-  website: "from-emerald-500 to-teal-500",
+const platformLabels: Record<string, string> = {
+  instagram: "Instagram",
+  youtube: "YouTube",
+  linkedin: "LinkedIn",
+  tiktok: "TikTok",
+  facebook: "Facebook",
+  twitter: "Twitter / X",
+  website: "Website",
 };
 
-function InfoCard({ icon, label, value, editKey, editing, onEdit, onSave, multiline }: InfoCardProps) {
-  const [editValue, setEditValue] = useState(value);
-  const isEditing = editing === editKey;
+type Step = { type: "source"; source: SourcePreview } | { type: "details" };
 
-  if (!value && !isEditing) return null;
+function buildSteps(sources: SourcePreview[]): Step[] {
+  const steps: Step[] = sources.map(s => ({ type: "source" as const, source: s }));
+  steps.push({ type: "details" as const });
+  return steps;
+}
+
+/* ─── Source confirmation step ─── */
+function SourceStep({
+  source,
+  onConfirm,
+  onEdit,
+}: {
+  source: SourcePreview;
+  onConfirm: () => void;
+  onEdit: (url: string) => void;
+}) {
+  const [editUrl, setEditUrl] = useState(source.url);
+  const [isEditing, setIsEditing] = useState(false);
+  const icon = platformIcons[source.platform] || <Globe className="h-5 w-5" />;
+  const label = platformLabels[source.platform] || source.platform;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="group relative rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/20"
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="flex flex-col items-center text-center space-y-6 px-2"
     >
-      <div className="flex items-start gap-3">
-        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 mt-0.5">
-          {icon}
+      {/* Platform icon */}
+      <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/10 flex items-center justify-center text-primary">
+        {icon}
+      </div>
+
+      <div className="space-y-1.5">
+        <h3 className="text-lg font-display font-semibold text-foreground">
+          Encontrei seu <span className="text-primary">{label}</span>
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+          Confirma que essa é a conta certa? Você pode editar se precisar.
+        </p>
+      </div>
+
+      {/* Preview card */}
+      <div className="w-full max-w-md rounded-xl border border-border bg-card overflow-hidden">
+        {/* Header with profile info */}
+        <div className="px-5 py-4 flex items-center gap-3 border-b border-border">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 overflow-hidden">
+            {source.profilePic ? (
+              <img src={source.profilePic} alt="" className="h-full w-full object-cover" />
+            ) : (
+              icon
+            )}
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-medium text-foreground truncate">
+              {source.displayName || label}
+            </p>
+            {source.followers != null && source.followers > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {source.followers.toLocaleString()} seguidores
+              </p>
+            )}
+          </div>
+          <a
+            href={source.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-1">{label}</p>
-          {isEditing ? (
-            <div className="space-y-2">
-              {multiline ? (
-                <Textarea value={editValue} onChange={e => setEditValue(e.target.value)} className="text-sm min-h-[80px] bg-background" autoFocus />
-              ) : (
-                <Input value={editValue} onChange={e => setEditValue(e.target.value)} className="text-sm h-8 bg-background" autoFocus />
-              )}
-              <div className="flex gap-2">
-                <Button size="sm" variant="ghost" onClick={() => onEdit("")} className="h-7 text-xs">Cancelar</Button>
-                <Button size="sm" onClick={() => onSave(editKey, editValue)} className="h-7 text-xs">
-                  <Check className="h-3 w-3 mr-1" /> Salvar
-                </Button>
+
+        {/* Bio */}
+        {source.bio && (
+          <p className="px-5 py-3 text-sm text-muted-foreground text-left leading-relaxed border-b border-border">
+            {source.bio}
+          </p>
+        )}
+
+        {/* Thumbnails */}
+        {source.thumbnails && source.thumbnails.length > 0 && (
+          <div className="p-3 grid grid-cols-3 gap-1.5">
+            {source.thumbnails.slice(0, 6).map((thumb, i) => (
+              <div key={i} className="aspect-square rounded-lg overflow-hidden bg-muted">
+                <img
+                  src={thumb}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  onError={e => (e.currentTarget.style.display = "none")}
+                />
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* URL display / edit */}
+        <div className="px-5 py-3 bg-muted/30">
+          {isEditing ? (
+            <div className="flex gap-2">
+              <Input
+                value={editUrl}
+                onChange={e => setEditUrl(e.target.value)}
+                className="text-xs h-8 bg-background"
+                autoFocus
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => { setIsEditing(false); setEditUrl(source.url); }}
+                className="h-8 text-xs shrink-0"
+              >
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => { onEdit(editUrl); setIsEditing(false); }}
+                className="h-8 text-xs shrink-0"
+              >
+                <Check className="h-3 w-3 mr-1" /> Salvar
+              </Button>
             </div>
           ) : (
-            <p className="text-sm text-foreground whitespace-pre-line">{value}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground truncate">
+                {source.url.replace(/https?:\/\/(www\.)?/, "")}
+              </p>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="h-6 w-6 rounded bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-2"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+            </div>
           )}
         </div>
-        {!isEditing && (
-          <button
-            onClick={() => { setEditValue(value); onEdit(editKey); }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 rounded-lg bg-muted flex items-center justify-center hover:bg-primary/10"
-          >
-            <Pencil className="h-3 w-3 text-muted-foreground" />
-          </button>
-        )}
       </div>
+
+      <Button
+        onClick={onConfirm}
+        className="gap-2 bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20 px-8"
+      >
+        Confirmar <ArrowRight className="h-4 w-4" />
+      </Button>
     </motion.div>
   );
 }
 
-function SourcePreviewCard({ source }: { source: SourcePreview }) {
-  const gradient = platformColors[source.platform] || platformColors.website;
-  const icon = platformIcons[source.platform] || <Globe className="h-4 w-4" />;
+/* ─── Details confirmation step ─── */
+function DetailsStep({
+  data,
+  onDataChange,
+  onConfirm,
+}: {
+  data: OverviewData;
+  onDataChange: (d: OverviewData) => void;
+  onConfirm: () => void;
+}) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+
+  const fields = [
+    { icon: <Building2 className="h-4 w-4" />, label: "Negócio", key: "businessName", multiline: false },
+    { icon: <MessageCircle className="h-4 w-4" />, label: "Descrição", key: "description", multiline: true },
+    { icon: <ShoppingBag className="h-4 w-4" />, label: "Setor", key: "sector", multiline: false },
+    { icon: <MapPin className="h-4 w-4" />, label: "Endereço", key: "address", multiline: false },
+    { icon: <Clock className="h-4 w-4" />, label: "Horário", key: "hours", multiline: false },
+    { icon: <Phone className="h-4 w-4" />, label: "Contato", key: "contactInfo", multiline: false },
+    { icon: <ShoppingBag className="h-4 w-4" />, label: "Produtos / Serviços", key: "products", multiline: true },
+    { icon: <DollarSign className="h-4 w-4" />, label: "Preços", key: "prices", multiline: true },
+    { icon: <Star className="h-4 w-4" />, label: "Diferenciais", key: "highlights", multiline: true },
+  ];
+
+  const startEdit = (key: string) => {
+    setEditing(key);
+    setEditValue((data as any)[key] || "");
+  };
+
+  const save = () => {
+    if (!editing) return;
+    onDataChange({ ...data, [editing]: editValue });
+    setEditing(null);
+  };
+
+  const visibleFields = fields.filter(f => (data as any)[f.key]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="rounded-xl border border-border bg-card overflow-hidden"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-5 px-2"
     >
-      {/* Header */}
-      <div className={`bg-gradient-to-r ${gradient} px-4 py-3 flex items-center gap-3`}>
-        <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center text-white backdrop-blur-sm">
-          {source.profilePic ? (
-            <img src={source.profilePic} alt="" className="h-full w-full rounded-full object-cover" />
-          ) : (
-            icon
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white truncate">{source.displayName || source.platform}</p>
-          {source.followers != null && source.followers > 0 && (
-            <p className="text-[11px] text-white/70">{source.followers.toLocaleString()} seguidores</p>
-          )}
-        </div>
-        <a href={source.url} target="_blank" rel="noopener noreferrer" className="h-7 w-7 rounded-lg bg-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-colors">
-          <ExternalLink className="h-3.5 w-3.5" />
-        </a>
+      <div className="text-center space-y-1.5">
+        <h3 className="text-lg font-display font-semibold text-foreground">
+          Resumo de{" "}
+          <span className="text-primary">{data.businessName || "sua empresa"}</span>
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Revise os dados e edite o que precisar.
+        </p>
       </div>
 
-      {/* Bio */}
-      {source.bio && (
-        <p className="px-4 pt-3 text-xs text-muted-foreground line-clamp-2">{source.bio}</p>
-      )}
+      <div className="grid gap-2.5 max-h-[50vh] overflow-y-auto pr-1">
+        {visibleFields.map((f, i) => {
+          const val = (data as any)[f.key] || "";
+          const isEditing = editing === f.key;
 
-      {/* Thumbnails grid */}
-      {source.thumbnails && source.thumbnails.length > 0 && (
-        <div className="p-3 grid grid-cols-3 gap-1.5">
-          {source.thumbnails.slice(0, 6).map((thumb, i) => (
-            <div key={i} className="aspect-square rounded-lg overflow-hidden bg-muted">
-              <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" onError={e => (e.currentTarget.style.display = "none")} />
-            </div>
-          ))}
-        </div>
-      )}
+          return (
+            <motion.div
+              key={f.key}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+              className="group rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-primary/15"
+            >
+              <div className="flex items-start gap-3">
+                <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                  {f.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium mb-0.5">
+                    {f.label}
+                  </p>
+                  {isEditing ? (
+                    <div className="space-y-2 mt-1">
+                      {f.multiline ? (
+                        <Textarea
+                          value={editValue}
+                          onChange={e => setEditValue(e.target.value)}
+                          className="text-sm min-h-[80px] bg-background"
+                          autoFocus
+                        />
+                      ) : (
+                        <Input
+                          value={editValue}
+                          onChange={e => setEditValue(e.target.value)}
+                          className="text-sm h-8 bg-background"
+                          autoFocus
+                        />
+                      )}
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => setEditing(null)} className="h-7 text-xs">
+                          Cancelar
+                        </Button>
+                        <Button size="sm" onClick={save} className="h-7 text-xs">
+                          <Check className="h-3 w-3 mr-1" /> Salvar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                      {val}
+                    </p>
+                  )}
+                </div>
+                {!isEditing && (
+                  <button
+                    onClick={() => startEdit(f.key)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 rounded-lg bg-muted flex items-center justify-center hover:bg-primary/10"
+                  >
+                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
 
-      {!source.thumbnails?.length && !source.bio && (
-        <div className="px-4 py-3">
-          <p className="text-xs text-muted-foreground italic">Dados coletados com sucesso</p>
-        </div>
-      )}
+      <div className="flex justify-center pt-2">
+        <Button
+          onClick={onConfirm}
+          className="gap-2 bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20 px-8"
+        >
+          Tudo certo, continuar <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
     </motion.div>
   );
 }
 
+/* ─── Main overview component ─── */
 export default function BusinessOverview({
   data,
   sourcePreviews,
@@ -178,122 +355,91 @@ export default function BusinessOverview({
   onGoBack: () => void;
   onDataChange: (data: OverviewData) => void;
 }) {
-  const [editing, setEditing] = useState<string | null>(null);
   const [localData, setLocalData] = useState<OverviewData>(data);
+  const steps = buildSteps(sourcePreviews || []);
+  const [currentStep, setCurrentStep] = useState(0);
+  const total = steps.length;
 
-  const handleSave = (key: string, val: string) => {
-    const updated = { ...localData, [key]: val };
-    setLocalData(updated);
-    onDataChange(updated);
-    setEditing(null);
+  const handleDataChange = (d: OverviewData) => {
+    setLocalData(d);
+    onDataChange(d);
   };
 
-  const hasAnyData = !!(
-    localData.businessName || localData.sector || localData.address ||
-    localData.hours || localData.products || localData.prices ||
-    localData.highlights || localData.description || localData.contactInfo
-  );
+  const next = () => {
+    if (currentStep < total - 1) {
+      setCurrentStep(s => s + 1);
+    } else {
+      onConfirm(localData);
+    }
+  };
 
-  const cards = [
-    { icon: <Building2 className="h-4 w-4" />, label: "Negócio", value: localData.businessName || "", key: "businessName" },
-    { icon: <MessageCircle className="h-4 w-4" />, label: "Descrição", value: localData.description || "", key: "description", multiline: true },
-    { icon: <ShoppingBag className="h-4 w-4" />, label: "Setor", value: localData.sector || "", key: "sector" },
-    { icon: <MapPin className="h-4 w-4" />, label: "Endereço", value: localData.address || "", key: "address" },
-    { icon: <Clock className="h-4 w-4" />, label: "Horário de Funcionamento", value: localData.hours || "", key: "hours" },
-    { icon: <Phone className="h-4 w-4" />, label: "Contato", value: localData.contactInfo || "", key: "contactInfo" },
-    { icon: <ShoppingBag className="h-4 w-4" />, label: "Produtos / Serviços", value: localData.products || "", key: "products", multiline: true },
-    { icon: <DollarSign className="h-4 w-4" />, label: "Preços", value: localData.prices || "", key: "prices", multiline: true },
-    { icon: <Star className="h-4 w-4" />, label: "Diferenciais", value: localData.highlights || "", key: "highlights", multiline: true },
-  ];
+  const prev = () => {
+    if (currentStep > 0) setCurrentStep(s => s - 1);
+    else onGoBack();
+  };
+
+  const step = steps[currentStep];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-3xl mx-auto space-y-6"
-    >
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 300, delay: 0.2 }}
-          className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mx-auto shadow-lg shadow-primary/20"
-        >
-          <Sparkles className="h-7 w-7 text-primary-foreground" />
-        </motion.div>
-        <h2 className="text-xl font-display font-semibold text-foreground">
-          {hasAnyData ? (
-            <>Dá uma olhada no que encontrei sobre <span className="text-primary">{localData.businessName || "sua empresa"}</span></>
-          ) : (
-            "Não encontramos muitas informações"
-          )}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {hasAnyData
-            ? "Confira os dados e edite o que quiser. Clique no lápis para ajustar."
-            : "Você pode preencher os campos manualmente ou enviar documentos na próxima etapa."
-          }
-        </p>
-      </div>
-
-      {/* Source Previews */}
-      {sourcePreviews && sourcePreviews.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">Fontes analisadas</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {sourcePreviews.map((src, i) => (
-              <SourcePreviewCard key={i} source={src} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="relative w-full max-w-lg mx-4 rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 overflow-hidden"
+      >
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+          <button
+            onClick={prev}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            {currentStep === 0 ? "Voltar" : "Anterior"}
+          </button>
+          <div className="flex items-center gap-1.5">
+            {steps.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === currentStep
+                    ? "w-6 bg-primary"
+                    : i < currentStep
+                    ? "w-1.5 bg-primary/40"
+                    : "w-1.5 bg-muted"
+                }`}
+              />
             ))}
           </div>
-        </motion.div>
-      )}
+          <span className="text-[10px] text-muted-foreground font-mono">
+            {currentStep + 1}/{total}
+          </span>
+        </div>
 
-      {/* Info Cards */}
-      <div className="grid gap-3">
-        {cards.map((c, i) => (
-          <motion.div key={c.key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * i }}>
-            <InfoCard
-              icon={c.icon}
-              label={c.label}
-              value={c.value}
-              editKey={c.key}
-              editing={editing}
-              onEdit={setEditing}
-              onSave={handleSave}
-              multiline={c.multiline}
-            />
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Social Links */}
-      {localData.socialLinks && Object.keys(localData.socialLinks).length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Globe className="h-4 w-4 text-primary" />
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Redes Sociais</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(localData.socialLinks).filter(([, v]) => v).map(([k, v]) => (
-              <span key={k} className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-lg capitalize font-medium">
-                {k}: {String(v)}
-              </span>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Actions */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="flex items-center justify-between pt-2">
-        <Button variant="ghost" onClick={onGoBack} className="gap-2 text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Voltar para as redes
-        </Button>
-        <Button onClick={() => onConfirm(localData)} className="gap-2 bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20">
-          Confirmar e continuar <ArrowRight className="h-4 w-4" />
-        </Button>
+        {/* Content */}
+        <div className="p-6 min-h-[400px] flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            {step.type === "source" ? (
+              <SourceStep
+                key={`source-${currentStep}`}
+                source={step.source}
+                onConfirm={next}
+                onEdit={(url) => {
+                  // Update source URL in local state
+                  next();
+                }}
+              />
+            ) : (
+              <DetailsStep
+                key="details"
+                data={localData}
+                onDataChange={handleDataChange}
+                onConfirm={next}
+              />
+            )}
+          </AnimatePresence>
+        </div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
