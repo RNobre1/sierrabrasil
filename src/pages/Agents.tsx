@@ -216,7 +216,7 @@ export default function Agents() {
           const filtered = tab === "all" ? agents : agents.filter(a => (a.class || "support") === tab);
           return (
             <TabsContent key={tab} value={tab}>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {filtered.map((agent, i) => renderAgentCard(agent, i))}
                 {filtered.length === 0 && (
                   <div className="col-span-full text-center py-16">
