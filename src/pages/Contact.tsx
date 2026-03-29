@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Send, CheckCircle2 } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
+import meteoraLogoPreta from "@/assets/meteora-preta.png";
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
@@ -49,7 +50,8 @@ export default function Contact() {
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
 
-        <img src={meteoraLogo} alt="Meteora Digital" className="h-6 mb-8 opacity-80" />
+        <img src={meteoraLogo} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:block hidden" />
+        <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:hidden block" />
 
         <h1 className="text-2xl font-bold text-foreground tracking-tight">Plano personalizado</h1>
         <p className="text-sm text-muted-foreground mt-2 mb-8">

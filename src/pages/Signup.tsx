@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Zap, Brain, MessageSquare, Phone } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
+import meteoraLogoPreta from "@/assets/meteora-preta.png";
 import WhatsAppOTPStep from "@/components/signup/WhatsAppOTPStep";
 import GoogleCompanyStep from "@/components/signup/GoogleCompanyStep";
 
@@ -147,7 +148,8 @@ export default function Signup() {
       <div className="flex-1 flex items-center justify-center p-6 lg:p-10 bg-background overflow-y-auto">
         <div className="w-full max-w-[380px] py-4">
           <div className="lg:hidden mb-8">
-            <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-7 dark:block hidden" />
+            <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-7 dark:hidden block" />
           </div>
 
           {step === "form" && (

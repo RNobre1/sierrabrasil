@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
+import meteoraLogoPreta from "@/assets/meteora-preta.png";
 
 function Particles({ count = 40 }: { count?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -128,7 +129,8 @@ export default function Login() {
         <div className="w-full max-w-[380px]">
           {/* Mobile logo */}
           <div className="lg:hidden mb-12">
-            <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-7 dark:block hidden" />
+            <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-7 dark:hidden block" />
           </div>
 
           <h2 className="text-xl font-bold tracking-tight text-foreground">Bem-vindo de volta</h2>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
+import meteoraLogoPreta from "@/assets/meteora-preta.png";
 
 export default function Terms() {
   return (
@@ -10,7 +11,8 @@ export default function Terms() {
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
 
-        <img src={meteoraLogo} alt="Meteora Digital" className="h-6 mb-8 opacity-80" />
+        <img src={meteoraLogo} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:block hidden" />
+        <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:hidden block" />
 
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-2">
           Termos de Uso

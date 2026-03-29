@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Star, Bot, MessageSquare, Zap, Shield, Clock, BarChart3, Crown, Send } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
+import meteoraLogoPreta from "@/assets/meteora-preta.png";
 import { MeteoraSeal, MeteorTrail } from "@/components/MeteoraBrand";
 
 const features = [
@@ -50,7 +51,8 @@ export default function Index() {
       <header className="fixed top-0 inset-x-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-7 dark:block hidden" />
+            <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-7 dark:hidden block" />
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Entrar</Button></Link>
@@ -252,7 +254,8 @@ export default function Index() {
       <footer className="border-t border-border/30 py-8 px-6 relative z-10">
         <div className="mx-auto max-w-6xl flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <img src={meteoraLogo} alt="Meteora Digital" className="h-5" />
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-5 dark:block hidden" />
+            <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-5 dark:hidden block" />
             <span className="text-[10px] sm:text-xs text-muted-foreground">© 2026 Meteora Digital</span>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
