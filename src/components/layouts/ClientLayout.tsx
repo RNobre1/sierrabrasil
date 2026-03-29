@@ -1,5 +1,5 @@
 import { Outlet, useNavigate } from "react-router-dom";
-import { Home, MessageSquare, Bot, BarChart3, User, Play, LogOut } from "lucide-react";
+import { Home, MessageSquare, Bot, BarChart3, User, Play, LogOut, Shield } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -15,7 +15,7 @@ const navItems = [
 ];
 
 export default function ClientLayout() {
-  const { profile, signOut } = useAuth();
+  const { profile, isAdmin, signOut } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
@@ -49,15 +49,35 @@ export default function ClientLayout() {
                 <span>{item.label}</span>
               </NavLink>
             ))}
+
+            {/* Admin link */}
+            {isAdmin && (
+              <>
+                <div className="my-3 border-t border-border" />
+                <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground px-3 mb-2">Admin</p>
+                <NavLink
+                  to="/admin/dashboard"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground"
+                  activeClassName="bg-primary/10 text-primary font-semibold shadow-sm"
+                >
+                  <Shield className="h-[18px] w-[18px]" />
+                  <span>Painel Admin</span>
+                </NavLink>
+              </>
+            )}
           </nav>
 
           {/* User section */}
           <div className="border-t border-border p-3">
             <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/50">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
-                <span className="text-xs font-semibold text-primary">
-                  {profile?.full_name?.charAt(0)?.toUpperCase() || "U"}
-                </span>
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-xs font-semibold text-primary">
+                    {profile?.full_name?.charAt(0)?.toUpperCase() || "U"}
+                  </span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate text-foreground">{profile?.full_name || "Usuário"}</p>

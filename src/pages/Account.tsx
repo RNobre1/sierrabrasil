@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Save, LogOut } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Save, LogOut, Camera } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import AvatarCropModal from "@/components/AvatarCropModal";
+
+const MAX_SIZE = 500 * 1024; // 500KB
+const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 export default function Account() {
   const { user, profile, signOut } = useAuth();
@@ -14,21 +18,62 @@ export default function Account() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name ?? "");
       setPhone(profile.phone ?? "");
+      setAvatarUrl(profile.avatar_url ?? null);
     }
   }, [profile]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      toast({ title: "Formato não suportado", description: "Use JPG, PNG ou WebP.", variant: "destructive" });
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      toast({ title: "Arquivo muito grande", description: "Máximo 500KB.", variant: "destructive" });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => setCropSrc(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropped = async (blob: Blob) => {
+    if (!user) return;
+    const path = `${user.id}/avatar.jpg`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+
+    if (uploadError) {
+      toast({ title: "Erro no upload", description: uploadError.message, variant: "destructive" });
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+    const url = `${publicUrl}?t=${Date.now()}`;
+
+    await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);
+    setAvatarUrl(url);
+    toast({ title: "Foto atualizada!" });
+  };
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({
-      full_name: fullName,
-      phone,
-    }).eq("user_id", user.id);
+    const { error } = await supabase.from("profiles").update({ full_name: fullName, phone }).eq("user_id", user.id);
     setSaving(false);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -49,7 +94,36 @@ export default function Account() {
           <CardTitle className="text-base font-display">Informações pessoais</CardTitle>
           <CardDescription>Seus dados de perfil na plataforma</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Avatar */}
+          <div className="flex items-center gap-5">
+            <div className="relative group">
+              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-2 border-primary/10 overflow-hidden">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-2xl font-semibold text-primary">
+                    {fullName?.charAt(0)?.toUpperCase() || "U"}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <Camera className="h-5 w-5 text-white" />
+              </button>
+              <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden" onChange={handleFileSelect} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Foto de perfil</p>
+              <p className="text-xs text-muted-foreground">JPG, PNG ou WebP. Máximo 500KB.</p>
+              <Button variant="outline" size="sm" className="mt-2 h-7 text-xs" onClick={() => fileRef.current?.click()}>
+                Alterar foto
+              </Button>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>E-mail</Label>
             <Input value={user?.email ?? ""} disabled className="bg-muted" />
@@ -95,6 +169,15 @@ export default function Account() {
           </Button>
         </CardContent>
       </Card>
+
+      {cropSrc && (
+        <AvatarCropModal
+          open={!!cropSrc}
+          onClose={() => setCropSrc(null)}
+          imageSrc={cropSrc}
+          onCropped={handleCropped}
+        />
+      )}
     </div>
   );
 }
