@@ -25,6 +25,7 @@ type OnboardingPhase =
   | "chat"
   | "social-links"
   | "scraping"
+  | "post-scrape-chat"
   | "overview"
   | "docs"
   | "finalizing"
