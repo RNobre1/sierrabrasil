@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { Home, MessageSquare, Bot, BarChart3, Radio, Puzzle, ChevronRight } from "lucide-react";
+import { Home, MessageSquare, Bot, BarChart3, Radio, Puzzle, Zap, ChevronRight } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
