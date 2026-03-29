@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,104 +6,125 @@
 
 @layer base {
   :root {
-    /* Meteora — Dark-first premium theme */
-    --background: 222 30% 6%;
-    --foreground: 210 40% 95%;
-    --card: 222 25% 9%;
-    --card-foreground: 210 40% 95%;
-    --popover: 222 25% 10%;
-    --popover-foreground: 210 40% 95%;
-    --primary: 225 80% 56%;
+    /* ═══ Cosmos Tech — Dark Premium ═══ */
+    /* Backgrounds — depth layers */
+    --bg-base: 230 30% 4%;
+    --bg-surface: 230 22% 7%;
+    --bg-elevated: 230 18% 10%;
+    --bg-overlay: 230 16% 13%;
+    --bg-hover: 232 20% 14%;
+    --bg-active: 232 22% 17%;
+
+    /* Shadcn tokens mapped to Cosmos */
+    --background: 230 30% 4%;
+    --foreground: 240 10% 95%;
+    --card: 230 18% 10%;
+    --card-foreground: 240 10% 95%;
+    --popover: 230 16% 13%;
+    --popover-foreground: 240 10% 95%;
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 222 20% 14%;
-    --secondary-foreground: 210 30% 80%;
-    --muted: 222 20% 14%;
-    --muted-foreground: 215 15% 50%;
-    --accent: 222 20% 16%;
-    --accent-foreground: 210 30% 90%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 222 15% 14%;
-    --input: 222 15% 14%;
-    --ring: 225 80% 56%;
-    --radius: 0.75rem;
-
-    /* Meteora brand */
-    --meteora-blue: 225 80% 56%;
-    --meteora-cyan: 190 90% 50%;
-    --meteora-green: 152 69% 40%;
-    --meteora-lime: 80 80% 55%;
-    --meteora-warning: 38 92% 50%;
-    --meteora-danger: 0 72% 51%;
-
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(225 80% 56%), hsl(190 90% 50%));
-    --gradient-success: linear-gradient(135deg, hsl(152 69% 40%), hsl(190 90% 50%));
-    --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%), hsl(24 95% 53%));
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-    --gradient-surface: linear-gradient(180deg, hsl(222 25% 10%), hsl(222 30% 6%));
-
-    /* Surfaces */
-    --surface-page: 222 30% 6%;
-    --surface-card: 222 25% 9%;
-    --surface-elevated: 222 20% 12%;
-
-    /* Sidebar */
-    --sidebar-background: 222 30% 5%;
-    --sidebar-foreground: 210 20% 70%;
-    --sidebar-primary: 225 80% 56%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 20% 12%;
-    --sidebar-accent-foreground: 210 30% 90%;
-    --sidebar-border: 222 15% 12%;
-    --sidebar-ring: 225 80% 56%;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not(.dark) {
-    --background: 220 14% 96%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 225 80% 56%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 93%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 220 14% 93%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 95%;
-    --accent-foreground: 222 47% 11%;
+    --secondary: 230 18% 12%;
+    --secondary-foreground: 240 10% 80%;
+    --muted: 230 18% 12%;
+    --muted-foreground: 232 10% 48%;
+    --accent: 239 84% 67%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 225 80% 56%;
+    --border: 230 12% 12%;
+    --input: 230 12% 12%;
+    --ring: 239 84% 67%;
+    --radius: 0.75rem;
 
-    --meteora-blue: 225 80% 56%;
-    --meteora-cyan: 190 90% 40%;
-    --meteora-green: 152 69% 31%;
-    --meteora-lime: 80 80% 45%;
-    --meteora-warning: 38 92% 50%;
-    --meteora-danger: 0 84% 60%;
+    /* Cosmos brand accents */
+    --cosmos-indigo: 239 84% 67%;
+    --cosmos-indigo-light: 239 84% 74%;
+    --cosmos-violet: 263 70% 58%;
+    --cosmos-cyan: 187 86% 53%;
+    --cosmos-emerald: 160 84% 39%;
+    --cosmos-amber: 38 92% 50%;
+    --cosmos-rose: 347 77% 59%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(225 80% 56%), hsl(190 90% 50%));
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
-    --gradient-surface: linear-gradient(180deg, hsl(220 14% 98%), hsl(220 14% 96%));
+    /* Glow colors */
+    --glow-indigo: 239 84% 67%;
+    --glow-cyan: 187 86% 53%;
 
-    --surface-page: 220 14% 96%;
-    --surface-card: 0 0% 100%;
-    --surface-elevated: 0 0% 100%;
+    /* Premium gradients */
+    --gradient-accent: linear-gradient(135deg, #6366F1, #8B5CF6, #A78BFA);
+    --gradient-accent-2: linear-gradient(135deg, #06B6D4, #6366F1);
+    --gradient-warm: linear-gradient(135deg, #F59E0B, #EF4444);
+    --gradient-surface: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+    --gradient-card: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    --gradient-glow: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 70%);
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 20%;
-    --sidebar-primary: 225 80% 56%;
+    /* Premium shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.4), 0 0 40px rgba(99, 102, 241, 0.1);
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(255,255,255,0.03);
+
+    /* Chart colors */
+    --chart-1: 239 84% 67%;
+    --chart-2: 187 86% 53%;
+    --chart-3: 263 70% 58%;
+    --chart-4: 160 84% 39%;
+    --chart-5: 38 92% 50%;
+
+    /* Sidebar — darker than content */
+    --sidebar-background: 230 30% 3%;
+    --sidebar-foreground: 232 10% 55%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 95%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 13% 93%;
-    --sidebar-ring: 225 80% 56%;
+    --sidebar-accent: 232 20% 14%;
+    --sidebar-accent-foreground: 240 10% 90%;
+    --sidebar-border: 230 12% 10%;
+    --sidebar-ring: 239 84% 67%;
+
+    /* Border variants */
+    --border-subtle: 0 0% 100% / 0.06;
+    --border-default: 0 0% 100% / 0.08;
+    --border-strong: 0 0% 100% / 0.12;
+    --border-accent: 239 84% 67% / 0.3;
+
+    /* Text variants */
+    --text-primary: 240 10% 95%;
+    --text-secondary: 232 10% 58%;
+    --text-tertiary: 232 10% 38%;
+  }
+
+  /* Light mode — clean, not flat */
+  @media (prefers-color-scheme: light) {
+    :root:not(.dark) {
+      --background: 230 14% 97%;
+      --foreground: 230 40% 10%;
+      --card: 0 0% 100%;
+      --card-foreground: 230 40% 10%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 230 40% 10%;
+      --primary: 239 84% 67%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 230 14% 93%;
+      --secondary-foreground: 230 40% 10%;
+      --muted: 230 14% 93%;
+      --muted-foreground: 230 8% 46%;
+      --accent: 230 14% 95%;
+      --accent-foreground: 230 40% 10%;
+      --destructive: 0 84% 60%;
+      --destructive-foreground: 0 0% 100%;
+      --border: 230 13% 91%;
+      --input: 230 13% 91%;
+      --ring: 239 84% 67%;
+
+      --sidebar-background: 0 0% 100%;
+      --sidebar-foreground: 230 40% 20%;
+      --sidebar-primary: 239 84% 67%;
+      --sidebar-primary-foreground: 0 0% 100%;
+      --sidebar-accent: 230 14% 95%;
+      --sidebar-accent-foreground: 230 40% 10%;
+      --sidebar-border: 230 13% 93%;
+      --sidebar-ring: 239 84% 67%;
     }
   }
 }
@@ -115,41 +136,79 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 400;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Outfit', sans-serif;
     font-weight: 600;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
   }
 
   input, textarea, select, [role="combobox"] {
-    font-family: 'Space Grotesk', sans-serif;
-    letter-spacing: -0.01em;
+    font-family: 'DM Sans', sans-serif;
   }
 }
 
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-hero);
+    background-image: var(--gradient-accent);
+  }
+
+  .font-display {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .font-body {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .font-code {
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .glass-card {
-    background: var(--gradient-glass);
+    background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
 
-  .glow-primary {
-    box-shadow: 0 0 40px -10px hsl(225 80% 56% / 0.4);
+  .cosmos-card {
+    background: hsl(var(--card));
+    background-image: var(--gradient-card);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+    transition: all 250ms ease;
+  }
+
+  .cosmos-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+
+  .cosmos-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .glow-indigo {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4), 0 0 40px rgba(99, 102, 241, 0.1);
   }
 
   .glow-cyan {
-    box-shadow: 0 0 40px -10px hsl(190 90% 50% / 0.3);
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.3), 0 0 40px rgba(6, 182, 212, 0.1);
   }
 
   .surface-glow {
@@ -162,7 +221,7 @@
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, hsl(225 80% 56% / 0.2), transparent, hsl(190 90% 50% / 0.1));
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), transparent, rgba(6, 182, 212, 0.1));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -170,22 +229,64 @@
     pointer-events: none;
   }
 
-  .meteora-noise {
-    position: relative;
-  }
-
-  .meteora-noise::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0.015;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    pointer-events: none;
-    border-radius: inherit;
+  .icon-glow {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
-/* Pulse animation for status dot */
+/* ═══ BACKGROUND ATMOSPHERE ═══ */
+body {
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+}
+
+/* Ambient glow — nebula in background */
+.cosmos-glow::before {
+  content: '';
+  position: fixed;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 500px;
+  background: radial-gradient(ellipse, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══ ANIMATIONS ═══ */
+
+/* Page entrance */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Card stagger */
+.card-stagger:nth-child(1) { animation: fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
+.card-stagger:nth-child(2) { animation: fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both; }
+.card-stagger:nth-child(3) { animation: fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both; }
+.card-stagger:nth-child(4) { animation: fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both; }
+
+/* Pulse glow for status dots */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  50%      { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(1.4); }
@@ -195,7 +296,7 @@
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-/* Typing dots for chat */
+/* Typing dots */
 @keyframes typing-dot {
   0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
   30% { opacity: 1; transform: scale(1); }
@@ -205,41 +306,45 @@
 .typing-dot:nth-child(2) { animation: typing-dot 1.2s infinite 0.2s; }
 .typing-dot:nth-child(3) { animation: typing-dot 1.2s infinite 0.4s; }
 
+/* Button shine */
+@keyframes btn-shine {
+  0%   { transform: rotate(45deg) translateX(-150%); }
+  100% { transform: rotate(45deg) translateX(150%); }
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-cosmos {
+  background: linear-gradient(
+    90deg,
+    hsl(230 18% 10%) 25%,
+    hsl(230 16% 13%) 50%,
+    hsl(230 18% 10%) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s ease infinite;
+  border-radius: 8px;
+}
+
+/* Interactive hover */
+.interactive-hover {
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.interactive-hover:hover {
+  transform: translateY(-2px);
+}
+
 /* Dashboard page transition */
-@keyframes dash-fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 .dash-page-enter {
-  animation: dash-fade-in 300ms ease-out;
+  animation: fadeInUp 300ms ease-out;
 }
 
-/* Gradient border glow */
-@keyframes border-glow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.animate-border-glow {
-  background-size: 200% 200%;
-  animation: border-glow 3s ease infinite;
-}
-
-/* Ambient glow background */
-.ambient-glow {
-  position: fixed;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  filter: blur(120px);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.18;
-}
-
-/* Scrollbar */
+/* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -249,37 +354,39 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(222 15% 20%);
+  background: hsl(230 12% 18%);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(222 15% 30%);
+  background: hsl(230 12% 28%);
+}
+
+/* ═══ RECHARTS CUSTOMIZATION ═══ */
+.recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.04) !important;
 }
 
 /* ═══ METEORA BRAND SIGNATURE ═══ */
-
-/* The Seal — holographic badge */
 .meteora-seal {
   position: relative;
   background: linear-gradient(
     135deg,
-    hsl(225 80% 56% / 0.08),
-    hsl(190 90% 50% / 0.04),
-    hsl(225 80% 56% / 0.08)
+    rgba(99, 102, 241, 0.08),
+    rgba(6, 182, 212, 0.04),
+    rgba(99, 102, 241, 0.08)
   );
-  border: 1px solid hsl(225 80% 56% / 0.15);
-  color: hsl(225 80% 70%);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  color: rgba(99, 102, 241, 0.7);
   overflow: hidden;
   transition: border-color 0.4s ease, color 0.4s ease;
 }
 
 .meteora-seal:hover {
-  border-color: hsl(225 80% 56% / 0.35);
-  color: hsl(225 80% 80%);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: rgba(99, 102, 241, 0.9);
 }
 
-/* Light sweep — the holographic shimmer */
 .meteora-seal::before {
   content: '';
   position: absolute;
@@ -290,9 +397,9 @@
   background: linear-gradient(
     105deg,
     transparent 30%,
-    hsl(225 80% 80% / 0.12) 45%,
-    hsl(190 90% 80% / 0.08) 50%,
-    hsl(225 80% 80% / 0.12) 55%,
+    rgba(99, 102, 241, 0.12) 45%,
+    rgba(6, 182, 212, 0.08) 50%,
+    rgba(99, 102, 241, 0.12) 55%,
     transparent 70%
   );
   animation: seal-shimmer 6s ease-in-out infinite;
@@ -304,13 +411,12 @@
   40%, 60% { left: 150%; }
 }
 
-/* Star symbol — subtle breathing */
 .meteora-seal__star {
   display: inline-block;
   font-size: 1.1em;
-  color: hsl(225 80% 60%);
+  color: rgba(99, 102, 241, 0.7);
   animation: star-breathe 4s ease-in-out infinite;
-  filter: drop-shadow(0 0 3px hsl(225 80% 56% / 0.4));
+  filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.4));
 }
 
 @keyframes star-breathe {
@@ -318,27 +424,25 @@
   50% { opacity: 1; transform: scale(1.15); }
 }
 
-/* Dot — tiny status pulse */
 .meteora-seal__dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: hsl(190 90% 50%);
-  box-shadow: 0 0 6px hsl(190 90% 50% / 0.6);
+  background: #06B6D4;
+  box-shadow: 0 0 6px rgba(6, 182, 212, 0.6);
   animation: dot-pulse 3s ease-in-out infinite;
 }
 
 @keyframes dot-pulse {
-  0%, 100% { opacity: 0.4; box-shadow: 0 0 4px hsl(190 90% 50% / 0.3); }
-  50% { opacity: 1; box-shadow: 0 0 8px hsl(190 90% 50% / 0.8); }
+  0%, 100% { opacity: 0.4; box-shadow: 0 0 4px rgba(6, 182, 212, 0.3); }
+  50% { opacity: 1; box-shadow: 0 0 8px rgba(6, 182, 212, 0.8); }
 }
 
-/* Meteor particle — shooting star */
 .meteora-meteor {
   position: absolute;
   width: 30px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, hsl(190 90% 70% / 0.6), hsl(225 80% 80% / 0.3));
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.6), rgba(99, 102, 241, 0.3));
   border-radius: 1px;
   animation: meteor-fly 1.6s ease-out forwards;
   pointer-events: none;
@@ -353,56 +457,49 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: hsl(190 90% 80%);
-  box-shadow: 0 0 6px hsl(190 90% 60% / 0.8);
+  background: #22D3EE;
+  box-shadow: 0 0 6px rgba(6, 182, 212, 0.8);
 }
 
 @keyframes meteor-fly {
-  0% {
-    transform: translateX(0) scaleX(0.3);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-    transform: translateX(40px) scaleX(1);
-  }
-  90% {
-    opacity: 0.6;
-  }
-  100% {
-    transform: translateX(calc(100vw + 40px)) scaleX(0.5);
-    opacity: 0;
-  }
+  0% { transform: translateX(0) scaleX(0.3); opacity: 0; }
+  10% { opacity: 1; transform: translateX(40px) scaleX(1); }
+  90% { opacity: 0.6; }
+  100% { transform: translateX(calc(100vw + 40px)) scaleX(0.5); opacity: 0; }
 }
 
-/* Watermark entrance */
 @keyframes watermark-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Light mode overrides */
+/* Light mode seal overrides */
 :root:not(.dark) .meteora-seal {
-  background: linear-gradient(
-    135deg,
-    hsl(225 80% 56% / 0.06),
-    hsl(190 90% 50% / 0.03),
-    hsl(225 80% 56% / 0.06)
-  );
-  border-color: hsl(225 80% 56% / 0.12);
-  color: hsl(225 60% 45%);
+  background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(6,182,212,0.03), rgba(99,102,241,0.06));
+  border-color: rgba(99,102,241,0.12);
+  color: rgba(99,102,241,0.6);
 }
 
-:root:not(.dark) .meteora-seal__star {
-  color: hsl(225 80% 50%);
-  filter: drop-shadow(0 0 2px hsl(225 80% 56% / 0.3));
+/* Gradient border glow */
+@keyframes border-glow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-:root:not(.dark) .meteora-meteor {
-  background: linear-gradient(90deg, transparent, hsl(225 80% 56% / 0.4), hsl(190 90% 50% / 0.3));
+.animate-border-glow {
+  background-size: 200% 200%;
+  animation: border-glow 3s ease infinite;
 }
 
-:root:not(.dark) .meteora-meteor::after {
-  background: hsl(225 80% 56%);
-  box-shadow: 0 0 6px hsl(225 80% 56% / 0.6);
+/* Ambient glow */
+.ambient-glow {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.12;
 }
