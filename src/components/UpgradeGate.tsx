@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export default function UpgradeGate({ message }: { message: string }) {
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/60 backdrop-blur-sm">
+    <div className="absolute inset-0 z-10 flex items-end justify-center rounded-2xl bg-gradient-to-t from-background/90 via-background/40 to-transparent pb-8">
       <div className="text-center space-y-3 max-w-sm px-4">
         <div className="h-12 w-12 rounded-2xl bg-meteora-warning/10 flex items-center justify-center mx-auto border border-meteora-warning/20">
           <Lock className="h-5 w-5 text-meteora-warning" />
