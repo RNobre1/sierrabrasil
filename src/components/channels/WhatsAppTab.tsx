@@ -416,10 +416,12 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
 
       {/* Bulk Messaging */}
       <div className="relative">
-        <Card className={!isPremium ? "opacity-60 pointer-events-none select-none" : ""}>
+        <Card className={!isPremium ? "pointer-events-none select-none" : ""}>
           <CardHeader>
             <CardTitle className="text-base font-display">Envio em Massa</CardTitle>
-            <CardDescription>Envie mensagens para múltiplos contatos de uma vez</CardDescription>
+            <CardDescription className="max-w-lg">
+              Envie mensagens para milhares de clientes com um clique — sem risco de banimento ou queda do número.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
