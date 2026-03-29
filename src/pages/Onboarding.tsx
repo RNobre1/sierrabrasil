@@ -441,51 +441,7 @@ export default function Onboarding() {
         }
       }
 
-      // 3. Scrape social media URLs in background (don't block)
-      const socialLinks = extractedConfig.social_links || {};
-      const urlsToScrape = Object.values(socialLinks).filter((v): v is string => !!v && String(v).startsWith("http"));
-      if (urlsToScrape.length > 0) {
-        fetch(SCRAPE_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            urls: urlsToScrape,
-            tenantId: tenant.id,
-            attendantId: att.id,
-          }),
-        }).then(r => r.json()).then(d => {
-          console.log("Scrape results:", d);
-        }).catch(e => console.error("Scrape error:", e));
-      }
-
-      // 4. Process any document content collected during conversation
-      const docMessages = messages.filter(m => m.role === "user" && m.content.startsWith("📎"));
-      if (docMessages.length > 0) {
-        for (const dm of docMessages) {
-          const fullContent = messages.find(m => m === dm);
-          if (fullContent) {
-            fetch(PROCESS_URL, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              },
-              body: JSON.stringify({
-                tenantId: tenant.id,
-                attendantId: att.id,
-                content: fullContent.content,
-                sourceName: fullContent.content.split("\n")[0].replace("📎 ", ""),
-                sourceType: "document",
-              }),
-            }).catch(e => console.error("Process knowledge error:", e));
-          }
-        }
-      }
-
-      // 5. Also store the full instructions as knowledge
+      // 3. Store instructions as knowledge
       if (extractedConfig.instructions) {
         fetch(PROCESS_URL, {
           method: "POST",
@@ -503,12 +459,66 @@ export default function Onboarding() {
         }).catch(e => console.error("Process instructions error:", e));
       }
 
-      toast({ title: "Atendente configurado! 🎉", description: "Seu atendente já está online. Redes sociais e documentos sendo processados em segundo plano." });
-      navigate("/dashboard");
+      // 4. Process doc messages
+      const docMessages = messages.filter(m => m.role === "user" && m.content.startsWith("📎"));
+      for (const dm of docMessages) {
+        fetch(PROCESS_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            tenantId: tenant.id,
+            attendantId: att.id,
+            content: dm.content,
+            sourceName: dm.content.split("\n")[0].replace("📎 ", ""),
+            sourceType: "document",
+          }),
+        }).catch(e => console.error("Process knowledge error:", e));
+      }
+
+      // 5. Scrape social URLs - show progress UI
+      const socialLinks = extractedConfig.social_links || {};
+      const urlsToScrape = Object.values(socialLinks).filter((v): v is string => !!v && String(v).startsWith("http"));
+      
+      if (urlsToScrape.length > 0) {
+        setScrapeUrls(urlsToScrape);
+        setScrapingPhase(true);
+        setSaving(false);
+
+        try {
+          const resp = await fetch(SCRAPE_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              urls: urlsToScrape,
+              tenantId: tenant.id,
+              attendantId: att.id,
+            }),
+          });
+          const data = await resp.json();
+          if (data.results) {
+            setScrapeResults(data.results);
+          }
+        } catch (e) {
+          console.error("Scrape error:", e);
+        }
+
+        setScrapeComplete(true);
+        // Wait 3 seconds for user to see results, then navigate
+        setTimeout(() => navigate("/dashboard"), 4000);
+      } else {
+        toast({ title: "Atendente configurado! 🎉", description: "Seu atendente já está online e pronto para atender." });
+        navigate("/dashboard");
+      }
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
