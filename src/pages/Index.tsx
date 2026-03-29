@@ -69,7 +69,7 @@ export default function Index() {
             INFRAESTRUTURA DE CRESCIMENTO EMPRESARIAL
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-foreground">
-            Construímos <span className="text-gradient">sistemas</span> que fazem sua empresa{" "}
+            Entregamos <span className="text-gradient">soluções</span> que fazem sua empresa{" "}
             <span className="text-gradient">vender mais</span> e escalar{" "}
             com <span className="text-gradient">inteligência</span>.
           </h1>

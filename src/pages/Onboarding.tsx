@@ -69,19 +69,30 @@ export default function Onboarding() {
   const [tempPassword, setTempPassword] = useState("");
   const [isPasswordInput, setIsPasswordInput] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const sensitiveInputRef = useRef<HTMLInputElement>(null);
   const hasStarted = useRef(false);
   const userMsgCount = messages.filter(m => m.role === "user").length;
 
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        chatEndRef.current?.scrollIntoView({ behavior, block: "end" });
+      });
+    });
+  }, []);
+
   // Autoscroll
   useEffect(() => {
-    const el = scrollRef.current;
-    if (el) {
-      requestAnimationFrame(() => {
-        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-      });
+    scrollToBottom(messages.length > 2 ? "smooth" : "auto");
+  }, [messages, isLoading, phase, isPasswordInput, scrollToBottom]);
+
+  useEffect(() => {
+    if (isPasswordInput) {
+      sensitiveInputRef.current?.focus();
     }
-  }, [messages, isLoading, phase]);
+  }, [isPasswordInput, passwordPhase]);
 
   const userName = user?.user_metadata?.full_name || profile?.full_name || "";
   const companyName = user?.user_metadata?.company_name || "";
@@ -244,16 +255,14 @@ export default function Onboarding() {
     // Handle password collection flow
     if (passwordPhase === "awaiting") {
       if (text.length < 8) {
-        setMessages(prev => [...prev,
-          { role: "user", content: "•".repeat(text.length) },
-          { role: "assistant", content: "A senha precisa ter pelo menos **8 caracteres**. Tente novamente:" }
+      setMessages(prev => [...prev,
+          { role: "assistant", content: "Sua senha precisa ter pelo menos **8 caracteres**. Tente novamente." }
         ]);
         setInput("");
         return;
       }
       setTempPassword(text);
       setMessages(prev => [...prev,
-        { role: "user", content: "•".repeat(text.length) },
         { role: "assistant", content: "Perfeito! Agora confirme digitando a mesma senha novamente:" }
       ]);
       setInput("");
@@ -264,8 +273,7 @@ export default function Onboarding() {
     if (passwordPhase === "confirming") {
       if (text !== tempPassword) {
         setMessages(prev => [...prev,
-          { role: "user", content: "•".repeat(text.length) },
-          { role: "assistant", content: "As senhas não conferem 😅 Tente digitar a senha novamente:" }
+          { role: "assistant", content: "As senhas não conferem. Vamos tentar de novo." }
         ]);
         setInput("");
         setPasswordPhase("awaiting");
@@ -273,7 +281,6 @@ export default function Onboarding() {
         return;
       }
       // Password confirmed — update via supabase auth
-      setMessages(prev => [...prev, { role: "user", content: "•".repeat(text.length) }]);
       setInput("");
       setIsLoading(true);
       setIsPasswordInput(false);
@@ -288,15 +295,13 @@ export default function Onboarding() {
           return;
         }
         setPasswordPhase("done");
-        setMessages(prev => [...prev, { role: "assistant", content: "Senha definida com sucesso! 🔒\n\nAgora vamos ao que interessa — me conta sobre seu negócio!" }]);
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: companyName
+            ? `Senha definida com sucesso. 🔒\n\nAgora vamos falar do seu negócio: em qual setor a **${companyName}** atua?`
+            : "Senha definida com sucesso. 🔒\n\nAgora vamos falar do seu negócio: qual é o nome da sua empresa?",
+        }]);
         setIsLoading(false);
-        // Kick off AI chat — send a silent trigger to the AI
-        setTimeout(() => {
-          const introMsg = userName
-            ? `Olá! Sou ${userName.split(" ")[0]}${companyName ? ` da ${companyName}` : ""} e quero configurar meu agente.`
-            : "Olá! Acabei de criar minha conta e quero configurar meu agente.";
-          sendToChat(introMsg);
-        }, 1000);
       });
       return;
     }
@@ -659,6 +664,20 @@ export default function Onboarding() {
             <ChatBubble key={i} msg={msg} />
           ))}
 
+          {isPasswordInput && (
+            <SensitiveConversationPanel
+              inputRef={sensitiveInputRef}
+              value={input}
+              onChange={setInput}
+              onSubmit={sendMessage}
+              onKeyDown={handleKeyDown}
+              disabled={isLoading}
+              placeholder={passwordPhase === "confirming" ? "Confirme sua senha" : "Digite sua senha"}
+              title={passwordPhase === "confirming" ? "Confirme a senha para continuar" : "Crie sua senha de acesso"}
+              description="Essa informação vai direto para a criação da conta e não fica salva em nenhuma IA."
+            />
+          )}
+
           {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
             <div className="flex justify-start animate-in fade-in duration-300">
               <div className="flex items-center gap-2.5">
@@ -675,40 +694,27 @@ export default function Onboarding() {
               </div>
             </div>
           )}
+
+          <div ref={chatEndRef} />
         </div>
       </div>
 
       {/* Input */}
+      {!isPasswordInput && (
       <div className="border-t border-border bg-card/80 backdrop-blur-sm sticky bottom-0">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex gap-2 items-center">
-            {!isPasswordInput && <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />}
-            {isPasswordInput ? (
-              <div className="flex-1 relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="password"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Digite sua senha..."
-                  disabled={isLoading}
-                  autoFocus
-                  className="h-11 rounded-xl border-border bg-background pl-10 text-sm"
-                />
-              </div>
-            ) : (
-              <Textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Descreva seu negócio, serviços, regras de atendimento..."
-                disabled={isLoading}
-                rows={2}
-                className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-border bg-background"
-              />
-            )}
+            <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />
+            <Textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Descreva seu negócio, serviços, regras de atendimento..."
+              disabled={isLoading}
+              rows={2}
+              className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-border bg-background"
+            />
             <Button
               onClick={sendMessage}
               size="icon"
@@ -718,18 +724,12 @@ export default function Onboarding() {
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          {!isPasswordInput && (
-            <p className="text-[10px] text-muted-foreground mt-2 text-center">
-              🎤 Áudio · ⌨️ Texto — Shift+Enter para nova linha
-            </p>
-          )}
-          {isPasswordInput && (
-            <p className="text-[10px] text-muted-foreground mt-2 text-center">
-              🔒 Sua senha não é enviada para a IA — apenas salva na sua conta
-            </p>
-          )}
+          <p className="text-[10px] text-muted-foreground mt-2 text-center">
+            🎤 Áudio · ⌨️ Texto — Shift+Enter para nova linha
+          </p>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -785,6 +785,76 @@ function ChatBubble({ msg }: { msg: Msg }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function SensitiveConversationPanel({
+  title,
+  description,
+  placeholder,
+  value,
+  onChange,
+  onSubmit,
+  onKeyDown,
+  disabled,
+  inputRef,
+}: {
+  title: string;
+  description: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  disabled: boolean;
+  inputRef: React.RefObject<HTMLInputElement>;
+}) {
+  return (
+    <div className="flex justify-center animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <form
+        className="w-full max-w-xl rounded-2xl border border-border bg-card/95 p-4 shadow-sm surface-glow"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            <Lock className="h-3.5 w-3.5" /> Campo sensível
+          </span>
+          <span className="text-[10px] text-muted-foreground">Não fica salvo em nenhuma IA</span>
+        </div>
+
+        <div className="mt-4 space-y-1">
+          <p className="text-sm font-medium text-foreground">{title}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
+        </div>
+
+        <div className="mt-4 flex gap-2">
+          <div className="relative flex-1">
+            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              ref={inputRef}
+              type="password"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={placeholder}
+              disabled={disabled}
+              autoComplete="new-password"
+              className="h-11 rounded-xl border-border bg-background pl-10"
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={disabled || !value.trim()}
+            className="h-11 rounded-xl bg-gradient-to-br from-primary to-primary/80 px-4 shadow-lg shadow-primary/20"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
