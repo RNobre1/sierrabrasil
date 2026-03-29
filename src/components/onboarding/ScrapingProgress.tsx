@@ -266,7 +266,7 @@ export default function ScrapingProgress({
           <Sparkles className="h-4 w-4 text-primary shrink-0" />
           <p className="text-xs text-foreground">
             <span className="font-medium">{results.filter(r => r.status === "success").length} fontes</span> processadas com sucesso.
-            Seu atendente agora tem acesso a toda essa base de conhecimento.
+            Seu agente agora tem acesso a toda essa base de conhecimento.
           </p>
         </motion.div>
       )}
