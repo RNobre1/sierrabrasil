@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, User, Loader2, Check, ArrowRight } from "lucide-react";
+import { Send, Sparkles, User, Loader2, Check, ArrowRight, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import ChoiceSelector from "@/components/onboarding/ChoiceSelector";
 import AudioRecorder from "@/components/onboarding/AudioRecorder";
 import FileUploader from "@/components/onboarding/FileUploader";
+import ScrapingProgress from "@/components/onboarding/ScrapingProgress";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -44,6 +45,10 @@ export default function Onboarding() {
   const [extractedConfig, setExtractedConfig] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [activeChoices, setActiveChoices] = useState<ChoiceData | null>(null);
+  const [scrapingPhase, setScrapingPhase] = useState(false);
+  const [scrapeUrls, setScrapeUrls] = useState<string[]>([]);
+  const [scrapeResults, setScrapeResults] = useState<any[]>([]);
+  const [scrapeComplete, setScrapeComplete] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasStarted = useRef(false);
@@ -436,51 +441,7 @@ export default function Onboarding() {
         }
       }
 
-      // 3. Scrape social media URLs in background (don't block)
-      const socialLinks = extractedConfig.social_links || {};
-      const urlsToScrape = Object.values(socialLinks).filter((v): v is string => !!v && String(v).startsWith("http"));
-      if (urlsToScrape.length > 0) {
-        fetch(SCRAPE_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            urls: urlsToScrape,
-            tenantId: tenant.id,
-            attendantId: att.id,
-          }),
-        }).then(r => r.json()).then(d => {
-          console.log("Scrape results:", d);
-        }).catch(e => console.error("Scrape error:", e));
-      }
-
-      // 4. Process any document content collected during conversation
-      const docMessages = messages.filter(m => m.role === "user" && m.content.startsWith("📎"));
-      if (docMessages.length > 0) {
-        for (const dm of docMessages) {
-          const fullContent = messages.find(m => m === dm);
-          if (fullContent) {
-            fetch(PROCESS_URL, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              },
-              body: JSON.stringify({
-                tenantId: tenant.id,
-                attendantId: att.id,
-                content: fullContent.content,
-                sourceName: fullContent.content.split("\n")[0].replace("📎 ", ""),
-                sourceType: "document",
-              }),
-            }).catch(e => console.error("Process knowledge error:", e));
-          }
-        }
-      }
-
-      // 5. Also store the full instructions as knowledge
+      // 3. Store instructions as knowledge
       if (extractedConfig.instructions) {
         fetch(PROCESS_URL, {
           method: "POST",
@@ -498,12 +459,66 @@ export default function Onboarding() {
         }).catch(e => console.error("Process instructions error:", e));
       }
 
-      toast({ title: "Atendente configurado! 🎉", description: "Seu atendente já está online. Redes sociais e documentos sendo processados em segundo plano." });
-      navigate("/dashboard");
+      // 4. Process doc messages
+      const docMessages = messages.filter(m => m.role === "user" && m.content.startsWith("📎"));
+      for (const dm of docMessages) {
+        fetch(PROCESS_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            tenantId: tenant.id,
+            attendantId: att.id,
+            content: dm.content,
+            sourceName: dm.content.split("\n")[0].replace("📎 ", ""),
+            sourceType: "document",
+          }),
+        }).catch(e => console.error("Process knowledge error:", e));
+      }
+
+      // 5. Scrape social URLs - show progress UI
+      const socialLinks = extractedConfig.social_links || {};
+      const urlsToScrape = Object.values(socialLinks).filter((v): v is string => !!v && String(v).startsWith("http"));
+      
+      if (urlsToScrape.length > 0) {
+        setScrapeUrls(urlsToScrape);
+        setScrapingPhase(true);
+        setSaving(false);
+
+        try {
+          const resp = await fetch(SCRAPE_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              urls: urlsToScrape,
+              tenantId: tenant.id,
+              attendantId: att.id,
+            }),
+          });
+          const data = await resp.json();
+          if (data.results) {
+            setScrapeResults(data.results);
+          }
+        } catch (e) {
+          console.error("Scrape error:", e);
+        }
+
+        setScrapeComplete(true);
+        // Wait 3 seconds for user to see results, then navigate
+        setTimeout(() => navigate("/dashboard"), 4000);
+      } else {
+        toast({ title: "Atendente configurado! 🎉", description: "Seu atendente já está online e pronto para atender." });
+        navigate("/dashboard");
+      }
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -512,6 +527,46 @@ export default function Onboarding() {
       sendMessage();
     }
   };
+
+  // Scraping phase - full screen progress
+  if (scrapingPhase) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-base font-display font-semibold text-foreground">Treinando seu Atendente</h1>
+              <p className="text-xs text-muted-foreground">Buscando dados reais do seu negócio na web...</p>
+            </div>
+          </div>
+          <div className="h-0.5 bg-muted">
+            <div className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-700" style={{ width: "100%" }} />
+          </div>
+        </header>
+
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-xl space-y-6">
+            <ScrapingProgress urls={scrapeUrls} results={scrapeResults} isComplete={scrapeComplete} />
+            
+            {scrapeComplete && (
+              <div className="text-center animate-in fade-in duration-500">
+                <Button
+                  onClick={() => navigate("/dashboard")}
+                  className="bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20"
+                >
+                  <Rocket className="h-4 w-4 mr-2" />
+                  Ir para o Dashboard
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
