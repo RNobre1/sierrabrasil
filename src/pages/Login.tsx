@@ -181,12 +181,17 @@ export default function Login() {
               </div>
             </div>
             <Button type="submit"
-              className="w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 font-medium shadow-lg shadow-primary/20 transition-all"
+              className="group w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 font-medium shadow-lg shadow-primary/20 transition-all"
               disabled={loading}>
               {loading ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
               ) : (
-                <>Entrar <ArrowRight className="h-4 w-4 ml-1" /></>
+                <>
+                  Entrar
+                  <span className="relative ml-2 inline-flex items-center justify-center h-6 w-6 rounded-md bg-white/10 shadow-[0_0_8px_rgba(255,255,255,0.15)] group-hover:shadow-[0_0_12px_rgba(255,255,255,0.25)] group-hover:translate-x-0.5 transition-all duration-300">
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                </>
               )}
             </Button>
           </form>
