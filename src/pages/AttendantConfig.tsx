@@ -151,7 +151,7 @@ export default function AttendantConfig() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome do atendente</Label>
+            <Label htmlFor="name">Nome do agente</Label>
             <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Luna, Sofia, Max" />
           </div>
           <div className="space-y-2">
