@@ -80,6 +80,7 @@ export default function ScrapingProgress({
   const [currentMessage, setCurrentMessage] = useState(getRandomMessage("scanning"));
   const [progress, setProgress] = useState(0);
 
+  // Smooth fake progress while waiting for the single request
   useEffect(() => {
     if (isComplete) {
       setPhase("done");
@@ -88,22 +89,33 @@ export default function ScrapingProgress({
       return;
     }
 
-    const completedCount = results.length;
-    const total = urls.length;
-    const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+    // Simulate smooth progress over ~90 seconds
+    const stages = [
+      { at: 0, pct: 5, phase: "scanning" as Phase },
+      { at: 3000, pct: 12, phase: "scanning" as Phase },
+      { at: 6000, pct: 20, phase: "scraping" as Phase },
+      { at: 12000, pct: 30, phase: "scraping" as Phase },
+      { at: 20000, pct: 40, phase: "scraping" as Phase },
+      { at: 30000, pct: 50, phase: "scraping" as Phase },
+      { at: 40000, pct: 58, phase: "analyzing" as Phase },
+      { at: 50000, pct: 65, phase: "analyzing" as Phase },
+      { at: 60000, pct: 72, phase: "analyzing" as Phase },
+      { at: 75000, pct: 80, phase: "storing" as Phase },
+      { at: 90000, pct: 85, phase: "storing" as Phase },
+      { at: 110000, pct: 90, phase: "storing" as Phase },
+    ];
 
-    if (pct === 0) {
-      setPhase("scanning");
-    } else if (pct < 50) {
-      setPhase("scraping");
-    } else if (pct < 80) {
-      setPhase("analyzing");
-    } else {
-      setPhase("storing");
-    }
+    const timers = stages.map(s =>
+      setTimeout(() => {
+        if (!isComplete) {
+          setProgress(s.pct);
+          setPhase(s.phase);
+        }
+      }, s.at)
+    );
 
-    setProgress(Math.max(5, pct));
-  }, [results, urls, isComplete]);
+    return () => timers.forEach(clearTimeout);
+  }, [isComplete]);
 
   // Cycle witty messages
   useEffect(() => {

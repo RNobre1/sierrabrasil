@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Building2, Clock, MapPin, ShoppingBag, DollarSign, Globe, Pencil, Check, ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { Building2, Clock, MapPin, ShoppingBag, DollarSign, Globe, Pencil, Check, ArrowLeft, ArrowRight, Sparkles, Phone, MessageCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,9 @@ type OverviewData = {
   products?: string;
   prices?: string;
   highlights?: string;
+  description?: string;
+  contactInfo?: string;
+  tone?: string;
   socialLinks?: Record<string, string>;
 };
 
@@ -107,14 +110,22 @@ export default function BusinessOverview({
     setEditing(null);
   };
 
+  const hasAnyData = !!(
+    localData.businessName || localData.sector || localData.address ||
+    localData.hours || localData.products || localData.prices ||
+    localData.highlights || localData.description || localData.contactInfo
+  );
+
   const cards = [
     { icon: <Building2 className="h-4 w-4" />, label: "Negócio", value: localData.businessName || "", key: "businessName" },
+    { icon: <MessageCircle className="h-4 w-4" />, label: "Descrição", value: localData.description || "", key: "description", multiline: true },
     { icon: <ShoppingBag className="h-4 w-4" />, label: "Setor", value: localData.sector || "", key: "sector" },
     { icon: <MapPin className="h-4 w-4" />, label: "Endereço", value: localData.address || "", key: "address" },
     { icon: <Clock className="h-4 w-4" />, label: "Horário de Funcionamento", value: localData.hours || "", key: "hours" },
+    { icon: <Phone className="h-4 w-4" />, label: "Contato", value: localData.contactInfo || "", key: "contactInfo" },
     { icon: <ShoppingBag className="h-4 w-4" />, label: "Produtos / Serviços", value: localData.products || "", key: "products", multiline: true },
     { icon: <DollarSign className="h-4 w-4" />, label: "Preços", value: localData.prices || "", key: "prices", multiline: true },
-    { icon: <Sparkles className="h-4 w-4" />, label: "Destaques", value: localData.highlights || "", key: "highlights", multiline: true },
+    { icon: <Star className="h-4 w-4" />, label: "Diferenciais", value: localData.highlights || "", key: "highlights", multiline: true },
   ];
 
   return (
@@ -135,18 +146,27 @@ export default function BusinessOverview({
           <Sparkles className="h-7 w-7 text-primary-foreground" />
         </motion.div>
         <h2 className="text-xl font-display font-semibold text-foreground">
-          Olha o que encontrei sobre{" "}
-          <span className="text-primary">{localData.businessName || "sua empresa"}</span>
+          {hasAnyData ? (
+            <>
+              Olha o que encontrei sobre{" "}
+              <span className="text-primary">{localData.businessName || "sua empresa"}</span>
+            </>
+          ) : (
+            "Não encontramos muitas informações"
+          )}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Confira os dados e edite o que quiser. Clique no lápis para ajustar.
+          {hasAnyData
+            ? "Confira os dados e edite o que quiser. Clique no lápis para ajustar."
+            : "Você pode preencher os campos manualmente clicando em editar, ou enviar documentos na próxima etapa."
+          }
         </p>
       </div>
 
       {/* Cards Grid */}
       <div className="grid gap-3">
         {cards.map((c, i) => (
-          <motion.div key={c.key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i }}>
+          <motion.div key={c.key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * i }}>
             <InfoCard
               icon={c.icon}
               label={c.label}

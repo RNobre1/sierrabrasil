@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, User, Loader2, ArrowRight, Rocket, Paperclip } from "lucide-react";
+import { Send, Sparkles, User, Loader2, ArrowRight, Rocket, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
@@ -19,13 +19,13 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/onboarding-c
 const PROCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-knowledge`;
 const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
 
-type OnboardingPhase = 
-  | "chat"           // Initial conversation
-  | "social-links"   // Selecting social networks + inputting links
-  | "scraping"       // Scraping in progress
-  | "overview"       // Show scraped data overview
-  | "docs"           // Ask about documents
-  | "finalizing"     // Saving config
+type OnboardingPhase =
+  | "chat"
+  | "social-links"
+  | "scraping"
+  | "overview"
+  | "docs"
+  | "finalizing"
   | "done";
 
 type OverviewData = {
@@ -36,6 +36,9 @@ type OverviewData = {
   products?: string;
   prices?: string;
   highlights?: string;
+  description?: string;
+  contactInfo?: string;
+  tone?: string;
   socialLinks?: Record<string, string>;
 };
 
@@ -55,11 +58,12 @@ export default function Onboarding() {
   const [showDocUpload, setShowDocUpload] = useState(false);
   const [textPasteOpen, setTextPasteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [businessInfo, setBusinessInfo] = useState<any>({});
+  const [pastedTexts, setPastedTexts] = useState<string[]>([]);
+  const [attendantNameFromChat, setAttendantNameFromChat] = useState("");
+  const [personaFromChat, setPersonaFromChat] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasStarted = useRef(false);
-  // Track how many user messages to decide when to show social links
   const userMsgCount = messages.filter(m => m.role === "user").length;
 
   // Autoscroll
@@ -80,7 +84,7 @@ export default function Onboarding() {
     }, 500);
   }, []);
 
-  // Streaming helper 
+  // Streaming helper
   const streamChat = async (allMessages: Msg[], onChunk: (text: string) => void): Promise<string> => {
     const resp = await fetch(CHAT_URL, {
       method: "POST",
@@ -150,7 +154,6 @@ export default function Onboarding() {
 
     try {
       const allMessages = [...prevMessages, userMsg];
-      let assistantText = "";
 
       const fullText = await streamChat(allMessages, (chunk) => {
         const display = cleanDisplay(chunk);
@@ -163,26 +166,31 @@ export default function Onboarding() {
         });
       });
 
-      assistantText = fullText;
+      // Extract attendant name & persona from conversation context
+      const nameMatch = fullText.match(/(?:nome.*?atendente|atendente.*?(?:chamar|nome))[:\s]*["']?(\w+)["']?/i);
+      if (nameMatch) setAttendantNameFromChat(nameMatch[1]);
+
+      const personaMatch = fullText.match(/(?:tom|persona)[:\s]*([^\n.!?]+)/i);
+      if (personaMatch) setPersonaFromChat(personaMatch[1].trim());
 
       // Check if AI is requesting social links
-      if (assistantText.includes("```social_links```")) {
+      if (fullText.includes("```social_links```")) {
         setPhase("social-links");
       }
 
       // Check for docs upload request
-      if (assistantText.includes("```docs_upload```")) {
+      if (fullText.includes("```docs_upload```")) {
         setShowDocUpload(true);
       }
 
       // Check for final config JSON
-      const jsonMatch = assistantText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+      const jsonMatch = fullText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
       if (jsonMatch) {
         try {
           const parsed = JSON.parse(jsonMatch[1]);
           if (parsed.ready && parsed.config) {
-            setBusinessInfo(parsed.config);
-            await finalize(parsed.config);
+            if (parsed.config.attendant_name) setAttendantNameFromChat(parsed.config.attendant_name);
+            if (parsed.config.persona) setPersonaFromChat(parsed.config.persona);
           }
         } catch {}
       }
@@ -193,6 +201,18 @@ export default function Onboarding() {
     setIsLoading(false);
     inputRef.current?.focus();
   };
+
+  // Also extract attendant name from user messages
+  useEffect(() => {
+    const userMsgs = messages.filter(m => m.role === "user");
+    for (const m of userMsgs) {
+      const match = m.content.match(/(?:atendente|assistente).*?(?:chamar|nome)[:\s]*["']?(\w+)["']?/i);
+      if (match) setAttendantNameFromChat(match[1]);
+      // Also check "pode ser X", "quero que se chame X"
+      const match2 = m.content.match(/(?:pode ser|se chame?|nome dele?|nome dela?)[:\s]*["']?(\w+)["']?/i);
+      if (match2) setAttendantNameFromChat(match2[1]);
+    }
+  }, [messages]);
 
   const sendMessage = () => {
     const text = input.trim();
@@ -209,14 +229,14 @@ export default function Onboarding() {
   };
 
   const handleTextPaste = (text: string) => {
+    setPastedTexts(prev => [...prev, text]);
     sendToChat(`📎 Texto colado:\n\n${text.slice(0, 3000)}`);
   };
 
   // Social links confirmed
   const handleSocialLinksSubmit = (links: Record<string, string>) => {
     setSocialLinks(links);
-    
-    // Build URLs for scraping
+
     const urls: string[] = [];
     Object.entries(links).forEach(([platform, val]) => {
       if (!val) return;
@@ -233,11 +253,9 @@ export default function Onboarding() {
     setScrapeUrls(urls);
     setPhase("scraping");
 
-    // Tell the chat about the selection
     const summary = Object.entries(links).map(([k, v]) => `${k}: ${v}`).join(", ");
     setMessages((prev) => [...prev, { role: "user", content: `Minhas redes: ${summary}` }]);
 
-    // Start scraping
     startScraping(urls, links);
   };
 
@@ -249,62 +267,57 @@ export default function Onboarding() {
       const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).single();
       if (!att) throw new Error("Attendant not found");
 
+      // Simulate progressive results while waiting for the single request
+      const fakeProgressInterval = setInterval(() => {
+        setScrapeResults(prev => {
+          if (prev.length < urls.length - 1) {
+            // Add a "processing" placeholder to show progress
+            return prev;
+          }
+          return prev;
+        });
+      }, 3000);
+
       const resp = await fetch(SCRAPE_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ urls, tenantId: tenant.id, attendantId: att.id }),
+        body: JSON.stringify({
+          urls,
+          tenantId: tenant.id,
+          attendantId: att.id,
+          pastedText: pastedTexts.join("\n\n---\n\n"),
+        }),
       });
+
+      clearInterval(fakeProgressInterval);
       const data = await resp.json();
-      
+
       if (data.results) {
         setScrapeResults(data.results);
-        
-        // Build overview from scraped data
-        const overview: OverviewData = {
-          businessName: profile?.full_name || "",
-          socialLinks: links,
-        };
 
-        // Extract info from scrape results
-        for (const r of data.results) {
-          if (r.enrichedContent) {
-            const content = r.enrichedContent as string;
-            // Try to extract structured info
-            const nameMatch = content.match(/(?:nome|empresa|negócio)[:\s]*([^\n]+)/i);
-            if (nameMatch && !overview.businessName) overview.businessName = nameMatch[1].trim();
-            const sectorMatch = content.match(/(?:setor|ramo|segmento)[:\s]*([^\n]+)/i);
-            if (sectorMatch) overview.sector = sectorMatch[1].trim();
-            const addressMatch = content.match(/(?:endereço|localização|local)[:\s]*([^\n]+)/i);
-            if (addressMatch) overview.address = addressMatch[1].trim();
-            const hoursMatch = content.match(/(?:horário|funcionamento)[:\s]*([^\n]+)/i);
-            if (hoursMatch) overview.hours = hoursMatch[1].trim();
-            const productsMatch = content.match(/(?:produtos|serviços|cardápio)[:\s]*([\s\S]*?)(?:\n\n|$)/i);
-            if (productsMatch) overview.products = productsMatch[1].trim().slice(0, 500);
-            const pricesMatch = content.match(/(?:preços|valores|tabela)[:\s]*([\s\S]*?)(?:\n\n|$)/i);
-            if (pricesMatch) overview.prices = pricesMatch[1].trim().slice(0, 500);
-          }
-        }
+        // Use AI-generated overview if available
+        const overview: OverviewData = { socialLinks: links };
 
-        // Also try AI summary
-        if (data.results.some((r: any) => r.status === "success")) {
-          const allContent = data.results
-            .filter((r: any) => r.enrichedContent)
-            .map((r: any) => r.enrichedContent)
-            .join("\n\n");
-          
-          if (allContent) {
-            overview.highlights = allContent.slice(0, 300);
-          }
+        if (data.overview) {
+          overview.businessName = data.overview.businessName || "";
+          overview.sector = data.overview.sector || "";
+          overview.address = data.overview.address || "";
+          overview.hours = data.overview.hours || "";
+          overview.products = data.overview.products || "";
+          overview.prices = data.overview.prices || "";
+          overview.highlights = data.overview.highlights || "";
+          overview.description = data.overview.description || "";
+          overview.contactInfo = data.overview.contactInfo || "";
+          overview.tone = data.overview.tone || "";
         }
 
         setOverviewData(overview);
       }
-      
+
       setScrapeComplete(true);
-      // Small delay then show overview
       setTimeout(() => setPhase("overview"), 2000);
     } catch (e) {
       console.error("Scrape error:", e);
@@ -316,12 +329,11 @@ export default function Onboarding() {
   const handleOverviewConfirm = (data: OverviewData) => {
     setOverviewData(data);
     setPhase("docs");
-    // Add assistant message about docs
     setMessages((prev) => [
       ...prev,
       {
         role: "assistant",
-        content: "Ótimo! Agora, você tem algum material que pode nos ajudar a treinar melhor seu atendente? 📄\n\nPode ser catálogo, cardápio, tabela de preços, apresentação da empresa, FAQ... qualquer documento que descreva seu negócio.\n\nFormatos aceitos: PDF, DOC, DOCX, XLS, XLSX, CSV, MD, TXT.\nVocê também pode colar texto direto!",
+        content: "Ótimo! Agora, você tem algum material que pode nos ajudar a treinar melhor seu atendente? 📄\n\nPode ser catálogo, cardápio, tabela de preços, apresentação da empresa, FAQ... qualquer documento que descreva seu negócio.\n\nVocê também pode colar texto direto!",
       },
     ]);
     setShowDocUpload(true);
@@ -341,54 +353,6 @@ export default function Onboarding() {
     finalizeOnboarding();
   };
 
-  const finalize = async (config: any) => {
-    if (!user) return;
-    setSaving(true);
-
-    try {
-      const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).single();
-      if (!tenant) throw new Error("Tenant not found");
-      const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).single();
-      if (!att) throw new Error("Attendant not found");
-
-      await supabase.from("attendants").update({
-        name: config.attendant_name || "Meu Atendente",
-        persona: config.persona || "",
-        instructions: config.instructions || "",
-        channels: config.channels || ["whatsapp", "web"],
-        status: "online",
-      }).eq("id", att.id);
-
-      if (config.instructions) {
-        const bizMatch = config.instructions.match(/SOBRE O NEG[ÓO]CIO[:\s]*([^\n]+)/i);
-        if (bizMatch) {
-          await supabase.from("tenants").update({ name: bizMatch[1].trim().slice(0, 50) }).eq("id", tenant.id);
-        }
-
-        fetch(PROCESS_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            tenantId: tenant.id,
-            attendantId: att.id,
-            content: config.instructions,
-            sourceName: "Instruções do Onboarding",
-            sourceType: "manual",
-          }),
-        }).catch(e => console.error("Process instructions error:", e));
-      }
-
-      toast({ title: "Atendente configurado! 🎉", description: "Seu atendente está online." });
-      navigate("/dashboard");
-    } catch (e: any) {
-      toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
-    }
-    setSaving(false);
-  };
-
   const finalizeOnboarding = async () => {
     if (!user) return;
     setSaving(true);
@@ -399,21 +363,26 @@ export default function Onboarding() {
       const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).single();
       if (!att) throw new Error("Attendant not found");
 
-      // Build instructions from overview + chat
+      // Build rich instructions from overview data
       const instructions = [
         overviewData.businessName ? `SOBRE O NEGÓCIO: ${overviewData.businessName}` : "",
+        overviewData.description ? `DESCRIÇÃO: ${overviewData.description}` : "",
         overviewData.sector ? `SETOR: ${overviewData.sector}` : "",
         overviewData.address ? `ENDEREÇO: ${overviewData.address}` : "",
-        overviewData.hours ? `HORÁRIO: ${overviewData.hours}` : "",
+        overviewData.hours ? `HORÁRIO DE FUNCIONAMENTO: ${overviewData.hours}` : "",
+        overviewData.contactInfo ? `CONTATO: ${overviewData.contactInfo}` : "",
         overviewData.products ? `PRODUTOS/SERVIÇOS:\n${overviewData.products}` : "",
         overviewData.prices ? `PREÇOS:\n${overviewData.prices}` : "",
-        overviewData.highlights ? `INFORMAÇÕES ADICIONAIS:\n${overviewData.highlights}` : "",
-        overviewData.socialLinks ? `REDES SOCIAIS: ${Object.entries(overviewData.socialLinks).map(([k,v]) => `${k}: ${v}`).join(", ")}` : "",
+        overviewData.highlights ? `DIFERENCIAIS E INFORMAÇÕES IMPORTANTES:\n${overviewData.highlights}` : "",
       ].filter(Boolean).join("\n\n");
 
+      // Use attendant name from chat, fallback to business name
+      const finalAttendantName = attendantNameFromChat || overviewData.businessName || "Meu Atendente";
+      const finalPersona = personaFromChat || overviewData.tone || "Simpático, profissional e direto";
+
       await supabase.from("attendants").update({
-        name: overviewData.businessName || "Meu Atendente",
-        persona: "Simpático, profissional e direto",
+        name: finalAttendantName,
+        persona: finalPersona,
         instructions,
         channels: ["whatsapp", "web"],
         status: "online",
@@ -519,7 +488,6 @@ export default function Onboarding() {
         <OnboardingHeader title="Documentos da empresa" subtitle="Envie materiais para turbinar seu atendente" progress={85} />
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-            {/* Show last messages */}
             {messages.slice(-3).map((msg, i) => (
               <ChatBubble key={i} msg={msg} />
             ))}
@@ -527,12 +495,12 @@ export default function Onboarding() {
         </div>
 
         <div className="border-t border-border bg-card/80 backdrop-blur-sm sticky bottom-0">
-          <div className="max-w-3xl mx-auto px-4 py-3 space-y-3">
-            <div className="flex gap-2 items-end">
+          <div className="max-w-3xl mx-auto px-4 py-3 space-y-2">
+            <div className="flex gap-2 items-center">
               <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />
               <FileUploader onFileContent={handleFileContent} disabled={isLoading} />
-              <Button variant="outline" size="sm" onClick={() => setTextPasteOpen(true)} className="h-11 rounded-xl text-xs shrink-0">
-                Colar texto
+              <Button variant="outline" size="icon" onClick={() => setTextPasteOpen(true)} className="h-11 w-11 rounded-xl shrink-0" title="Colar texto">
+                <FileText className="h-4 w-4" />
               </Button>
               <Textarea
                 ref={inputRef}
@@ -542,7 +510,7 @@ export default function Onboarding() {
                 placeholder="Ou descreva aqui..."
                 disabled={isLoading}
                 rows={2}
-                className="flex-1 min-h-[52px] max-h-[120px] resize-none rounded-xl border-border bg-background"
+                className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-border bg-background"
               />
               <Button
                 onClick={sendMessage}
@@ -555,12 +523,14 @@ export default function Onboarding() {
             </div>
             <div className="flex justify-between items-center">
               <p className="text-[10px] text-muted-foreground">PDF, DOC, DOCX, XLS, CSV, MD, TXT aceitos</p>
-              <Button size="sm" variant="ghost" onClick={skipDocs} className="text-xs text-muted-foreground">
-                Pular — não tenho documentos
-              </Button>
-              <Button size="sm" onClick={finishDocsAndContinue} className="text-xs bg-gradient-to-r from-primary to-primary/80">
-                <ArrowRight className="h-3 w-3 mr-1" /> Finalizar
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" onClick={skipDocs} className="text-xs text-muted-foreground h-8">
+                  Pular
+                </Button>
+                <Button size="sm" onClick={finishDocsAndContinue} className="text-xs bg-gradient-to-r from-primary to-primary/80 h-8">
+                  <ArrowRight className="h-3 w-3 mr-1" /> Finalizar
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -622,7 +592,7 @@ export default function Onboarding() {
       {/* Input */}
       <div className="border-t border-border bg-card/80 backdrop-blur-sm sticky bottom-0">
         <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex gap-2 items-end">
+          <div className="flex gap-2 items-center">
             <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />
             <Textarea
               ref={inputRef}
@@ -632,7 +602,7 @@ export default function Onboarding() {
               placeholder="Descreva seu negócio, serviços, regras de atendimento..."
               disabled={isLoading}
               rows={2}
-              className="flex-1 min-h-[52px] max-h-[120px] resize-none rounded-xl border-border bg-background"
+              className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-border bg-background"
             />
             <Button
               onClick={sendMessage}
