@@ -477,6 +477,7 @@ export default function Onboarding() {
         <div className="flex-1 overflow-y-auto p-6">
           <BusinessOverview
             data={overviewData}
+            sourcePreviews={sourcePreviews}
             onConfirm={handleOverviewConfirm}
             onGoBack={handleOverviewGoBack}
             onDataChange={setOverviewData}
