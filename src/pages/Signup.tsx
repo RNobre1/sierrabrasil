@@ -187,23 +187,6 @@ export default function Signup() {
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">Senha</Label>
-              <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" className="h-11 rounded-xl bg-secondary/50 border-border/50 pr-10 text-sm placeholder:text-muted-foreground/50" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                  {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm-password" className="text-xs font-medium text-muted-foreground">Confirmar senha</Label>
-              <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} placeholder="Repita a senha" className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
-              {confirmPassword && password !== confirmPassword && (
-                <p className="text-xs text-destructive">As senhas não conferem</p>
-              )}
-            </div>
 
             <Button type="submit" className="group w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 font-medium shadow-lg shadow-primary/20 transition-all" disabled={loading}>
               {loading ? (
