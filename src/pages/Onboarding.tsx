@@ -358,27 +358,41 @@ export default function Onboarding() {
     const summary = Object.entries(links).map(([k, v]) => `${k}: ${v}`).join(", ");
     setMessages((prev) => [...prev, { role: "user", content: `Minhas redes: ${summary}` }]);
 
-    startScraping(urls, links);
+    // Fire-and-forget: start scraping in background
+    startScrapingBackground(urls, links);
+
+    // After 30s max, transition to post-scrape chat regardless
+    setTimeout(() => {
+      transitionToPostScrapeChat();
+    }, 30000);
   };
 
-  const startScraping = async (urls: string[], links: Record<string, string>) => {
+  const transitionToPostScrapeChat = () => {
+    // Only transition if we're still on the scraping screen
+    setPhase((current) => {
+      if (current !== "scraping") return current;
+      return "post-scrape-chat";
+    });
+    setScrapeComplete(true);
+    setPostScrapeStep(0);
+
+    // Add the first post-scrape question
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        content: "Enquanto nossos robôs finalizam a análise, me conta mais algumas coisas! 🚀\n\n**Qual é o principal diferencial do seu negócio?** O que faz seus clientes escolherem vocês ao invés da concorrência?",
+      },
+    ]);
+  };
+
+  const startScrapingBackground = async (urls: string[], links: Record<string, string>) => {
     if (!user) return;
     try {
       const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).single();
       if (!tenant) throw new Error("Tenant not found");
       const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).single();
       if (!att) throw new Error("Attendant not found");
-
-      // Simulate progressive results while waiting for the single request
-      const fakeProgressInterval = setInterval(() => {
-        setScrapeResults(prev => {
-          if (prev.length < urls.length - 1) {
-            // Add a "processing" placeholder to show progress
-            return prev;
-          }
-          return prev;
-        });
-      }, 3000);
 
       const resp = await fetch(SCRAPE_URL, {
         method: "POST",
@@ -392,18 +406,16 @@ export default function Onboarding() {
           attendantId: att.id,
           pastedText: pastedTexts.join("\n\n---\n\n"),
         }),
-        signal: AbortSignal.timeout(180000), // 3 min max
+        signal: AbortSignal.timeout(150000),
       });
 
-      clearInterval(fakeProgressInterval);
       const data = await resp.json();
 
       if (data.results) {
         setScrapeResults(data.results);
+        scrapeDataRef.current.results = data.results;
 
-        // Use AI-generated overview if available
         const overview: OverviewData = { socialLinks: links };
-
         if (data.overview) {
           overview.businessName = data.overview.businessName || "";
           overview.sector = data.overview.sector || "";
@@ -416,20 +428,100 @@ export default function Onboarding() {
           overview.contactInfo = data.overview.contactInfo || "";
           overview.tone = data.overview.tone || "";
         }
-
+        scrapeDataRef.current.overview = overview;
         setOverviewData(overview);
       }
 
       if (data.sourcePreviews) {
+        scrapeDataRef.current.sourcePreviews = data.sourcePreviews;
         setSourcePreviews(data.sourcePreviews);
       }
 
+      scrapeDataRef.current.done = true;
       setScrapeComplete(true);
-      setTimeout(() => setPhase("overview"), 2000);
+
+      // If still on scraping screen (< 30s), transition early
+      setPhase((current) => {
+        if (current === "scraping") {
+          // Scraping finished before 30s — show briefly then transition
+          setTimeout(() => transitionToPostScrapeChat(), 2000);
+        }
+        return current;
+      });
+
+      // If user already finished post-scrape questions and is waiting
+      if (waitingForScrape) {
+        setWaitingForScrape(false);
+        setPhase("overview");
+      }
     } catch (e) {
       console.error("Scrape error:", e);
+      scrapeDataRef.current.done = true;
       setScrapeComplete(true);
-      setTimeout(() => setPhase("overview"), 2000);
+
+      setPhase((current) => {
+        if (current === "scraping") {
+          setTimeout(() => transitionToPostScrapeChat(), 1000);
+        }
+        return current;
+      });
+
+      if (waitingForScrape) {
+        setWaitingForScrape(false);
+        setPhase("overview");
+      }
+    }
+  };
+
+  // Handle post-scrape chat answers
+  const handlePostScrapeAnswer = (text: string) => {
+    setMessages((prev) => [...prev, { role: "user", content: text }]);
+
+    const step = postScrapeStep + 1;
+    setPostScrapeStep(step);
+
+    const questions: Msg[] = [
+      {
+        role: "assistant",
+        content: "Boa! 💪 E como seus clientes costumam entrar em contato? WhatsApp, ligação, presencial? **Qual o canal mais usado?**",
+      },
+      {
+        role: "assistant",
+        content: "Entendi! Última pergunta: **tem alguma regra importante** que seu agente precisa seguir? Por exemplo: não dar desconto, sempre pedir o nome do cliente, encaminhar para um humano em certos casos...",
+      },
+      {
+        role: "assistant",
+        content: "Perfeito! 🎯 Já tenho tudo que preciso. Deixa eu compilar o diagnóstico completo do seu negócio...",
+      },
+    ];
+
+    if (step < questions.length) {
+      setTimeout(() => {
+        setMessages((prev) => [...prev, questions[step]]);
+        if (step === questions.length - 1) {
+          // Last question answered — check if scraping is done
+          setTimeout(() => showOverviewWhenReady(), 2000);
+        }
+      }, 800);
+    } else {
+      showOverviewWhenReady();
+    }
+  };
+
+  const showOverviewWhenReady = () => {
+    if (scrapeDataRef.current.done) {
+      // Scraping already done — go straight to overview
+      setPhase("overview");
+    } else {
+      // Still scraping — show a brief "finalizing" message and wait
+      setWaitingForScrape(true);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Quase lá! ⏳ Finalizando a análise das suas redes sociais...",
+        },
+      ]);
     }
   };
 
