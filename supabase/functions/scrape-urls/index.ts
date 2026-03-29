@@ -377,7 +377,8 @@ serve(async (req) => {
     const allRawContents: string[] = [];
     const sourcePreviews: any[] = [];
 
-    for (const url of urls) {
+    // Process all URLs in parallel with individual timeouts
+    const urlPromises = urls.map(async (url: string) => {
       const platform = detectPlatform(url);
       try {
         let rawContent = "";
@@ -400,18 +401,13 @@ serve(async (req) => {
         }
 
         // Extract preview data for frontend display
-        if (apifyItems && apifyItems.length > 0) {
-          sourcePreviews.push(extractSourcePreviews(platform, apifyItems, url));
-        } else {
-          sourcePreviews.push({ platform, url, displayName: url.replace(/https?:\/\/(www\.)?/, "").split("/")[0], thumbnails: [] });
-        }
+        const preview = (apifyItems && apifyItems.length > 0)
+          ? extractSourcePreviews(platform, apifyItems, url)
+          : { platform, url, displayName: url.replace(/https?:\/\/(www\.)?/, "").split("/")[0], thumbnails: [] };
 
         if (!rawContent || rawContent.length < 20) {
-          results.push({ url, platform, status: "empty", details: "Nenhum conteúdo extraído" });
-          continue;
+          return { result: { url, platform, status: "empty", details: "Nenhum conteúdo extraído" } as any, rawContent: "", preview };
         }
-
-        allRawContents.push(`[${platform.toUpperCase()}] ${rawContent}`);
 
         const chunks = chunkContent(rawContent);
         const rows = chunks.map((chunk, i) => ({
@@ -428,15 +424,24 @@ serve(async (req) => {
         const { error } = await supabase.from("knowledge_base").insert(rows);
         if (error) {
           console.error(`[${platform}] DB insert error:`, error);
-          results.push({ url, platform, status: "error", details: error.message });
-        } else {
-          results.push({ url, platform, status: "success", chunks: chunks.length, details: `${rawContent.length} chars processados` });
+          return { result: { url, platform, status: "error", details: error.message } as any, rawContent, preview };
         }
+        return { result: { url, platform, status: "success", chunks: chunks.length, details: `${rawContent.length} chars processados` } as any, rawContent: `[${platform.toUpperCase()}] ${rawContent}`, preview };
       } catch (e) {
         console.error(`[${platform}] Failed for ${url}:`, e);
-        results.push({ url, platform, status: "error", details: e instanceof Error ? e.message : "Unknown" });
-        sourcePreviews.push({ platform, url, displayName: url.replace(/https?:\/\/(www\.)?/, "").split("/")[0], thumbnails: [] });
+        return {
+          result: { url, platform, status: "error", details: e instanceof Error ? e.message : "Unknown" } as any,
+          rawContent: "",
+          preview: { platform, url, displayName: url.replace(/https?:\/\/(www\.)?/, "").split("/")[0], thumbnails: [] },
+        };
       }
+    });
+
+    const settled = await Promise.all(urlPromises);
+    for (const s of settled) {
+      results.push(s.result);
+      if (s.rawContent) allRawContents.push(s.rawContent);
+      sourcePreviews.push(s.preview);
     }
 
     const allContent = allRawContents.join("\n\n===\n\n");
