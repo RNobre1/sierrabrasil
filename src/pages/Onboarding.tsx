@@ -189,8 +189,8 @@ export default function Onboarding() {
         });
       });
 
-      // Extract attendant name & persona from conversation context
-      const nameMatch = fullText.match(/(?:nome.*?atendente|atendente.*?(?:chamar|nome))[:\s]*["']?(\w+)["']?/i);
+      // Extract agent name & persona from conversation context
+      const nameMatch = fullText.match(/(?:nome.*?agente|agente.*?(?:chamar|nome))[:\s]*["']?(\w+)["']?/i);
       if (nameMatch) setAttendantNameFromChat(nameMatch[1]);
 
       const personaMatch = fullText.match(/(?:tom|persona)[:\s]*([^\n.!?]+)/i);
