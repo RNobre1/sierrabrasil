@@ -498,7 +498,7 @@ export default function Onboarding() {
   // ========== OVERVIEW PHASE ==========
   if (phase === "overview") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Revisão dos dados" subtitle="Confira o que encontramos e ajuste o que precisar" progress={70} />
         <div className="flex-1 overflow-y-auto p-6">
           <BusinessOverview
