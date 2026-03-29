@@ -107,7 +107,7 @@ export default function Onboarding() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || "" }),
+      body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || userName, companyName }),
     });
 
     if (!resp.ok) {
