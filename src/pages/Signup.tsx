@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap, Brain, MessageSquare, Phone } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
 
 function formatWhatsApp(value: string) {
