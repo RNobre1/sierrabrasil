@@ -93,16 +93,16 @@ export default function Index() {
 
       {/* Stats */}
       <section className="border-y border-border/30 bg-card/30 backdrop-blur-sm py-10 relative z-10">
-        <div className="mx-auto max-w-4xl flex items-center justify-center gap-12 px-6 text-center">
+        <div className="mx-auto max-w-4xl grid grid-cols-2 gap-6 sm:grid-cols-4 px-6 text-center">
           {[
             { value: "+R$42M", label: "Gerados para clientes" },
             { value: "84%", label: "Taxa de conversão" },
             { value: "12x", label: "ROI médio" },
             { value: "3s", label: "Tempo de resposta" },
           ].map((s, i) => (
-            <div key={i} className="flex-1">
-              <p className="text-2xl sm:text-3xl font-bold text-foreground">{s.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">{s.label}</p>
+            <div key={i}>
+              <p className="text-xl sm:text-3xl font-bold text-foreground">{s.value}</p>
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1">{s.label}</p>
             </div>
           ))}
         </div>
