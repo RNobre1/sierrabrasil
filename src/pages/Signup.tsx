@@ -85,13 +85,11 @@ export default function Signup() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      toast({ title: "Senhas não conferem", description: "Digite a mesma senha nos dois campos.", variant: "destructive" });
-      return;
-    }
     setLoading(true);
+    // Generate temporary password — real password will be set during onboarding
+    const tempPassword = crypto.randomUUID() + "Aa1!";
     const { error } = await supabase.auth.signUp({
-      email, password,
+      email, password: tempPassword,
       options: {
         data: { full_name: fullName, company_name: companyName, whatsapp: `+55${whatsapp.replace(/\D/g, "")}` },
         emailRedirectTo: window.location.origin,
