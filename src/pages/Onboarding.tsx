@@ -747,12 +747,13 @@ export default function Onboarding() {
     );
   }
 
-  // ========== CHAT PHASE ==========
+  // ========== CHAT PHASE (also handles post-scrape-chat) ==========
+  const isPostScrape = phase === "post-scrape-chat";
   return (
     <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
       <OnboardingHeader
-        title="Configuração do seu Agente"
-        subtitle="Conte sobre seu negócio — por texto ou áudio"
+        title={isPostScrape ? "Conhecendo seu negócio" : "Configuração do seu Agente"}
+        subtitle={isPostScrape ? "Mais algumas perguntas enquanto analisamos seus dados" : "Conte sobre seu negócio — por texto ou áudio"}
         progress={Number(progressPct)}
       />
 
