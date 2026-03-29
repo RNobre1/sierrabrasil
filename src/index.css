@@ -128,6 +128,11 @@
     font-weight: 600;
     letter-spacing: -0.03em;
   }
+
+  input, textarea, select, [role="combobox"] {
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.01em;
+  }
 }
 
 @layer utilities {
