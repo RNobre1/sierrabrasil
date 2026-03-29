@@ -197,7 +197,7 @@ export default function Agents() {
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="all" className="space-y-4">
+      <Tabs defaultValue="all" className="space-y-4 overflow-x-auto">
         <TabsList className="bg-muted/30 border border-border/30 h-9">
           <TabsTrigger value="all" className="text-[11px] gap-1.5 data-[state=active]:bg-background">
             <Bot className="h-3.5 w-3.5" /> Todos <Badge variant="secondary" className="text-[9px] h-4 px-1.5 ml-1">{agents.length}</Badge>
