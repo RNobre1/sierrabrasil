@@ -118,7 +118,7 @@ export default function AttendantPlayground() {
       }
     } catch (e) {
       console.error(e);
-      toast({ title: "Erro de conexão", description: "Não foi possível conectar ao atendente.", variant: "destructive" });
+      toast({ title: "Erro de conexão", description: "Não foi possível conectar ao agente.", variant: "destructive" });
     }
 
     setIsLoading(false);
