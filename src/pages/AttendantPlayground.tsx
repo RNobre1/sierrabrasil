@@ -21,7 +21,7 @@ export default function AttendantPlayground() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [attendantId, setAttendantId] = useState<string | null>(null);
-  const [attendantName, setAttendantName] = useState("Atendente");
+  const [attendantName, setAttendantName] = useState("Agente");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
