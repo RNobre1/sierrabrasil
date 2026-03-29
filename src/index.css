@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,102 +6,108 @@
 
 @layer base {
   :root {
-    /* Meteora Client — Light Mode (Clarivus-inspired elegance) */
+    /* Meteora — Dark-first premium theme */
+    --background: 222 30% 6%;
+    --foreground: 210 40% 95%;
+    --card: 222 25% 9%;
+    --card-foreground: 210 40% 95%;
+    --popover: 222 25% 10%;
+    --popover-foreground: 210 40% 95%;
+    --primary: 225 80% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 20% 14%;
+    --secondary-foreground: 210 30% 80%;
+    --muted: 222 20% 14%;
+    --muted-foreground: 215 15% 50%;
+    --accent: 222 20% 16%;
+    --accent-foreground: 210 30% 90%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 15% 14%;
+    --input: 222 15% 14%;
+    --ring: 225 80% 56%;
+    --radius: 0.75rem;
+
+    /* Meteora brand */
+    --meteora-blue: 225 80% 56%;
+    --meteora-cyan: 190 90% 50%;
+    --meteora-green: 152 69% 40%;
+    --meteora-lime: 80 80% 55%;
+    --meteora-warning: 38 92% 50%;
+    --meteora-danger: 0 72% 51%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(225 80% 56%), hsl(190 90% 50%));
+    --gradient-success: linear-gradient(135deg, hsl(152 69% 40%), hsl(190 90% 50%));
+    --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%), hsl(24 95% 53%));
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    --gradient-surface: linear-gradient(180deg, hsl(222 25% 10%), hsl(222 30% 6%));
+
+    /* Surfaces */
+    --surface-page: 222 30% 6%;
+    --surface-card: 222 25% 9%;
+    --surface-elevated: 222 20% 12%;
+
+    /* Sidebar */
+    --sidebar-background: 222 30% 5%;
+    --sidebar-foreground: 210 20% 70%;
+    --sidebar-primary: 225 80% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 20% 12%;
+    --sidebar-accent-foreground: 210 30% 90%;
+    --sidebar-border: 222 15% 12%;
+    --sidebar-ring: 225 80% 56%;
+  }
+
+  .dark {
+    /* Same as root — dark-first */
+  }
+
+  /* Light mode override for people who want it */
+  .light {
     --background: 220 14% 96%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 60%;
+    --primary: 225 80% 56%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 93%;
     --secondary-foreground: 222 47% 11%;
     --muted: 220 14% 93%;
     --muted-foreground: 220 9% 46%;
-    --accent: 217 91% 95%;
-    --accent-foreground: 217 91% 40%;
+    --accent: 220 14% 95%;
+    --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 217 91% 60%;
-    --radius: 0.625rem;
+    --ring: 225 80% 56%;
 
-    /* Meteora semantic */
-    --meteora-blue: 217 91% 60%;
-    --meteora-success: 152 69% 31%;
+    --meteora-blue: 225 80% 56%;
+    --meteora-cyan: 190 90% 40%;
+    --meteora-green: 152 69% 31%;
+    --meteora-lime: 80 80% 45%;
     --meteora-warning: 38 92% 50%;
     --meteora-danger: 0 84% 60%;
-    --meteora-info: 217 91% 60%;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%), hsl(260 67% 60%));
-    --gradient-success: linear-gradient(135deg, hsl(152 69% 31%), hsl(168 76% 36%));
-    --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%), hsl(24 95% 53%));
+    --gradient-hero: linear-gradient(135deg, hsl(225 80% 56%), hsl(190 90% 50%));
     --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
+    --gradient-surface: linear-gradient(180deg, hsl(220 14% 98%), hsl(220 14% 96%));
 
-    /* Surfaces */
     --surface-page: 220 14% 96%;
     --surface-card: 0 0% 100%;
     --surface-elevated: 0 0% 100%;
 
-    /* Sidebar */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222 47% 20%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary: 225 80% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 91% 96%;
-    --sidebar-accent-foreground: 217 91% 40%;
+    --sidebar-accent: 220 14% 95%;
+    --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 93%;
-    --sidebar-ring: 217 91% 60%;
-  }
-
-  .dark {
-    /* Meteora Admin — Dark Mode / MCC (Dominação Digital-inspired) */
-    --background: 228 12% 7%;
-    --foreground: 210 20% 90%;
-    --card: 225 11% 11%;
-    --card-foreground: 210 20% 90%;
-    --popover: 225 11% 11%;
-    --popover-foreground: 210 20% 90%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 225 11% 15%;
-    --secondary-foreground: 210 20% 90%;
-    --muted: 225 11% 15%;
-    --muted-foreground: 220 9% 55%;
-    --accent: 225 11% 18%;
-    --accent-foreground: 210 20% 90%;
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 225 11% 16%;
-    --input: 225 11% 16%;
-    --ring: 217 91% 60%;
-
-    --meteora-blue: 217 91% 60%;
-    --meteora-success: 152 69% 41%;
-    --meteora-warning: 38 92% 55%;
-    --meteora-danger: 0 70% 50%;
-    --meteora-info: 217 91% 60%;
-
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 50%), hsl(260 67% 50%));
-    --gradient-success: linear-gradient(135deg, hsl(152 69% 35%), hsl(168 76% 40%));
-    --gradient-warm: linear-gradient(135deg, hsl(38 92% 45%), hsl(24 95% 48%));
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-
-    --surface-page: 228 12% 7%;
-    --surface-card: 225 11% 11%;
-    --surface-elevated: 225 11% 15%;
-
-    --sidebar-background: 228 12% 7%;
-    --sidebar-foreground: 210 20% 80%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 11% 15%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 225 11% 14%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 225 80% 56%;
   }
 }
 
@@ -111,11 +117,13 @@
   }
 
   body {
-    @apply bg-background text-foreground font-body antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
   }
 }
 
@@ -127,16 +135,48 @@
 
   .glass-card {
     background: var(--gradient-glass);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .glow-primary {
-    box-shadow: 0 0 20px -5px hsl(217 91% 60% / 0.3);
+    box-shadow: 0 0 40px -10px hsl(225 80% 56% / 0.4);
   }
 
-  .glow-success {
-    box-shadow: 0 0 20px -5px hsl(152 69% 31% / 0.3);
+  .glow-cyan {
+    box-shadow: 0 0 40px -10px hsl(190 90% 50% / 0.3);
+  }
+
+  .surface-glow {
+    position: relative;
+  }
+
+  .surface-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(225 80% 56% / 0.2), transparent, hsl(190 90% 50% / 0.1));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .meteora-noise {
+    position: relative;
+  }
+
+  .meteora-noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
   }
 }
 
@@ -162,12 +202,12 @@
 
 /* Dashboard page transition */
 @keyframes dash-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .dash-page-enter {
-  animation: dash-fade-in 250ms ease-out;
+  animation: dash-fade-in 300ms ease-out;
 }
 
 /* Gradient border glow */
@@ -180,4 +220,39 @@
 .animate-border-glow {
   background-size: 200% 200%;
   animation: border-glow 3s ease infinite;
+}
+
+/* Ambient glow background */
+@keyframes float-glow {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
+  50% { transform: translate(20px, -20px) scale(1.1); opacity: 0.25; }
+}
+
+.ambient-glow {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-glow 8s ease-in-out infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(222 15% 20%);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(222 15% 30%);
 }

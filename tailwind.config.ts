@@ -14,8 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Outfit", "sans-serif"],
-        body: ["DM Sans", "sans-serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
       colors: {
@@ -64,10 +63,11 @@ export default {
         },
         meteora: {
           blue: "hsl(var(--meteora-blue))",
-          success: "hsl(var(--meteora-success))",
+          cyan: "hsl(var(--meteora-cyan))",
+          green: "hsl(var(--meteora-green))",
+          lime: "hsl(var(--meteora-lime))",
           warning: "hsl(var(--meteora-warning))",
           danger: "hsl(var(--meteora-danger))",
-          info: "hsl(var(--meteora-info))",
         },
         surface: {
           page: "hsl(var(--surface-page))",
