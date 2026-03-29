@@ -91,7 +91,14 @@ export default function ClientLayout() {
           </nav>
 
           {/* User section */}
-          <div className="border-t border-border/30 p-3">
+          <div className="border-t border-border/30 p-3 space-y-2">
+            <a
+              href="/integrations"
+              className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.5)]"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Fazer Upgrade
+            </a>
             <div className="flex items-center gap-2.5 px-2 py-2">
               <UserMenu />
               <div className="flex-1 min-w-0">
