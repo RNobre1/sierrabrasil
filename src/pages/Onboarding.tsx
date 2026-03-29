@@ -651,6 +651,7 @@ export default function Onboarding() {
   const progressPct = phase === "done" ? 100
     : phase === "docs" ? 85
     : phase === "overview" ? 70
+    : phase === "post-scrape-chat" ? 60
     : phase === "scraping" ? 50
     : phase === "social-links" ? 35
     : `${Math.min(30, userMsgCount * 8)}`;
