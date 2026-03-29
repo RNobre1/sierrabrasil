@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, User, Loader2, Check, ArrowRight } from "lucide-react";
+import { Send, Sparkles, User, Loader2, Check, ArrowRight, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import ChoiceSelector from "@/components/onboarding/ChoiceSelector";
 import AudioRecorder from "@/components/onboarding/AudioRecorder";
 import FileUploader from "@/components/onboarding/FileUploader";
+import ScrapingProgress from "@/components/onboarding/ScrapingProgress";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
