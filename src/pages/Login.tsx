@@ -157,7 +157,7 @@ export default function Login() {
             </div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">E-mail</Label>
               <Input
