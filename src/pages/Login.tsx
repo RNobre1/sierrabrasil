@@ -136,7 +136,7 @@ export default function Login() {
 
           <Button
             variant="outline"
-            className="w-full mt-10 h-12 gap-3 rounded-xl border-border/60 hover:bg-accent transition-all"
+            className="w-full mt-7 h-11 gap-3 rounded-xl border-border/60 hover:bg-accent transition-all"
             onClick={handleGoogleSSO}
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
