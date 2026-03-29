@@ -327,7 +327,7 @@ export default function Onboarding() {
     }
 
     sendToChat(text);
-
+  };
   const handleAudioTranscribed = (text: string) => {
     sendToChat(`🎤 ${text}`);
   };
