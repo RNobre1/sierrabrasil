@@ -177,7 +177,7 @@ export default function Dashboard() {
       {/* ── Header ── */}
       <div>
         <h1 className="text-[22px] font-display font-bold text-white tracking-[-0.03em]">Dashboard</h1>
-        <p className="text-[13px] text-white/35 mt-0.5">Visão geral do seu agente inteligente</p>
+        <p className="text-[13px] text-white/35 mt-0.5">Visão geral dos seus agentes inteligentes</p>
       </div>
 
       {/* ── KPIs ── */}
