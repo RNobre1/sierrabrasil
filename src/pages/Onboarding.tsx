@@ -55,6 +55,7 @@ export default function Onboarding() {
   const [scrapeResults, setScrapeResults] = useState<any[]>([]);
   const [scrapeComplete, setScrapeComplete] = useState(false);
   const [overviewData, setOverviewData] = useState<OverviewData>({});
+  const [sourcePreviews, setSourcePreviews] = useState<any[]>([]);
   const [showDocUpload, setShowDocUpload] = useState(false);
   const [textPasteOpen, setTextPasteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -317,6 +318,10 @@ export default function Onboarding() {
         setOverviewData(overview);
       }
 
+      if (data.sourcePreviews) {
+        setSourcePreviews(data.sourcePreviews);
+      }
+
       setScrapeComplete(true);
       setTimeout(() => setPhase("overview"), 2000);
     } catch (e) {
@@ -472,6 +477,7 @@ export default function Onboarding() {
         <div className="flex-1 overflow-y-auto p-6">
           <BusinessOverview
             data={overviewData}
+            sourcePreviews={sourcePreviews}
             onConfirm={handleOverviewConfirm}
             onGoBack={handleOverviewGoBack}
             onDataChange={setOverviewData}

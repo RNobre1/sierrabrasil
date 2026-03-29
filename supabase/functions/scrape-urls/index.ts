@@ -7,13 +7,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Apify actors — using the fastest/cheapest tiers available
 const APIFY_ACTORS: Record<string, string> = {
-  instagram: "apify~instagram-scraper",
+  instagram: "apify~instagram-profile-scraper",
   facebook: "apify~facebook-pages-scraper",
   tiktok: "clockworks~free-tiktok-scraper",
   youtube: "streamers~youtube-channel-scraper",
   linkedin: "anchor~linkedin-company-scraper",
+  twitter: "apidojo~tweet-scraper",
   website: "apify~website-content-crawler",
+  google_maps: "compass~crawler-google-places",
 };
 
 function detectPlatform(url: string): string {
@@ -22,6 +25,8 @@ function detectPlatform(url: string): string {
   if (url.includes("tiktok.com")) return "tiktok";
   if (url.includes("youtube.com") || url.includes("youtu.be")) return "youtube";
   if (url.includes("linkedin.com")) return "linkedin";
+  if (url.includes("twitter.com") || url.includes("x.com")) return "twitter";
+  if (url.includes("google.com/maps") || url.includes("goo.gl/maps")) return "google_maps";
   return "website";
 }
 
@@ -29,7 +34,10 @@ function buildApifyInput(platform: string, url: string): any {
   switch (platform) {
     case "instagram": {
       const username = url.replace(/.*instagram\.com\//, "").replace(/[\/?#@].*/, "").replace(/^@/, "");
-      return { directUrls: [`https://www.instagram.com/${username}/`], resultsType: "posts", resultsLimit: 20 };
+      return {
+        usernames: [username],
+        resultsLimit: 30,
+      };
     }
     case "facebook":
       return { startUrls: [{ url }], maxPagesPerQuery: 1 };
@@ -39,6 +47,10 @@ function buildApifyInput(platform: string, url: string): any {
       return { startUrls: [{ url }], maxResults: 20 };
     case "linkedin":
       return { startUrls: [{ url }] };
+    case "twitter":
+      return { startUrls: [url], maxTweets: 20, addUserInfo: true };
+    case "google_maps":
+      return { startUrls: [{ url }], maxCrawledPlacesPerSearch: 1 };
     case "website":
     default:
       return { startUrls: [{ url }], maxCrawlPages: 10, crawlerType: "cheerio", maxCrawlDepth: 2 };
@@ -75,6 +87,7 @@ async function simpleScrape(url: string): Promise<string> {
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() || url;
   const metaDesc = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([\s\S]*?)["']/i)?.[1]?.trim() || "";
   const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([\s\S]*?)["']/i)?.[1]?.trim() || "";
+  const ogImage = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([\s\S]*?)["']/i)?.[1]?.trim() || "";
   const text = html
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -83,7 +96,7 @@ async function simpleScrape(url: string): Promise<string> {
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
     .replace(/\s+/g, " ").trim().slice(0, 5000);
-  return `FONTE: ${url}\nTÍTULO: ${title}\n${metaDesc ? `DESCRIÇÃO: ${metaDesc}\n` : ""}${ogDesc ? `OG: ${ogDesc}\n` : ""}\nCONTEÚDO:\n${text}`;
+  return `FONTE: ${url}\nTÍTULO: ${title}\n${metaDesc ? `DESCRIÇÃO: ${metaDesc}\n` : ""}${ogDesc ? `OG: ${ogDesc}\n` : ""}${ogImage ? `IMAGEM: ${ogImage}\n` : ""}\nCONTEÚDO:\n${text}`;
 }
 
 async function runApifyActor(actorId: string, input: any, apiKey: string): Promise<any[]> {
@@ -104,6 +117,74 @@ async function runApifyActor(actorId: string, input: any, apiKey: string): Promi
   const dataResp = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${apiKey}&limit=50`);
   if (!dataResp.ok) throw new Error(`Dataset fetch failed: ${dataResp.status}`);
   return await dataResp.json();
+}
+
+/** Extract preview data (images, thumbnails) from scraped results */
+function extractSourcePreviews(platform: string, items: any[], url: string): any {
+  const preview: any = { platform, url, thumbnails: [] };
+  
+  switch (platform) {
+    case "instagram": {
+      const p = items[0];
+      if (p) {
+        preview.profilePic = p.profilePicUrl || p.profilePicUrlHD || "";
+        preview.displayName = p.fullName || p.username || "";
+        preview.bio = p.biography || "";
+        preview.followers = p.followersCount || 0;
+        preview.posts = p.postsCount || 0;
+        // Get thumbnails from recent posts
+        const posts = items.filter(i => i.displayUrl || i.thumbnailUrl);
+        preview.thumbnails = posts.slice(0, 6).map(post => post.displayUrl || post.thumbnailUrl).filter(Boolean);
+      }
+      break;
+    }
+    case "facebook": {
+      const page = items[0];
+      if (page) {
+        preview.profilePic = page.profilePic || page.imageUrl || "";
+        preview.displayName = page.title || page.name || "";
+        preview.bio = page.description || "";
+      }
+      break;
+    }
+    case "youtube": {
+      if (items.length > 0) {
+        preview.displayName = items[0]?.channelName || "";
+        preview.thumbnails = items.slice(0, 6).map(v => v.thumbnailUrl).filter(Boolean);
+      }
+      break;
+    }
+    case "linkedin": {
+      const co = items[0];
+      if (co) {
+        preview.profilePic = co.logo || "";
+        preview.displayName = co.name || "";
+        preview.bio = co.description?.slice(0, 200) || "";
+      }
+      break;
+    }
+    case "tiktok": {
+      const p = items[0];
+      if (p) {
+        preview.profilePic = p.authorMeta?.avatar || "";
+        preview.displayName = p.authorMeta?.name || p.authorMeta?.nickName || "";
+        preview.followers = p.authorMeta?.fans || 0;
+        preview.thumbnails = items.slice(0, 6).map(v => v.videoMeta?.coverUrl).filter(Boolean);
+      }
+      break;
+    }
+    case "website":
+    default: {
+      // Try to extract OG images from website pages
+      for (const page of items.slice(0, 3)) {
+        const ogImg = page.screenshotUrl || page.ogImage || "";
+        if (ogImg) preview.thumbnails.push(ogImg);
+      }
+      preview.displayName = items[0]?.title || url.replace(/https?:\/\/(www\.)?/, "").split("/")[0];
+      break;
+    }
+  }
+  return preview;
 }
 
 function formatApifyResults(platform: string, items: any[], url: string): string {
@@ -185,6 +266,29 @@ function formatApifyResults(platform: string, items: any[], url: string): string
         co.website ? `Site: ${co.website}` : "",
       ].filter(Boolean).join("\n");
     }
+    case "twitter": {
+      return [
+        `TWITTER/X: ${url}`,
+        ...items.slice(0, 15).map((t: any, i: number) =>
+          `${i + 1}. ${(t.full_text || t.text || "").slice(0, 300)} (❤️ ${t.favorite_count || 0}, 🔁 ${t.retweet_count || 0})`
+        ),
+      ].join("\n");
+    }
+    case "google_maps": {
+      const place = items[0];
+      if (!place) return "";
+      return [
+        `GOOGLE MAPS: ${url}`,
+        place.title ? `Nome: ${place.title}` : "",
+        place.address ? `Endereço: ${place.address}` : "",
+        place.phone ? `Telefone: ${place.phone}` : "",
+        place.website ? `Site: ${place.website}` : "",
+        place.totalScore ? `Avaliação: ${place.totalScore}` : "",
+        place.reviewsCount ? `Reviews: ${place.reviewsCount}` : "",
+        place.openingHours ? `Horários: ${JSON.stringify(place.openingHours)}` : "",
+        place.categoryName ? `Categoria: ${place.categoryName}` : "",
+      ].filter(Boolean).join("\n");
+    }
     case "website":
     default: {
       return items.map((page: any, i: number) =>
@@ -194,7 +298,6 @@ function formatApifyResults(platform: string, items: any[], url: string): string
   }
 }
 
-/** Use AI to build a structured JSON overview from ALL scraped data */
 async function buildStructuredOverview(allContent: string, pastedText: string): Promise<any> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) return null;
@@ -248,7 +351,6 @@ REGRAS:
     if (!resp.ok) return null;
     const data = await resp.json();
     const content = data.choices?.[0]?.message?.content || "";
-    // Parse JSON from response, handle potential markdown wrapping
     const jsonStr = content.replace(/```json?\s*/g, "").replace(/```\s*/g, "").trim();
     return JSON.parse(jsonStr);
   } catch (e) {
@@ -273,26 +375,35 @@ serve(async (req) => {
 
     const results: { url: string; platform: string; status: string; chunks?: number; title?: string; details?: string }[] = [];
     const allRawContents: string[] = [];
+    const sourcePreviews: any[] = [];
 
     for (const url of urls) {
       const platform = detectPlatform(url);
       try {
         let rawContent = "";
+        let apifyItems: any[] | null = null;
 
         if (APIFY_API_KEY) {
           const actorId = APIFY_ACTORS[platform] || APIFY_ACTORS.website;
           const input = buildApifyInput(platform, url);
           console.log(`[${platform}] Running Apify actor ${actorId} for ${url}`);
           try {
-            const items = await runApifyActor(actorId, input, APIFY_API_KEY);
-            rawContent = formatApifyResults(platform, items, url);
-            console.log(`[${platform}] Apify returned ${items.length} items, ${rawContent.length} chars`);
+            apifyItems = await runApifyActor(actorId, input, APIFY_API_KEY);
+            rawContent = formatApifyResults(platform, apifyItems, url);
+            console.log(`[${platform}] Apify returned ${apifyItems.length} items, ${rawContent.length} chars`);
           } catch (apifyErr) {
             console.warn(`[${platform}] Apify failed, falling back to simple scrape:`, apifyErr);
             rawContent = await simpleScrape(url);
           }
         } else {
           rawContent = await simpleScrape(url);
+        }
+
+        // Extract preview data for frontend display
+        if (apifyItems && apifyItems.length > 0) {
+          sourcePreviews.push(extractSourcePreviews(platform, apifyItems, url));
+        } else {
+          sourcePreviews.push({ platform, url, displayName: url.replace(/https?:\/\/(www\.)?/, "").split("/")[0], thumbnails: [] });
         }
 
         if (!rawContent || rawContent.length < 20) {
@@ -302,7 +413,6 @@ serve(async (req) => {
 
         allRawContents.push(`[${platform.toUpperCase()}] ${rawContent}`);
 
-        // Chunk and store raw content
         const chunks = chunkContent(rawContent);
         const rows = chunks.map((chunk, i) => ({
           tenant_id: tenantId,
@@ -325,15 +435,15 @@ serve(async (req) => {
       } catch (e) {
         console.error(`[${platform}] Failed for ${url}:`, e);
         results.push({ url, platform, status: "error", details: e instanceof Error ? e.message : "Unknown" });
+        sourcePreviews.push({ platform, url, displayName: url.replace(/https?:\/\/(www\.)?/, "").split("/")[0], thumbnails: [] });
       }
     }
 
-    // Build structured overview from ALL scraped data + pasted text using AI
     const allContent = allRawContents.join("\n\n===\n\n");
     console.log(`Building structured overview from ${allContent.length} chars total content...`);
     const overview = await buildStructuredOverview(allContent, pastedText || "");
 
-    // Also store pasted text in knowledge base if provided
+    // Store pasted text
     if (pastedText && pastedText.trim().length > 10) {
       const chunks = chunkContent(pastedText);
       const rows = chunks.map((chunk, i) => ({
@@ -349,7 +459,7 @@ serve(async (req) => {
       await supabase.from("knowledge_base").insert(rows).catch(e => console.error("Pasted text insert error:", e));
     }
 
-    return new Response(JSON.stringify({ success: true, results, overview }), {
+    return new Response(JSON.stringify({ success: true, results, overview, sourcePreviews }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
