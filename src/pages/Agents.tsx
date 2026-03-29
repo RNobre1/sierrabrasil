@@ -128,17 +128,6 @@ export default function Agents() {
         </div>
       )}
 
-      {/* ── Status bar ── */}
-      {agents.length > 0 && (
-        <div className="flex items-center gap-2 h-2 rounded-full overflow-hidden bg-white/[0.04]">
-          {online > 0 && (
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
-              style={{ width: `${(online / agents.length) * 100}%` }}
-            />
-          )}
-        </div>
-      )}
 
       {/* ── Filter bar ── */}
       <div className="flex flex-wrap items-center gap-2">
