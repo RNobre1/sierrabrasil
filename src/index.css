@@ -231,11 +231,6 @@
 }
 
 /* Ambient glow background */
-@keyframes float-glow {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
-  50% { transform: translate(20px, -20px) scale(1.1); opacity: 0.25; }
-}
-
 .ambient-glow {
   position: fixed;
   width: 600px;
@@ -244,7 +239,7 @@
   filter: blur(120px);
   pointer-events: none;
   z-index: 0;
-  animation: float-glow 8s ease-in-out infinite;
+  opacity: 0.18;
 }
 
 /* Scrollbar */
