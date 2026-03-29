@@ -11,7 +11,8 @@ export default function Privacy() {
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
 
-        <img src={meteoraLogo} alt="Meteora Digital" className="h-6 mb-8 opacity-80" />
+        <img src={meteoraLogo} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:block hidden" />
+        <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:hidden block" />
 
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-2">
           Política de Privacidade

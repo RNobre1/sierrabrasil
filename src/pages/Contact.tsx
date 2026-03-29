@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Send, CheckCircle2 } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
+import meteoraLogoPreta from "@/assets/meteora-preta.png";
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);

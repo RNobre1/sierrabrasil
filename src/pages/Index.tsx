@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Star, Bot, MessageSquare, Zap, Shield, Clock, BarChart3, Crown, Send } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
+import meteoraLogoPreta from "@/assets/meteora-preta.png";
 import { MeteoraSeal, MeteorTrail } from "@/components/MeteoraBrand";
 
 const features = [
