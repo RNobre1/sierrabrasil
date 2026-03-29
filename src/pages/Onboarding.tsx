@@ -674,17 +674,33 @@ export default function Onboarding() {
       <div className="border-t border-border bg-card/80 backdrop-blur-sm sticky bottom-0">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex gap-2 items-center">
-            <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />
-            <Textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Descreva seu negócio, serviços, regras de atendimento..."
-              disabled={isLoading}
-              rows={2}
-              className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-border bg-background"
-            />
+            {!isPasswordInput && <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />}
+            {isPasswordInput ? (
+              <div className="flex-1 relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="password"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Digite sua senha..."
+                  disabled={isLoading}
+                  autoFocus
+                  className="h-11 rounded-xl border-border bg-background pl-10 text-sm"
+                />
+              </div>
+            ) : (
+              <Textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Descreva seu negócio, serviços, regras de atendimento..."
+                disabled={isLoading}
+                rows={2}
+                className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-border bg-background"
+              />
+            )}
             <Button
               onClick={sendMessage}
               size="icon"
@@ -694,9 +710,16 @@ export default function Onboarding() {
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            🎤 Áudio · ⌨️ Texto — Shift+Enter para nova linha
-          </p>
+          {!isPasswordInput && (
+            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              🎤 Áudio · ⌨️ Texto — Shift+Enter para nova linha
+            </p>
+          )}
+          {isPasswordInput && (
+            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              🔒 Sua senha não é enviada para a IA — apenas salva na sua conta
+            </p>
+          )}
         </div>
       </div>
     </div>
