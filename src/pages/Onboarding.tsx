@@ -45,6 +45,10 @@ export default function Onboarding() {
   const [extractedConfig, setExtractedConfig] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [activeChoices, setActiveChoices] = useState<ChoiceData | null>(null);
+  const [scrapingPhase, setScrapingPhase] = useState(false);
+  const [scrapeUrls, setScrapeUrls] = useState<string[]>([]);
+  const [scrapeResults, setScrapeResults] = useState<any[]>([]);
+  const [scrapeComplete, setScrapeComplete] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasStarted = useRef(false);
