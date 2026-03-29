@@ -183,7 +183,7 @@ function SourceStep({
           ) : (
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground truncate">
-                {source.url.replace(/https?:\/\/(www\.)?/, "")}
+                {source.url.toLowerCase().replace(/https?:\/\/(www\.)?/, "")}
               </p>
               <button
                 onClick={() => setIsEditing(true)}

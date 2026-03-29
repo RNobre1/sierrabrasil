@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { MessageSquare, CheckCircle2, Clock, TrendingUp, Play, Settings, Sparkles, ArrowRight, Zap, BarChart3 } from "lucide-react";
+import TrialTimer from "@/components/TrialTimer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -69,13 +70,15 @@ export default function Dashboard() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [allConversations, setAllConversations] = useState<Conversation[]>([]);
   const [totalMessages, setTotalMessages] = useState(0);
+  const [tenantCreatedAt, setTenantCreatedAt] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).single();
+      const { data: tenant } = await supabase.from("tenants").select("id, created_at").eq("owner_id", user.id).single();
       if (!tenant) { setLoading(false); return; }
+      setTenantCreatedAt(tenant.created_at);
       const [attRes, convRes, allConvRes, msgRes] = await Promise.all([
         supabase.from("attendants").select("id, name, status, channels, model").eq("tenant_id", tenant.id).limit(1).single(),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id).order("started_at", { ascending: false }).limit(5),
@@ -124,6 +127,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Trial Timer */}
+      {tenantCreatedAt && <TrialTimer createdAt={tenantCreatedAt} />}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -43,7 +43,7 @@ export default function SocialLinksSelector({
   const handleSubmit = () => {
     const links: Record<string, string> = {};
     selected.forEach((id) => {
-      if (values[id]?.trim()) links[id] = values[id].trim();
+      if (values[id]?.trim()) links[id] = values[id].trim().toLowerCase();
     });
     onSubmit(links);
   };

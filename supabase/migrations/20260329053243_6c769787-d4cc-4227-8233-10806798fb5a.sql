@@ -1,0 +1,1 @@
+ALTER TABLE public.attendants ADD COLUMN IF NOT EXISTS class text DEFAULT 'support';

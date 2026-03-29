@@ -210,24 +210,6 @@ export default function AttendantConfig() {
         </CardContent>
       </Card>
 
-      {/* Channels */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-display">Canais</CardTitle>
-          <CardDescription>Em quais canais o agente opera</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-3">
-            {CHANNELS.map(ch => (
-              <label key={ch} className="flex items-center gap-3 cursor-pointer">
-                <Checkbox checked={channels.includes(ch)} onCheckedChange={() => toggleChannel(ch)} />
-                <span className="text-sm capitalize">{ch}</span>
-              </label>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Save - inline below form */}
       <div className="flex items-center gap-3 pb-8">
         <Button onClick={handleSave} disabled={saving || !isDirty} size="lg">
