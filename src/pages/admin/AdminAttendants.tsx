@@ -87,8 +87,8 @@ export default function AdminAttendants() {
   return (
     <div className="space-y-5 max-w-[1600px] mx-auto">
       <div>
-        <h1 className="text-xl font-display font-bold tracking-tight">Atendentes</h1>
-        <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider mt-0.5">{attendants.length} atendentes no sistema</p>
+        <h1 className="text-xl font-display font-bold tracking-tight">Agentes</h1>
+        <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider mt-0.5">{attendants.length} agentes no sistema</p>
       </div>
 
       {/* Stats */}
