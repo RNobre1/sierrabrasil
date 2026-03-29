@@ -89,12 +89,19 @@ export default function Onboarding() {
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
-    // Start with password collection
+    // Start with user intro message, then agent greeting with password request
     setTimeout(() => {
-      const greeting = userName
-        ? `Olá, ${userName.split(" ")[0]}! 👋 Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Antes de começarmos a configurar seu atendente, vamos criar uma senha para seu acesso, tudo bem?!\n\nPor ora só precisa ter **8 dígitos**. Digite sua senha abaixo:`
-        : `Olá! 👋 Antes de começarmos a configurar seu atendente, vamos criar uma senha para seu acesso, tudo bem?!\n\nPor ora só precisa ter **8 dígitos**. Digite sua senha abaixo:`;
-      setMessages([{ role: "assistant", content: greeting }]);
+      const firstName = userName ? userName.split(" ")[0] : "";
+      const introMsg = firstName
+        ? `Olá! Sou ${firstName}${companyName ? ` da ${companyName}` : ""} e quero configurar meu agente.`
+        : "Olá! Acabei de criar minha conta e quero configurar meu agente.";
+      const greeting = firstName
+        ? `Olá, ${firstName}! Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Antes de começarmos a configurar seu agente, vamos criar uma senha para seu acesso, tudo bem?!\n\nDigite sua senha abaixo:`
+        : `Olá! Antes de começarmos a configurar seu agente, vamos criar uma senha para seu acesso, tudo bem?!\n\nDigite sua senha abaixo:`;
+      setMessages([
+        { role: "user", content: introMsg },
+        { role: "assistant", content: greeting },
+      ]);
       setPasswordPhase("awaiting");
       setIsPasswordInput(true);
     }, 500);
