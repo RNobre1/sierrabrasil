@@ -51,14 +51,14 @@ const wittyMessages: Record<Phase, string[]> = {
     "💡 Transformando dados brutos em conhecimento puro...",
   ],
   storing: [
-    "💾 Armazenando na base de conhecimento do seu atendente...",
-    "📚 Seu atendente tá estudando mais que vestibulando em Novembro...",
+    "💾 Armazenando na base de conhecimento do seu agente...",
+    "📚 Seu agente tá estudando mais que vestibulando em Novembro...",
     "🧬 Criando DNA digital da sua empresa...",
   ],
   done: [
-    "✅ Pronto! Seu atendente agora sabe mais sobre sua empresa do que seus sócios.",
+    "✅ Pronto! Seu agente agora sabe mais sobre sua empresa do que seus sócios.",
     "🎉 Missão cumprida! Base de conhecimento turbinada.",
-    "🚀 Tudo processado. Seu atendente virou expert no seu negócio.",
+    "🚀 Tudo processado. Seu agente virou expert no seu negócio.",
   ],
 };
 
