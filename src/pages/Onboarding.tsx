@@ -573,7 +573,7 @@ export default function Onboarding() {
   // ========== SOCIAL LINKS PHASE ==========
   if (phase === "social-links") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Redes sociais e presença online" subtitle="Selecione as redes e insira os links ou @" progress={35} />
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-xl mx-auto">

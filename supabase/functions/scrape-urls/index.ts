@@ -28,8 +28,10 @@ function detectPlatform(url: string): string {
 
 function buildApifyInput(platform: string, url: string): any {
   switch (platform) {
-    case "instagram":
-      return { usernames: [url.replace(/.*instagram\.com\//, "").replace(/[\/?#].*/, "")], resultsLimit: 30 };
+    case "instagram": {
+      const username = url.replace(/.*instagram\.com\//, "").replace(/[\/?#@].*/, "").replace(/^@/, "");
+      return { directUrls: [`https://www.instagram.com/${username}/`], resultsType: "posts", resultsLimit: 20 };
+    }
     case "facebook":
       return { startUrls: [{ url }], maxPagesPerQuery: 1 };
     case "tiktok":
