@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { LayoutDashboard, Users, Bot, Cpu, DollarSign, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Bot, Cpu, Puzzle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
