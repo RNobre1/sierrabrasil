@@ -775,7 +775,9 @@ function ChatBubble({ msg }: { msg: Msg }) {
               : "bg-card border border-border text-foreground rounded-bl-md shadow-sm"
           }`}
         >
-          <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
+          <div className="text-sm leading-relaxed prose prose-sm prose-invert max-w-none [&_p]:m-0 [&_p+p]:mt-2">
+            <ReactMarkdown>{msg.content}</ReactMarkdown>
+          </div>
         </div>
         {isUser && (
           <div className="h-8 w-8 rounded-xl bg-muted flex items-center justify-center shrink-0 mt-0.5">

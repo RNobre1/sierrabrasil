@@ -201,7 +201,7 @@ export default function AdminAttendants() {
               </tbody>
             </table>
           </div>
-          {filtered.length === 0 && <p className="text-center text-xs text-muted-foreground py-12">Nenhum atendente encontrado</p>}
+          {filtered.length === 0 && <p className="text-center text-xs text-muted-foreground py-12">Nenhum agente encontrado</p>}
         </CardContent>
       </Card>
     </div>

@@ -128,7 +128,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Visão geral do seu atendente inteligente</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Visão geral do seu agente inteligente</p>
         </div>
         <Button size="sm" className="gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20" onClick={() => navigate("/attendant/playground")}>
           <Play className="h-3.5 w-3.5" /> Testar

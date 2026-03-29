@@ -214,7 +214,7 @@ export default function AttendantConfig() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-display">Canais</CardTitle>
-          <CardDescription>Em quais canais o atendente opera</CardDescription>
+          <CardDescription>Em quais canais o agente opera</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-3">

@@ -133,7 +133,7 @@ export default function AttendantPlayground() {
         </Button>
         <div className="flex-1">
           <h1 className="text-xl font-display font-semibold">Playground</h1>
-          <p className="text-xs text-muted-foreground">Teste seu atendente em tempo real</p>
+          <p className="text-xs text-muted-foreground">Teste seu agente em tempo real</p>
         </div>
         <Badge variant="outline" className="gap-1">
           <Bot className="h-3 w-3" /> {attendantName}

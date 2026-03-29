@@ -253,7 +253,7 @@ export default function AdminTenants() {
                 {[
                   { label: "Plano", value: selected.plan },
                   { label: "Status", value: selected.status },
-                  { label: "Atendentes", value: String(selected.attendant_count) },
+                  { label: "Agentes", value: String(selected.attendant_count) },
                   { label: "Conversas", value: String(selected.conversation_count) },
                 ].map(item => (
                   <div key={item.label} className="rounded-lg border border-border p-3">
