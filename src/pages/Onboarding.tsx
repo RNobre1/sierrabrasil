@@ -1,15 +1,37 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, Bot, User, Loader2, Check, ArrowRight } from "lucide-react";
+import { Send, Sparkles, User, Loader2, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import ChoiceSelector from "@/components/onboarding/ChoiceSelector";
+import AudioRecorder from "@/components/onboarding/AudioRecorder";
+import FileUploader from "@/components/onboarding/FileUploader";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+type ChoiceData = {
+  question: string;
+  multiSelect?: boolean;
+  options: { label: string; icon?: string }[];
+};
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/onboarding-chat`;
+
+/** Parse choices blocks from assistant message */
+function parseChoices(text: string): { cleanText: string; choices: ChoiceData | null } {
+  const match = text.match(/```choices\s*(\{[\s\S]*?\})\s*```/);
+  if (!match) return { cleanText: text, choices: null };
+  try {
+    const choices = JSON.parse(match[1]) as ChoiceData;
+    const cleanText = text.replace(/```choices\s*\{[\s\S]*?\}\s*```/g, "").trim();
+    return { cleanText, choices };
+  } catch {
+    return { cleanText: text, choices: null };
+  }
+}
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -21,16 +43,14 @@ export default function Onboarding() {
   const [configReady, setConfigReady] = useState(false);
   const [extractedConfig, setExtractedConfig] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [activeChoices, setActiveChoices] = useState<ChoiceData | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasStarted = useRef(false);
 
-  // Auto-start the conversation
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
-    
-    // Send initial empty message to trigger AI greeting
     setTimeout(() => {
       sendMessage("Olá! Acabei de criar minha conta e quero configurar meu atendente.");
     }, 500);
@@ -38,7 +58,7 @@ export default function Onboarding() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [messages, activeChoices]);
 
   const checkForConfig = useCallback((text: string) => {
     const jsonMatch = text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
@@ -60,24 +80,27 @@ export default function Onboarding() {
     if (!text || isLoading) return;
 
     const userMsg: Msg = { role: "user", content: text };
-    
-    // Don't show the auto-start message
     if (!overrideInput) {
-      setMessages(prev => [...prev, userMsg]);
+      setMessages((prev) => [...prev, userMsg]);
       setInput("");
     }
     setIsLoading(true);
+    setActiveChoices(null);
 
     let assistantSoFar = "";
 
     const upsertAssistant = (chunk: string) => {
       assistantSoFar += chunk;
-      const displayText = assistantSoFar.replace(/```json\s*\{[\s\S]*?\}\s*```/g, "").trim();
-      
-      setMessages(prev => {
+      // Strip JSON and choices blocks from display
+      let displayText = assistantSoFar
+        .replace(/```json\s*\{[\s\S]*?\}\s*```/g, "")
+        .replace(/```choices\s*\{[\s\S]*?\}\s*```/g, "")
+        .trim();
+
+      setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant") {
-          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: displayText } : m);
+          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: displayText } : m));
         }
         return [...prev, { role: "assistant", content: displayText }];
       });
@@ -85,7 +108,7 @@ export default function Onboarding() {
 
     try {
       const allMessages = overrideInput ? [userMsg] : [...messages, userMsg];
-      
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -136,9 +159,12 @@ export default function Onboarding() {
         }
       }
 
-      // Check if config was extracted
-      checkForConfig(assistantSoFar);
+      // Check for choices
+      const { choices } = parseChoices(assistantSoFar);
+      if (choices) setActiveChoices(choices);
 
+      // Check for config
+      checkForConfig(assistantSoFar);
     } catch (e) {
       console.error(e);
       toast({ title: "Erro de conexão", variant: "destructive" });
@@ -146,6 +172,237 @@ export default function Onboarding() {
 
     setIsLoading(false);
     inputRef.current?.focus();
+  };
+
+  // unused - remove dead code
+
+  // Simplified choice handler - just send the text as a message
+  const handleChoiceSelect = (selected: string[]) => {
+    setActiveChoices(null);
+    const text = selected.join(", ");
+    // Push user msg and send
+    const userMsg: Msg = { role: "user", content: text };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsLoading(true);
+
+    let assistantSoFar = "";
+    const allMessages = [...messages, userMsg];
+
+    fetch(CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || "" }),
+    })
+      .then(async (resp) => {
+        if (!resp.ok || !resp.body) throw new Error("Error");
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let textBuffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          textBuffer += decoder.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = textBuffer.indexOf("\n")) !== -1) {
+            let line = textBuffer.slice(0, idx);
+            textBuffer = textBuffer.slice(idx + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (line.startsWith(":") || line.trim() === "") continue;
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) {
+                assistantSoFar += content;
+                const displayText = assistantSoFar
+                  .replace(/```json\s*\{[\s\S]*?\}\s*```/g, "")
+                  .replace(/```choices\s*\{[\s\S]*?\}\s*```/g, "")
+                  .trim();
+                setMessages((prev) => {
+                  const last = prev[prev.length - 1];
+                  if (last?.role === "assistant") {
+                    return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: displayText } : m));
+                  }
+                  return [...prev, { role: "assistant", content: displayText }];
+                });
+              }
+            } catch {
+              textBuffer = line + "\n" + textBuffer;
+              break;
+            }
+          }
+        }
+
+        const { choices } = parseChoices(assistantSoFar);
+        if (choices) setActiveChoices(choices);
+        checkForConfig(assistantSoFar);
+      })
+      .catch((e) => {
+        console.error(e);
+        toast({ title: "Erro de conexão", variant: "destructive" });
+      })
+      .finally(() => {
+        setIsLoading(false);
+        inputRef.current?.focus();
+      });
+  };
+
+  const handleAudioTranscribed = (text: string) => {
+    const audioMsg = `🎤 ${text}`;
+    setMessages((prev) => [...prev, { role: "user", content: audioMsg }]);
+    // Send transcription as message
+    const userMsg: Msg = { role: "user", content: audioMsg };
+    setIsLoading(true);
+    setActiveChoices(null);
+
+    let assistantSoFar = "";
+    const allMessages = [...messages, userMsg];
+
+    fetch(CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || "" }),
+    })
+      .then(async (resp) => {
+        if (!resp.ok || !resp.body) throw new Error("Error");
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let textBuffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          textBuffer += decoder.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = textBuffer.indexOf("\n")) !== -1) {
+            let line = textBuffer.slice(0, idx);
+            textBuffer = textBuffer.slice(idx + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (line.startsWith(":") || line.trim() === "") continue;
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) {
+                assistantSoFar += content;
+                const displayText = assistantSoFar
+                  .replace(/```json\s*\{[\s\S]*?\}\s*```/g, "")
+                  .replace(/```choices\s*\{[\s\S]*?\}\s*```/g, "")
+                  .trim();
+                setMessages((prev) => {
+                  const last = prev[prev.length - 1];
+                  if (last?.role === "assistant") {
+                    return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: displayText } : m));
+                  }
+                  return [...prev, { role: "assistant", content: displayText }];
+                });
+              }
+            } catch {
+              textBuffer = line + "\n" + textBuffer;
+              break;
+            }
+          }
+        }
+
+        const { choices } = parseChoices(assistantSoFar);
+        if (choices) setActiveChoices(choices);
+        checkForConfig(assistantSoFar);
+      })
+      .catch((e) => {
+        console.error(e);
+        toast({ title: "Erro de conexão", variant: "destructive" });
+      })
+      .finally(() => {
+        setIsLoading(false);
+        inputRef.current?.focus();
+      });
+  };
+
+  const handleFileContent = (content: string, fileName: string) => {
+    const fileMsg = `📎 Arquivo: ${fileName}\n\n${content.slice(0, 3000)}`;
+    setMessages((prev) => [...prev, { role: "user", content: `📎 ${fileName}` }]);
+    // Send file content
+    const userMsg: Msg = { role: "user", content: fileMsg };
+    setIsLoading(true);
+    setActiveChoices(null);
+
+    let assistantSoFar = "";
+    const allMessages = [...messages, userMsg];
+
+    fetch(CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || "" }),
+    })
+      .then(async (resp) => {
+        if (!resp.ok || !resp.body) throw new Error("Error");
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let textBuffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          textBuffer += decoder.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = textBuffer.indexOf("\n")) !== -1) {
+            let line = textBuffer.slice(0, idx);
+            textBuffer = textBuffer.slice(idx + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (line.startsWith(":") || line.trim() === "") continue;
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (content) {
+                assistantSoFar += content;
+                const displayText = assistantSoFar
+                  .replace(/```json\s*\{[\s\S]*?\}\s*```/g, "")
+                  .replace(/```choices\s*\{[\s\S]*?\}\s*```/g, "")
+                  .trim();
+                setMessages((prev) => {
+                  const last = prev[prev.length - 1];
+                  if (last?.role === "assistant") {
+                    return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: displayText } : m));
+                  }
+                  return [...prev, { role: "assistant", content: displayText }];
+                });
+              }
+            } catch {
+              textBuffer = line + "\n" + textBuffer;
+              break;
+            }
+          }
+        }
+
+        const { choices } = parseChoices(assistantSoFar);
+        if (choices) setActiveChoices(choices);
+        checkForConfig(assistantSoFar);
+      })
+      .catch((e) => {
+        console.error(e);
+        toast({ title: "Erro de conexão", variant: "destructive" });
+      })
+      .finally(() => {
+        setIsLoading(false);
+        inputRef.current?.focus();
+      });
   };
 
   const applyConfig = async () => {
@@ -167,7 +424,6 @@ export default function Onboarding() {
         status: "online",
       }).eq("id", att.id);
 
-      // Update tenant name if we got business info
       if (extractedConfig.instructions) {
         const bizMatch = extractedConfig.instructions.match(/SOBRE O NEG[ÓO]CIO[:\s]*([^\n]+)/i);
         if (bizMatch) {
@@ -200,14 +456,13 @@ export default function Onboarding() {
           </div>
           <div>
             <h1 className="text-base font-display font-semibold text-foreground">Configuração do seu Atendente</h1>
-            <p className="text-xs text-muted-foreground">Conte sobre seu negócio e criaremos seu atendente IA</p>
+            <p className="text-xs text-muted-foreground">Conte sobre seu negócio — por texto, áudio ou documentos</p>
           </div>
         </div>
-        {/* Progress bar */}
         <div className="h-0.5 bg-muted">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-700"
-            style={{ width: configReady ? "100%" : `${Math.min(90, messages.filter(m => m.role === "user").length * 15)}%` }}
+            style={{ width: configReady ? "100%" : `${Math.min(90, messages.filter((m) => m.role === "user").length * 12)}%` }}
           />
         </div>
       </header>
@@ -225,11 +480,13 @@ export default function Onboarding() {
                       <Sparkles className="h-4 w-4 text-primary" />
                     </div>
                   )}
-                  <div className={`rounded-2xl px-4 py-3 ${
-                    isUser
-                      ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-br-md shadow-lg shadow-primary/20"
-                      : "bg-card border border-border text-foreground rounded-bl-md shadow-sm"
-                  }`}>
+                  <div
+                    className={`rounded-2xl px-4 py-3 ${
+                      isUser
+                        ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-br-md shadow-lg shadow-primary/20"
+                        : "bg-card border border-border text-foreground rounded-bl-md shadow-sm"
+                    }`}
+                  >
                     <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
                   </div>
                   {isUser && (
@@ -250,12 +507,19 @@ export default function Onboarding() {
                 </div>
                 <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
                   <div className="flex gap-1.5">
-                    <span className="typing-dot h-2 w-2 rounded-full bg-muted-foreground/40" />
-                    <span className="typing-dot h-2 w-2 rounded-full bg-muted-foreground/40" />
-                    <span className="typing-dot h-2 w-2 rounded-full bg-muted-foreground/40" />
+                    <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-pulse" />
+                    <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-pulse" style={{ animationDelay: "0.2s" }} />
+                    <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-pulse" style={{ animationDelay: "0.4s" }} />
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Interactive Choices */}
+          {activeChoices && !isLoading && (
+            <div className="ml-10">
+              <ChoiceSelector data={activeChoices} onSubmit={handleChoiceSelect} disabled={isLoading} />
             </div>
           )}
 
@@ -269,10 +533,12 @@ export default function Onboarding() {
                   </div>
                   <div>
                     <h3 className="font-display font-semibold text-foreground">Tudo pronto!</h3>
-                    <p className="text-sm text-muted-foreground">Seu atendente <span className="font-medium text-foreground">{extractedConfig.attendant_name}</span> está configurado</p>
+                    <p className="text-sm text-muted-foreground">
+                      Seu atendente <span className="font-medium text-foreground">{extractedConfig.attendant_name}</span> está configurado
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-card rounded-lg border border-border p-3">
                     <p className="text-xs text-muted-foreground mb-1">Persona</p>
@@ -284,12 +550,25 @@ export default function Onboarding() {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  <Button onClick={applyConfig} disabled={saving} className="flex-1 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20">
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
-                    {saving ? "Ativando..." : "Ativar atendente e ir pro Dashboard"}
-                  </Button>
-                </div>
+                {extractedConfig.social_links && (
+                  <div className="bg-card rounded-lg border border-border p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Redes Sociais</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {Object.entries(extractedConfig.social_links)
+                        .filter(([, v]) => v)
+                        .map(([k, v]) => (
+                          <span key={k} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-lg capitalize">
+                            {k}: {String(v)}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                <Button onClick={applyConfig} disabled={saving} className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
+                  {saving ? "Ativando..." : "Ativar atendente e ir pro Dashboard"}
+                </Button>
               </div>
             </div>
           )}
@@ -301,12 +580,14 @@ export default function Onboarding() {
         <div className="border-t border-border bg-card/80 backdrop-blur-sm sticky bottom-0">
           <div className="max-w-3xl mx-auto px-4 py-3">
             <div className="flex gap-2 items-end">
+              <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />
+              <FileUploader onFileContent={handleFileContent} disabled={isLoading} />
               <Textarea
                 ref={inputRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
+                onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Descreva seu negócio, serviços, como quer que o atendente se comporte..."
+                placeholder="Descreva seu negócio, serviços, regras de atendimento..."
                 disabled={isLoading}
                 rows={1}
                 className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-border bg-background"
@@ -321,7 +602,7 @@ export default function Onboarding() {
               </Button>
             </div>
             <p className="text-[10px] text-muted-foreground mt-2 text-center">
-              Shift+Enter para nova linha · Enter para enviar
+              🎤 Áudio · 📎 Documentos · ⌨️ Texto — Shift+Enter para nova linha
             </p>
           </div>
         </div>
