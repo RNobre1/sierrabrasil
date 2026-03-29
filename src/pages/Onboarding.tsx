@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, User, Loader2, ArrowRight, Rocket, FileText } from "lucide-react";
+import { Send, Sparkles, User, Loader2, ArrowRight, Rocket, FileText, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +63,10 @@ export default function Onboarding() {
   const [pastedTexts, setPastedTexts] = useState<string[]>([]);
   const [attendantNameFromChat, setAttendantNameFromChat] = useState("");
   const [personaFromChat, setPersonaFromChat] = useState("");
+  // Password collection state
+  const [passwordPhase, setPasswordPhase] = useState<"none" | "awaiting" | "confirming" | "done">("none");
+  const [tempPassword, setTempPassword] = useState("");
+  const [isPasswordInput, setIsPasswordInput] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasStarted = useRef(false);
@@ -77,11 +82,20 @@ export default function Onboarding() {
     }
   }, [messages, isLoading, phase]);
 
+  const userName = user?.user_metadata?.full_name || profile?.full_name || "";
+  const companyName = user?.user_metadata?.company_name || "";
+
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
+    // Start with password collection
     setTimeout(() => {
-      sendToChat("Olá! Acabei de criar minha conta e quero configurar meu atendente.");
+      const greeting = userName
+        ? `Olá, ${userName.split(" ")[0]}! 👋 Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Antes de começarmos a configurar seu atendente, vamos criar uma senha para seu acesso, tudo bem?!\n\nPor ora só precisa ter **8 dígitos**. Digite sua senha abaixo:`
+        : `Olá! 👋 Antes de começarmos a configurar seu atendente, vamos criar uma senha para seu acesso, tudo bem?!\n\nPor ora só precisa ter **8 dígitos**. Digite sua senha abaixo:`;
+      setMessages([{ role: "assistant", content: greeting }]);
+      setPasswordPhase("awaiting");
+      setIsPasswordInput(true);
     }, 500);
   }, []);
 
@@ -93,7 +107,7 @@ export default function Onboarding() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || "" }),
+      body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || userName, companyName }),
     });
 
     if (!resp.ok) {
@@ -218,6 +232,67 @@ export default function Onboarding() {
   const sendMessage = () => {
     const text = input.trim();
     if (!text || isLoading) return;
+
+    // Handle password collection flow
+    if (passwordPhase === "awaiting") {
+      if (text.length < 8) {
+        setMessages(prev => [...prev,
+          { role: "user", content: "•".repeat(text.length) },
+          { role: "assistant", content: "A senha precisa ter pelo menos **8 caracteres**. Tente novamente:" }
+        ]);
+        setInput("");
+        return;
+      }
+      setTempPassword(text);
+      setMessages(prev => [...prev,
+        { role: "user", content: "•".repeat(text.length) },
+        { role: "assistant", content: "Perfeito! Agora confirme digitando a mesma senha novamente:" }
+      ]);
+      setInput("");
+      setPasswordPhase("confirming");
+      return;
+    }
+
+    if (passwordPhase === "confirming") {
+      if (text !== tempPassword) {
+        setMessages(prev => [...prev,
+          { role: "user", content: "•".repeat(text.length) },
+          { role: "assistant", content: "As senhas não conferem 😅 Tente digitar a senha novamente:" }
+        ]);
+        setInput("");
+        setPasswordPhase("awaiting");
+        setTempPassword("");
+        return;
+      }
+      // Password confirmed — update via supabase auth
+      setMessages(prev => [...prev, { role: "user", content: "•".repeat(text.length) }]);
+      setInput("");
+      setIsLoading(true);
+      setIsPasswordInput(false);
+      supabase.auth.updateUser({ password: text }).then(({ error }) => {
+        if (error) {
+          toast({ title: "Erro ao definir senha", description: error.message, variant: "destructive" });
+          setMessages(prev => [...prev, { role: "assistant", content: "Ops, houve um erro ao salvar a senha. Tente novamente:" }]);
+          setPasswordPhase("awaiting");
+          setTempPassword("");
+          setIsPasswordInput(true);
+          setIsLoading(false);
+          return;
+        }
+        setPasswordPhase("done");
+        setMessages(prev => [...prev, { role: "assistant", content: "Senha definida com sucesso! 🔒✨\n\nAgora vamos ao que interessa — me conta sobre seu negócio!" }]);
+        setIsLoading(false);
+        // Kick off AI chat
+        setTimeout(() => {
+          const introMsg = userName
+            ? `Olá! Sou ${userName.split(" ")[0]}${companyName ? ` da ${companyName}` : ""} e quero configurar meu atendente.`
+            : "Olá! Acabei de criar minha conta e quero configurar meu atendente.";
+          sendToChat(introMsg);
+        }, 1000);
+      });
+      return;
+    }
+
     sendToChat(text);
   };
 
@@ -599,17 +674,33 @@ export default function Onboarding() {
       <div className="border-t border-border bg-card/80 backdrop-blur-sm sticky bottom-0">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex gap-2 items-center">
-            <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />
-            <Textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Descreva seu negócio, serviços, regras de atendimento..."
-              disabled={isLoading}
-              rows={2}
-              className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-border bg-background"
-            />
+            {!isPasswordInput && <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />}
+            {isPasswordInput ? (
+              <div className="flex-1 relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="password"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Digite sua senha..."
+                  disabled={isLoading}
+                  autoFocus
+                  className="h-11 rounded-xl border-border bg-background pl-10 text-sm"
+                />
+              </div>
+            ) : (
+              <Textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Descreva seu negócio, serviços, regras de atendimento..."
+                disabled={isLoading}
+                rows={2}
+                className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-border bg-background"
+              />
+            )}
             <Button
               onClick={sendMessage}
               size="icon"
@@ -619,9 +710,16 @@ export default function Onboarding() {
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            🎤 Áudio · ⌨️ Texto — Shift+Enter para nova linha
-          </p>
+          {!isPasswordInput && (
+            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              🎤 Áudio · ⌨️ Texto — Shift+Enter para nova linha
+            </p>
+          )}
+          {isPasswordInput && (
+            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              🔒 Sua senha não é enviada para a IA — apenas salva na sua conta
+            </p>
+          )}
         </div>
       </div>
     </div>
