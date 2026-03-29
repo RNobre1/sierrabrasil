@@ -225,11 +225,11 @@ export default function Onboarding() {
     inputRef.current?.focus();
   };
 
-  // Also extract attendant name from user messages
+  // Also extract agent name from user messages
   useEffect(() => {
     const userMsgs = messages.filter(m => m.role === "user");
     for (const m of userMsgs) {
-      const match = m.content.match(/(?:atendente|assistente).*?(?:chamar|nome)[:\s]*["']?(\w+)["']?/i);
+      const match = m.content.match(/(?:agente|assistente).*?(?:chamar|nome)[:\s]*["']?(\w+)["']?/i);
       if (match) setAttendantNameFromChat(match[1]);
       // Also check "pode ser X", "quero que se chame X"
       const match2 = m.content.match(/(?:pode ser|se chame?|nome dele?|nome dela?)[:\s]*["']?(\w+)["']?/i);
