@@ -43,17 +43,17 @@ export default function TrialTimer({ createdAt, trialDays = 7 }: TrialTimerProps
   }
 
   return (
-    <div className="rounded-xl border border-meteora-warning/15 bg-meteora-warning/5 p-3.5 flex items-center gap-3">
-      <Clock className="h-4 w-4 text-meteora-warning shrink-0" />
+    <div className="rounded-xl border border-primary/15 bg-primary/5 p-3.5 flex items-center gap-3">
+      <Clock className="h-4 w-4 text-primary shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-foreground">
           Seu período de testes termina em{" "}
-          <span className="text-meteora-warning font-bold">
+          <span className="text-primary font-bold">
             {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}min
           </span>
         </p>
       </div>
-      <Button size="sm" variant="outline" className="shrink-0 gap-1.5 border-meteora-warning/30 text-meteora-warning hover:bg-meteora-warning/10 text-xs h-8">
+      <Button size="sm" className="shrink-0 gap-1.5 bg-gradient-to-r from-primary to-[hsl(var(--meteora-cyan))] text-white text-xs h-8 shadow-sm shadow-primary/20">
         Fazer Upgrade <ArrowRight className="h-3 w-3" />
       </Button>
     </div>
