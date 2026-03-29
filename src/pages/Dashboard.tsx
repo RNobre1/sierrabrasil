@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { MessageSquare, CheckCircle2, Clock, TrendingUp, Play, Settings, Sparkles, ArrowRight, Zap, BarChart3 } from "lucide-react";
+import TrialTimer from "@/components/TrialTimer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
