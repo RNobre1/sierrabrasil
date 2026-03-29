@@ -81,11 +81,20 @@ export default function Onboarding() {
     }
   }, [messages, isLoading, phase]);
 
+  const userName = user?.user_metadata?.full_name || profile?.full_name || "";
+  const companyName = user?.user_metadata?.company_name || "";
+
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
+    // Start with password collection
     setTimeout(() => {
-      sendToChat("Olá! Acabei de criar minha conta e quero configurar meu atendente.");
+      const greeting = userName
+        ? `Olá, ${userName.split(" ")[0]}! 👋 Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Antes de começarmos a configurar seu atendente, vamos criar uma senha para seu acesso, tudo bem?!\n\nPor ora só precisa ter **8 dígitos**. Digite sua senha abaixo:`
+        : `Olá! 👋 Antes de começarmos a configurar seu atendente, vamos criar uma senha para seu acesso, tudo bem?!\n\nPor ora só precisa ter **8 dígitos**. Digite sua senha abaixo:`;
+      setMessages([{ role: "assistant", content: greeting }]);
+      setPasswordPhase("awaiting");
+      setIsPasswordInput(true);
     }, 500);
   }, []);
 
