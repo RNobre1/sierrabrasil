@@ -634,20 +634,6 @@ export default function Onboarding() {
     );
   }
 
-  // ========== SOCIAL LINKS PHASE ==========
-  if (phase === "social-links") {
-    return (
-      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
-        <OnboardingHeader title="Redes sociais e presença online" subtitle="Selecione as redes e insira os links ou @" progress={35} />
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-xl mx-auto">
-            <SocialLinksSelector onSubmit={handleSocialLinksSubmit} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // ========== CHAT PHASE ==========
   return (
     <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
@@ -676,6 +662,19 @@ export default function Onboarding() {
               title={passwordPhase === "confirming" ? "Confirme a senha para continuar" : "Crie sua senha de acesso"}
               description="Essa informação vai direto para a criação da conta e não fica salva em nenhuma IA."
             />
+          )}
+
+          {phase === "social-links" && (
+            <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-start gap-2.5 max-w-[85%]">
+                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0 mt-0.5 border border-primary/10">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-4 shadow-sm w-full max-w-lg">
+                  <SocialLinksSelector onSubmit={handleSocialLinksSubmit} />
+                </div>
+              </div>
+            </div>
           )}
 
           {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
