@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import UserMenu from "@/components/UserMenu";
 import meteoraLogoBranca from "@/assets/meteora-branca.png";
 import meteoraLogoPreta from "@/assets/meteora-preta.png";
+import { MeteoraSeal } from "@/components/MeteoraBrand";
 
 const navSections = [
   {
@@ -122,6 +123,9 @@ export default function ClientLayout() {
                 <p className="text-xs font-medium truncate text-sidebar-foreground/90">{profile?.full_name || "Usuário"}</p>
                 <p className="text-[10px] text-muted-foreground/60 font-mono capitalize">{tenantPlan}</p>
               </div>
+            </div>
+            <div className="flex justify-center pt-1 pb-0.5">
+              <MeteoraSeal size="small" />
             </div>
           </div>
         </aside>

@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { MeteoraWatermark } from "@/components/MeteoraBrand";
 
 interface Attendant {
   id: string;
@@ -258,6 +259,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      <MeteoraWatermark />
     </div>
   );
 }
