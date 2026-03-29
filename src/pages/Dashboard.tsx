@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { MeteoraWatermark } from "@/components/MeteoraBrand";
 
-interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; }
+interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class: string | null; }
 interface Conversation { id: string; contact_name: string; status: string; started_at: string; channel: string; }
 
 /* ─── helpers ─── */
@@ -95,7 +95,7 @@ function StBadge({ st }: { st: string }) {
 export default function Dashboard() {
   const nav = useNavigate();
   const { user } = useAuth();
-  const [attendant, setAttendant] = useState<Attendant | null>(null);
+  const [attendants, setAttendants] = useState<Attendant[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [allConversations, setAllConversations] = useState<Conversation[]>([]);
   const [totalMessages, setTotalMessages] = useState(0);
@@ -111,12 +111,12 @@ export default function Dashboard() {
       setTenantCreatedAt(tenant.created_at);
       setTenantPlan(tenant.plan || "starter");
       const [attRes, convRes, allConvRes, msgRes] = await Promise.all([
-        supabase.from("attendants").select("id, name, status, channels, model").eq("tenant_id", tenant.id).limit(1).single(),
+        supabase.from("attendants").select("id, name, status, channels, model, class").eq("tenant_id", tenant.id).order("status", { ascending: true }),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id).order("started_at", { ascending: false }).limit(6),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", tenant.id),
         supabase.from("messages").select("id", { count: "exact", head: true }),
       ]);
-      setAttendant(attRes.data);
+      setAttendants(attRes.data ?? []);
       setConversations(convRes.data ?? []);
       setAllConversations(allConvRes.data ?? []);
       setTotalMessages(msgRes.count ?? 0);
@@ -177,7 +177,7 @@ export default function Dashboard() {
       {/* ── Header ── */}
       <div>
         <h1 className="text-[22px] font-display font-bold text-white tracking-[-0.03em]">Dashboard</h1>
-        <p className="text-[13px] text-white/35 mt-0.5">Visão geral do seu agente inteligente</p>
+        <p className="text-[13px] text-white/35 mt-0.5">Visão geral dos seus agentes inteligentes</p>
       </div>
 
       {/* ── KPIs ── */}
@@ -188,38 +188,53 @@ export default function Dashboard() {
         <KPI icon={Zap} label="Mensagens" value={String(totalMessages)} accent="text-violet-400" iconBg="bg-violet-500/10 border-violet-500/20" sub="total processadas" />
       </div>
 
-      {/* ── Attendant Card ── */}
-      {attendant && (
+      {/* ── Agents Overview ── */}
+      {attendants.length > 0 && (
         <div className="cosmos-card p-5 surface-glow">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="relative">
-                <div className="h-11 w-11 rounded-[12px] flex items-center justify-center bg-gradient-to-br from-indigo-500 via-violet-500 to-violet-400 shadow-glow-indigo">
-                  <Sparkles className="h-5 w-5 text-white" />
-                </div>
-                <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#161822] ${attendant.status === "online" ? "bg-emerald-400 animate-pulse-glow" : "bg-white/25"}`} />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-[8px] flex items-center justify-center bg-violet-500/10 border border-violet-500/20">
+                <Sparkles className="h-3.5 w-3.5 text-violet-400" />
               </div>
-              <div>
-                <h2 className="text-[15px] font-display font-semibold text-white">{attendant.name}</h2>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  {attendant.channels?.map(ch => <ChBadge key={ch} ch={ch} />)}
-                  <span className={`text-[11px] font-semibold flex items-center gap-1 ${attendant.status === "online" ? "text-emerald-400" : "text-white/30"}`}>
-                    <Activity className="h-3 w-3" /> {attendant.status === "online" ? "Online" : "Offline"}
-                  </span>
+              <span className="text-[12.5px] font-display font-semibold text-white/80">
+                Agentes ({attendants.length})
+              </span>
+              <span className="text-[10px] font-mono text-emerald-400/60">
+                {attendants.filter(a => a.status === "online").length} online
+              </span>
+            </div>
+            <button onClick={() => nav("/agents")} className="text-[10px] font-medium text-white/25 hover:text-white/50 transition-colors flex items-center gap-1">
+              Ver todos <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5">
+            {attendants.slice(0, 12).map(a => (
+              <div
+                key={a.id}
+                className="group flex flex-col items-center gap-2 p-3 rounded-[12px] bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all cursor-pointer"
+                onClick={() => nav("/agents/detail")}
+              >
+                <div className="relative">
+                  <div className={`h-10 w-10 rounded-[10px] flex items-center justify-center text-white font-display font-bold text-[11px] ${a.class === "sales" ? "bg-gradient-to-br from-emerald-500 to-emerald-600" : "bg-gradient-to-br from-indigo-500 to-violet-500"}`}>
+                    {ini(a.name)}
+                  </div>
+                  <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#161822] ${a.status === "online" ? "bg-emerald-400 animate-pulse-glow" : "bg-white/20"}`} />
+                </div>
+                <div className="text-center w-full">
+                  <p className="text-[11px] font-medium text-white/80 truncate">{a.name}</p>
+                  <p className="text-[9px] font-mono text-white/25 capitalize">{a.class || "support"}</p>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button size="sm" variant="outline" onClick={() => nav("/attendant/playground")} className="gap-1.5 text-[11px] rounded-[9px] border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.1]">
-                <Play className="h-3 w-3" /> Testar
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => nav("/attendant/config")} className="gap-1.5 text-[11px] rounded-[9px] border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.1]">
-                <Settings className="h-3 w-3" /> Configurar
-              </Button>
-              <Button size="sm" onClick={() => nav("/conversations")} className="gap-1.5 text-[11px] rounded-[9px]">
-                <MessageSquare className="h-3 w-3" /> Conversas
-              </Button>
-            </div>
+            ))}
+            {attendants.length > 12 && (
+              <div
+                className="flex flex-col items-center justify-center gap-1 p-3 rounded-[12px] border border-dashed border-white/[0.06] hover:border-white/[0.12] transition-all cursor-pointer"
+                onClick={() => nav("/agents")}
+              >
+                <span className="text-[18px] font-display font-light text-white/30">+{attendants.length - 12}</span>
+                <span className="text-[9px] text-white/20">mais agentes</span>
+              </div>
+            )}
           </div>
         </div>
       )}
