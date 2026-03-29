@@ -71,6 +71,7 @@ export default function Dashboard() {
   const [allConversations, setAllConversations] = useState<Conversation[]>([]);
   const [totalMessages, setTotalMessages] = useState(0);
   const [tenantCreatedAt, setTenantCreatedAt] = useState("");
+  const [tenantPlan, setTenantPlan] = useState("starter");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
