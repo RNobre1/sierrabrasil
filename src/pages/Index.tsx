@@ -18,6 +18,7 @@ const plans = [
   { name: "Essencial", price: "97", features: ["1 agente IA", "1.000 conversas/mês", "WhatsApp", "Dashboard básico"], popular: false },
   { name: "Profissional", price: "247", features: ["3 agentes IA", "5.000 conversas/mês", "WhatsApp + Instagram", "Relatórios avançados", "Explorer com insights", "Ações automáticas"], popular: true },
   { name: "Empresarial", price: "597", features: ["5 agentes IA", "Conversas ilimitadas", "Todos os canais", "API dedicada", "Suporte prioritário", "Onboarding assistido"], popular: false },
+  { name: "Enterprise", price: "2.497", features: ["Até 100 agentes IA", "Conversas ilimitadas", "Todos os canais + API", "Relatórios ilimitados + IA", "Manager dedicado", "Estratégias mensais de vendas", "SLA garantido", "Onboarding white-glove"], popular: false, enterprise: true },
 ];
 
 const testimonials = [
