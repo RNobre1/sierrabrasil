@@ -124,6 +124,9 @@ export default function ClientLayout() {
                 <p className="text-[10px] text-muted-foreground/60 font-mono capitalize">{tenantPlan}</p>
               </div>
             </div>
+            <div className="flex justify-center pt-1 pb-0.5">
+              <MeteoraSeal size="small" />
+            </div>
           </div>
         </aside>
       )}
