@@ -382,7 +382,7 @@
 }
 
 /* Light mode overrides */
-.light .meteora-seal {
+:root:not(.dark) .meteora-seal {
   background: linear-gradient(
     135deg,
     hsl(225 80% 56% / 0.06),
@@ -393,16 +393,16 @@
   color: hsl(225 60% 45%);
 }
 
-.light .meteora-seal__star {
+:root:not(.dark) .meteora-seal__star {
   color: hsl(225 80% 50%);
   filter: drop-shadow(0 0 2px hsl(225 80% 56% / 0.3));
 }
 
-.light .meteora-meteor {
-  background: linear-gradient(90deg, transparent, hsl(225 80% 56% / 0.3), hsl(190 90% 50% / 0.2));
+:root:not(.dark) .meteora-meteor {
+  background: linear-gradient(90deg, transparent, hsl(225 80% 56% / 0.4), hsl(190 90% 50% / 0.3));
 }
 
-.light .meteora-meteor::after {
+:root:not(.dark) .meteora-meteor::after {
   background: hsl(225 80% 56%);
-  box-shadow: 0 0 4px hsl(225 80% 56% / 0.5);
+  box-shadow: 0 0 6px hsl(225 80% 56% / 0.6);
 }
