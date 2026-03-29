@@ -182,7 +182,7 @@ export default function Signup() {
             <div className="space-y-1.5">
               <Label htmlFor="whatsapp" className="text-xs font-medium text-muted-foreground">WhatsApp</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">🇧🇷 +55</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs text-muted-foreground"><Phone className="h-3.5 w-3.5" /> +55</span>
                 <Input id="whatsapp" value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))} required placeholder="(00) 00000-0000" className="h-11 rounded-xl bg-secondary/50 border-border/50 pl-16 text-sm placeholder:text-muted-foreground/50" />
               </div>
             </div>
