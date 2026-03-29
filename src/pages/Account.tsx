@@ -1,32 +1,42 @@
-import { useEffect, useState, useRef } from "react";
-import { Save, LogOut, Camera } from "lucide-react";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { Save, LogOut, Camera, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import AvatarCropModal from "@/components/AvatarCropModal";
+import { motion, AnimatePresence } from "framer-motion";
 
-const MAX_SIZE = 500 * 1024; // 500KB
+const MAX_SIZE = 500 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 export default function Account() {
   const { user, profile, signOut } = useAuth();
-  const { toast } = useToast();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Dirty tracking
+  const [initialValues, setInitialValues] = useState({ fullName: "", phone: "" });
+  const isDirty = useMemo(
+    () => fullName !== initialValues.fullName || phone !== initialValues.phone,
+    [fullName, phone, initialValues]
+  );
+
   useEffect(() => {
     if (profile) {
-      setFullName(profile.full_name ?? "");
-      setPhone(profile.phone ?? "");
+      const fn = profile.full_name ?? "";
+      const ph = profile.phone ?? "";
+      setFullName(fn);
+      setPhone(ph);
       setAvatarUrl(profile.avatar_url ?? null);
+      setInitialValues({ fullName: fn, phone: ph });
     }
   }, [profile]);
 
@@ -34,16 +44,8 @@ export default function Account() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast({ title: "Formato não suportado", description: "Use JPG, PNG ou WebP.", variant: "destructive" });
-      return;
-    }
-    if (file.size > MAX_SIZE) {
-      toast({ title: "Arquivo muito grande", description: "Máximo 500KB.", variant: "destructive" });
-      return;
-    }
-
+    if (!ACCEPTED_TYPES.includes(file.type)) return;
+    if (file.size > MAX_SIZE) return;
     const reader = new FileReader();
     reader.onload = () => setCropSrc(reader.result as string);
     reader.readAsDataURL(file);
@@ -52,40 +54,31 @@ export default function Account() {
   const handleCropped = async (blob: Blob) => {
     if (!user) return;
     const path = `${user.id}/avatar.jpg`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
-
-    if (uploadError) {
-      toast({ title: "Erro no upload", description: uploadError.message, variant: "destructive" });
-      return;
-    }
-
+    const { error: uploadError } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+    if (uploadError) return;
     const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
     const url = `${publicUrl}?t=${Date.now()}`;
-
     await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);
     setAvatarUrl(url);
-    toast({ title: "Foto atualizada!" });
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !isDirty) return;
     setSaving(true);
+    setSaved(false);
     const { error } = await supabase.from("profiles").update({ full_name: fullName, phone }).eq("user_id", user.id);
     setSaving(false);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Perfil atualizado!" });
+    if (!error) {
+      setSaved(true);
+      setInitialValues({ fullName, phone });
+      setTimeout(() => setSaved(false), 3000);
     }
   };
 
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-display font-semibold">Minha Conta</h1>
+        <h1 className="text-2xl font-display font-semibold text-foreground">Minha Conta</h1>
         <p className="text-sm text-muted-foreground mt-1">Gerencie suas informações pessoais</p>
       </div>
 
@@ -137,10 +130,26 @@ export default function Account() {
             <Label htmlFor="phone">Telefone</Label>
             <Input id="phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+55 11 99999-0000" />
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? "Salvando..." : "Salvar alterações"}
-          </Button>
+
+          {/* Inline save */}
+          <div className="flex items-center gap-3">
+            <Button onClick={handleSave} disabled={saving || !isDirty}>
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? "Salvando..." : "Salvar alterações"}
+            </Button>
+            <AnimatePresence>
+              {saved && (
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium"
+                >
+                  <Check className="h-4 w-4" /> Salvo com sucesso
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
         </CardContent>
       </Card>
 
@@ -171,12 +180,7 @@ export default function Account() {
       </Card>
 
       {cropSrc && (
-        <AvatarCropModal
-          open={!!cropSrc}
-          onClose={() => setCropSrc(null)}
-          imageSrc={cropSrc}
-          onCropped={handleCropped}
-        />
+        <AvatarCropModal open={!!cropSrc} onClose={() => setCropSrc(null)} imageSrc={cropSrc} onCropped={handleCropped} />
       )}
     </div>
   );

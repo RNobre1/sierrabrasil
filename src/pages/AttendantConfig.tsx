@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Save, ArrowLeft, Power, PowerOff } from "lucide-react";
+import { Save, ArrowLeft, Power, PowerOff, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,18 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CHANNELS = ["whatsapp", "instagram", "web"] as const;
 
 export default function AttendantConfig() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [attendantId, setAttendantId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
@@ -32,39 +32,63 @@ export default function AttendantConfig() {
   const [channels, setChannels] = useState<string[]>([]);
   const [status, setStatus] = useState("offline");
 
+  // Dirty tracking
+  const [initialValues, setInitialValues] = useState({
+    name: "", persona: "", instructions: "", model: "", temperature: 0.7, channels: [] as string[],
+  });
+
+  const isDirty = useMemo(() => {
+    return (
+      name !== initialValues.name ||
+      persona !== initialValues.persona ||
+      instructions !== initialValues.instructions ||
+      model !== initialValues.model ||
+      temperature !== initialValues.temperature ||
+      JSON.stringify([...channels].sort()) !== JSON.stringify([...initialValues.channels].sort())
+    );
+  }, [name, persona, instructions, model, temperature, channels, initialValues]);
+
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).single();
       if (!tenant) { setLoading(false); return; }
-
       const { data: att } = await supabase.from("attendants").select("*").eq("tenant_id", tenant.id).limit(1).single();
       if (att) {
         setAttendantId(att.id);
         setName(att.name);
         setPersona(att.persona ?? "");
         setInstructions(att.instructions ?? "");
-        setModel(att.model ?? "gpt-4o-mini");
+        setModel(att.model ?? "google/gemini-3-flash-preview");
         setTemperature(att.temperature ?? 0.7);
         setChannels(att.channels ?? []);
         setStatus(att.status);
+        setInitialValues({
+          name: att.name,
+          persona: att.persona ?? "",
+          instructions: att.instructions ?? "",
+          model: att.model ?? "google/gemini-3-flash-preview",
+          temperature: att.temperature ?? 0.7,
+          channels: att.channels ?? [],
+        });
       }
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [user]);
 
   const handleSave = async () => {
-    if (!attendantId) return;
+    if (!attendantId || !isDirty) return;
     setSaving(true);
+    setSaved(false);
     const { error } = await supabase.from("attendants").update({
       name, persona, instructions, model, temperature, channels, status,
     }).eq("id", attendantId);
     setSaving(false);
-    if (error) {
-      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Salvo!", description: "Configurações do atendente atualizadas." });
+    if (!error) {
+      setSaved(true);
+      setInitialValues({ name, persona, instructions, model, temperature, channels: [...channels] });
+      setTimeout(() => setSaved(false), 3000);
     }
   };
 
@@ -77,7 +101,6 @@ export default function AttendantConfig() {
     setStatus(newStatus);
     if (attendantId) {
       await supabase.from("attendants").update({ status: newStatus }).eq("id", attendantId);
-      toast({ title: newStatus === "online" ? "Atendente ativado!" : "Atendente pausado" });
     }
   };
 
@@ -205,12 +228,24 @@ export default function AttendantConfig() {
         </CardContent>
       </Card>
 
-      {/* Save */}
-      <div className="flex justify-end pb-8">
-        <Button onClick={handleSave} disabled={saving} size="lg">
+      {/* Save - inline below form */}
+      <div className="flex items-center gap-3 pb-8">
+        <Button onClick={handleSave} disabled={saving || !isDirty} size="lg">
           <Save className="h-4 w-4 mr-2" />
           {saving ? "Salvando..." : "Salvar configurações"}
         </Button>
+        <AnimatePresence>
+          {saved && (
+            <motion.span
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium"
+            >
+              <Check className="h-4 w-4" /> Configurações salvas
+            </motion.span>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
