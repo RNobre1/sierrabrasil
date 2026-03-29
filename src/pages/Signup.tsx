@@ -30,8 +30,8 @@ export default function Signup() {
     if (error) {
       toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Conta criada!", description: "Bem-vindo à Meteora Digital!" });
-      navigate("/dashboard");
+      toast({ title: "Conta criada!", description: "Vamos configurar seu atendente!" });
+      navigate("/onboarding");
     }
   };
 
