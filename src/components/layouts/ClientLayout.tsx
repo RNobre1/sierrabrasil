@@ -63,25 +63,29 @@ export default function ClientLayout() {
     });
   }, [user]);
 
-  // Dark-first: root is dark by default, light only if .light class present
   const isLightMode = typeof document !== "undefined" && document.documentElement.classList.contains("light");
   const logo = isLightMode ? meteoraLogoPreta : meteoraLogoBranca;
 
+  const initials = (profile?.full_name || "U").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+
   return (
-    <div className="flex min-h-screen w-full bg-background meteora-noise">
+    <div className="flex min-h-screen w-full bg-background">
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <aside className="fixed inset-y-0 left-0 z-30 flex w-[232px] flex-col border-r border-border/40 bg-sidebar">
+        <aside
+          className="fixed inset-y-0 left-0 z-30 flex w-[240px] flex-col border-r border-white/[0.06] bg-sidebar"
+          style={{ backgroundImage: "linear-gradient(180deg, rgba(99, 102, 241, 0.03) 0%, transparent 40%)" }}
+        >
           {/* Logo */}
-          <div className="flex h-14 items-center px-5">
-            <img src={logo} alt="Meteora Digital" className="h-5 opacity-90" />
+          <div className="flex h-14 items-center px-5 pb-2 pt-4">
+            <img src={logo} alt="Meteora Digital" className="h-[22px] opacity-90" />
           </div>
 
           {/* Nav */}
           <nav className="flex-1 px-3 pt-2 space-y-5 overflow-y-auto">
             {navSections.map((section) => (
               <div key={section.label}>
-                <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50 px-3 mb-1.5">
+                <p className="font-body text-[10px] font-semibold uppercase tracking-[0.1em] text-white/30 px-3 mb-1.5">
                   {section.label}
                 </p>
                 <div className="space-y-0.5">
@@ -89,10 +93,10 @@ export default function ClientLayout() {
                     <NavLink
                       key={item.to}
                       to={item.to}
-                      className="group flex items-center gap-2.5 rounded-lg px-3 py-[9px] text-[13px] font-medium text-sidebar-foreground/70 transition-all duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                      activeClassName="bg-primary/8 text-primary border border-primary/8"
+                      className="group relative flex items-center gap-2.5 rounded-lg px-3 py-[9px] text-[13.5px] font-medium text-white/50 transition-all duration-200 hover:bg-white/[0.04] hover:text-white/80"
+                      activeClassName="bg-cosmos-indigo/[0.15] text-cosmos-indigo"
                     >
-                      <item.icon className="h-[15px] w-[15px] shrink-0" />
+                      <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.7} />
                       <span className="truncate">{item.label}</span>
                     </NavLink>
                   ))}
@@ -101,28 +105,36 @@ export default function ClientLayout() {
             ))}
           </nav>
 
-          {/* User section */}
-          <div className="border-t border-border/30 p-3 space-y-2">
+          {/* Bottom section */}
+          <div className="border-t border-white/[0.06] p-3 space-y-2">
             {tenantPlan === "enterprise" ? (
-              <div className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[hsl(190,90%,50%)]/10 to-primary/10 border border-[hsl(190,90%,50%)]/20 px-3 py-2">
-                <Crown className="h-3.5 w-3.5 text-[hsl(190,90%,50%)]" />
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[hsl(190,90%,50%)]">✦ Enterprise</span>
+              <div className="flex items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-cosmos-cyan/10 to-cosmos-indigo/10 border border-cosmos-cyan/20 px-3 py-2">
+                <Crown className="h-3.5 w-3.5 text-cosmos-cyan" />
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-cosmos-cyan">✦ Enterprise</span>
               </div>
             ) : (
               <a
                 href="/integrations"
-                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-[hsl(190,90%,50%)] px-3 py-2 text-xs font-semibold text-white transition-all hover:shadow-[0_0_20px_-4px_hsl(var(--primary)/0.4)]"
+                className="group relative flex items-center justify-center gap-2 rounded-[10px] px-3 py-2.5 text-[13.5px] font-semibold text-white transition-all duration-200 overflow-hidden"
+                style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6, #A78BFA)", boxShadow: "0 2px 8px rgba(99, 102, 241, 0.4)" }}
               >
                 <Zap className="h-3.5 w-3.5" />
                 Fazer Upgrade
+                {/* Shine effect */}
+                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
               </a>
             )}
+
+            {/* User info */}
             <div className="flex items-center gap-2.5 px-2 py-2">
-              <UserMenu />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate text-sidebar-foreground/90">{profile?.full_name || "Usuário"}</p>
-                <p className="text-[10px] text-muted-foreground/60 font-mono capitalize">{tenantPlan}</p>
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white font-display font-semibold text-[13px]" style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}>
+                {initials}
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate text-white/80">{profile?.full_name || "Usuário"}</p>
+                <p className="text-[10px] text-white/30 font-mono capitalize">{tenantPlan}</p>
+              </div>
+              <UserMenu />
             </div>
             <div className="flex justify-center pt-1 pb-0.5">
               <MeteoraSeal size="small" />
@@ -132,29 +144,29 @@ export default function ClientLayout() {
       )}
 
       {/* Main content */}
-      <main className={`flex-1 ${!isMobile ? "ml-[232px]" : ""} ${isMobile ? "pb-20" : ""}`}>
-        <div className="mx-auto max-w-[1100px] p-4 md:p-6 dash-page-enter">
+      <main className={`flex-1 cosmos-glow ${!isMobile ? "ml-[240px]" : ""} ${isMobile ? "pb-20" : ""}`}>
+        <div className="mx-auto max-w-[1100px] p-4 md:p-6 page-enter">
           <Outlet />
         </div>
       </main>
 
       {/* Mobile Bottom Nav */}
       {isMobile && (
-        <nav className="fixed inset-x-0 bottom-0 z-30 flex h-16 items-center justify-around border-t border-border/40 bg-background/95 backdrop-blur-lg">
+        <nav className="fixed inset-x-0 bottom-0 z-30 flex h-16 items-center justify-around border-t border-white/[0.06] bg-background/95 backdrop-blur-lg">
           {mobileNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
-              className="flex flex-col items-center gap-1 text-muted-foreground"
-              activeClassName="text-primary"
+              className="flex flex-col items-center gap-1 text-white/40"
+              activeClassName="text-cosmos-indigo"
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className="h-5 w-5" strokeWidth={1.7} />
               <span className="text-[10px] font-medium">{item.label}</span>
             </NavLink>
           ))}
           <div className="flex flex-col items-center gap-1">
             <UserMenu />
-            <span className="text-[10px] font-medium text-muted-foreground">Conta</span>
+            <span className="text-[10px] font-medium text-white/40">Conta</span>
           </div>
         </nav>
       )}
