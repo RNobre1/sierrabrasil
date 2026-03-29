@@ -42,9 +42,12 @@ export default function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-border p-3">
-          <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={signOut}>
-            Sair
+        <div className="border-t border-border p-3 space-y-1">
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground" onClick={() => nav("/dashboard")}>
+            <ArrowLeftRight className="h-4 w-4" /> Painel do Cliente
+          </Button>
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive" onClick={signOut}>
+            <LogOut className="h-4 w-4" /> Sair
           </Button>
         </div>
       </aside>
