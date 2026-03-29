@@ -1,129 +1,154 @@
 
 
-## Plataforma de Atendentes Inteligentes — Meteora Digital
-### Sprint 1: Fundação + Auth + Dashboard + Conversas
+# Plano de Evolução — Meteora Platform
+
+## Visão Geral
+
+Este plano cobre todas as solicitações organizadas em blocos de execução sequencial. A ideia central: transformar o dashboard do cliente numa experiência profissional com canais de conexão dedicados (WhatsApp/Instagram), sistema de agentes com classes, trial timer, upgrade gates, e fluxo de criação de novos agentes inteligente.
 
 ---
 
-### 1. Design System (Fundação Visual)
+## Bloco 1 — Correções Rápidas e Visuais
 
-**Fontes:** Outfit (display/KPIs), DM Sans (body), JetBrains Mono (dados técnicos) via Google Fonts.
+1. **URLs lowercase** — No `SocialLinksSelector` e `BusinessOverview`, normalizar todas as URLs exibidas para lowercase (`.toLowerCase()` nos valores renderizados).
 
-**Tokens CSS:** Implementar todas as variáveis do systemDesign.md:
-- Paleta do Cliente (light mode): superfícies (#FAFAFA, #FFFFFF), textos (#18181B, #52525B), acento azul Meteora (#1A93FE), semânticas (success, warning, danger)
-- Paleta Admin (dark mode): superfícies (#161618, #383739), textos (#DADADA, #ACACAC)
-- Espaçamento (base 4px), border-radius (mínimo 6px), sombras, escala tipográfica
+2. **Logo modo claro no ClientLayout** — Importar `meteora-preta.png` e usar condicionalmente. Como o projeto é dark-first, verificar se existe classe `dark` no root e alternar entre `meteora-branca.png` e `meteora-preta.png`.
 
-**Tailwind config:** Estender com todas as cores customizadas, fontes, e tokens do design system.
+3. **Menu "Agente" → "Agentes" (plural)** — No `ClientLayout`, renomear o label do nav item.
 
 ---
 
-### 2. Estrutura de Rotas
+## Bloco 2 — Reestruturação do Menu Lateral do Cliente
 
+Redesign completo do sidebar para ficar premium e profissional:
+
+- Seções agrupadas com labels discretos: **"Principal"** (Início, Conversas), **"Agentes"** (link para listagem de agentes), **"Canais"** (Canais de Conexão), **"Análise"** (Relatórios)
+- Estilo: items com border-radius sutil, hover com bg-accent/5, ícones de 16px, tipografia mais refinada
+- Remover Playground do menu principal (mover para dentro da página do agente)
+- Adicionar item **"Canais de Conexão"** com ícone de `Link2` ou `Radio`
+
+Novas rotas:
+- `/channels` → Página de Canais de Conexão (WhatsApp + Instagram tabs)
+- `/agents` → Listagem de agentes do tenant
+- `/agents/:id/config` → Configuração individual do agente
+
+---
+
+## Bloco 3 — Página de Canais de Conexão (`/channels`)
+
+Nova página com **duas tabs elegantes**: WhatsApp e Instagram.
+
+### Tab WhatsApp
+Seções:
+1. **Status da Conexão** — LED verde/vermelho, status da API, botão refresh manual, auto-refresh 5min. Campos: Phone Number ID, Business Account ID, API Token (mascarado).
+2. **Templates de Mensagem** — Tabela com: nome do template, status (aprovado/pendente/rejeitado com badges coloridos), categoria, idioma, contadores (envios, entregas, leituras, % leitura).
+3. **Criar Novo Template** — Form com nome, categoria, corpo da mensagem (com variáveis `{{1}}`), botão "Enviar para Aprovação".
+4. **Excluir Template** — Botão com confirmação.
+5. **Envio em Massa** — Seletor de template, campo de mensagem com variáveis `{nome}`, upload de planilha CSV/XLSX de leads, agendamento de envio (date/time picker), botão enviar.
+
+### Tab Instagram
+- Versão simplificada: status de conexão, configurações básicas, sem API oficial complexa.
+
+### Upgrade Gates
+- Envio em massa e templates avançados bloqueados com overlay: "Para usar essa função, faça upgrade do seu plano" + botão de upgrade.
+
+---
+
+## Bloco 4 — Sistema de Agentes com Classes
+
+### Database Migration
+```sql
+-- Adicionar coluna 'class' na tabela attendants
+ALTER TABLE public.attendants ADD COLUMN IF NOT EXISTS class text DEFAULT 'support';
 ```
-/login                    → Página de login
-/signup                   → Página de cadastro
-/dashboard                → Dashboard do cliente
-/conversations            → Lista de conversas
-/conversations/:id        → Detalhe da conversa
-/attendant/config          → Configuração do atendente
-/attendant/playground      → Playground de teste
-/reports                  → Relatórios
-/account                  → Minha conta
-/admin/dashboard           → Dashboard admin Meteora
-/admin/tenants             → Gestão de tenants
-/admin/attendants          → Gestão de atendentes
-/admin/consumption         → Consumo de IA
-```
+
+### Classes de Agente
+- **Atendimento / Suporte** — Skills: FAQ, resolução de problemas, escalonamento, coleta de feedback
+- **Vendas / Acompanhamento** — Skills: qualificação de leads, follow-up, envio de propostas, fechamento
+
+Cada classe gera um `.md` de system prompt com habilidades específicas que é injetado automaticamente.
+
+### Página de Agentes (`/agents`)
+- Header: "Seus Agentes" + contador (ex: "1 de 1 agente")
+- Cards dos agentes com: nome, classe (badge), status (LED), canais, botão configurar
+- Botão **"Criar Novo Agente"** — Se plano básico e já tem 1 agente: overlay "Faça upgrade para criar mais agentes"
+- Ao clicar "Criar Novo Agente" (se permitido): abre fluxo de criação que começa perguntando a classe do agente, depois vai para o onboarding flow (sem boas-vindas, direto ao ponto, lendo as últimas 50 conversas para sugerir tipo de agente)
 
 ---
 
-### 3. Autenticação (Lovable Cloud)
+## Bloco 5 — Trial Timer no Dashboard
 
-- Login com email + senha
-- Proteção de rotas (redirecionar para /login se não autenticado)
-- Separação de rotas admin vs cliente
-- Tabela `profiles` com dados do usuário
-- Tabela `user_roles` para roles (admin, client) — seguindo as melhores práticas de segurança
-
----
-
-### 4. Layouts
-
-**Layout Cliente (Light Mode):**
-- Sidebar 220px fixa no desktop (branca, borda sutil)
-- 5 itens de navegação: Início, Conversas, Atendente, Relatórios, Minha Conta
-- Item ativo com fundo azul sutil + texto azul Meteora
-- Bottom navigation no mobile (< 768px) com 5 ícones
-- Content area com max-width 1200px, fundo #FAFAFA
-
-**Layout Admin (Dark Mode):**
-- Sidebar dark mode com cores MCC Design System
-- Itens: Dashboard, Clientes, Atendentes, Consumo IA, Financeiro, Configurações
-- Estilo cockpit/mission control
+- Componente elegante no topo do dashboard ou sidebar
+- Texto: "Seu período de testes termina em X dias, X horas"
+- Contagem regressiva em tempo real
+- Design: borda sutil, gradiente discreto, ícone de relógio
+- Baseado no `created_at` do tenant + 7 dias
+- Botão "Fazer Upgrade" ao lado
 
 ---
 
-### 5. Dashboard do Cliente
+## Bloco 6 — Upgrade Gates Espalhados
 
-**KPI Cards** (4 cards no topo):
-- Conversas hoje
-- Vendas realizadas
-- Agendamentos
-- Satisfação média
-- Cada card com valor grande (Outfit light 40px), label, e delta (variação %)
-
-**Card Hero do Atendente:**
-- Status dot com animação pulse (🟢 Online)
-- Nome do atendente + canais ativos
-- Botões: Testar, Pausar, Configurar, Ver conversas
-
-**Insights do Explorer** (seção inferior):
-- Cards com insights mockados e botão "Aceitar"
-
-**Últimas Conversas:**
-- Lista das conversas mais recentes com nome, ação e horário
+Adicionar 2-3 CTAs de upgrade estratégicos:
+1. No dashboard (banner lateral ou card)
+2. Na página de canais (funcionalidades bloqueadas)
+3. Na página de agentes (limite de agentes)
 
 ---
 
-### 6. Tela de Conversas
+## Bloco 7 — Onboarding: Seleção de Classe do Agente
 
-**Lista de conversas:**
-- Filtros por status (ativa, resolvida, escalada)
-- Busca por nome/telefone
-- Card de cada conversa: nome do contato, última mensagem, status badge, timestamp
-- Responsivo: cards empilhados no mobile
+No fluxo de onboarding, **antes** de começar a conversa com a IA:
+- Tela de seleção: "Qual tipo de agente você gostaria de criar?"
+- Duas opções visuais elegantes: **Atendimento / Suporte** e **Vendas / Acompanhamento**
+- A escolha determina as skills e o system prompt base do agente
+- Isso fica salvo no campo `class` do attendant
 
-**Detalhe da conversa:**
-- Chat view com mensagens do contato e do atendente
-- Bolhas de chat estilizadas (contato à esquerda, atendente à direita)
-- Metadata: canal, duração, ações executadas
-
----
-
-### 7. Dashboard Admin (básico)
-
-- KPIs globais: MRR, clientes ativos, agentes rodando, consumo IA
-- Lista de tenants recentes
-- Estilo dark mode com dados densos
+### Fluxo "Criar Novo Agente" (cliente existente)
+- Sem boas-vindas
+- Edge function lê últimas 50 conversas do tenant
+- IA sugere: "Com base nos seus atendimentos, que tal criar um agente de Vendas?"
+- Depois segue o flow normal de configuração
 
 ---
 
-### 8. Database (Lovable Cloud)
+## Bloco 8 — Remover Canais da Config do Agente
 
-Tabelas iniciais com RLS:
-- `profiles` (vinculada a auth.users)
-- `user_roles` (admin, client)
-- `tenants` (empresa do cliente, plano, status)
-- `attendants` (atendente IA, nome, status, config)
-- `conversations` (conversas com contatos)
-- `messages` (mensagens de cada conversa)
-
-Todas com RLS habilitado e policies de tenant isolation.
+- Remover a seção "Canais" do `AttendantConfig.tsx`
+- Canais agora são gerenciados exclusivamente na página `/channels`
 
 ---
 
-### Dados Mockados Iniciais
+## Arquivos Impactados
 
-Para a demonstração funcionar sem integrações externas (WhatsApp, Stripe), o dashboard e conversas usarão dados seed no banco para visualização.
+| Arquivo | Ação |
+|---------|------|
+| `src/components/layouts/ClientLayout.tsx` | Redesign menu, logo, novas rotas |
+| `src/App.tsx` | Novas rotas `/channels`, `/agents`, `/agents/:id/config` |
+| `src/pages/Channels.tsx` | **Novo** — Página de canais WhatsApp/Instagram |
+| `src/pages/Agents.tsx` | **Novo** — Listagem de agentes |
+| `src/pages/AttendantConfig.tsx` | Remover seção canais, adicionar classe |
+| `src/pages/Dashboard.tsx` | Trial timer, upgrade CTA |
+| `src/pages/Onboarding.tsx` | Adicionar seleção de classe |
+| `src/components/onboarding/AgentClassSelector.tsx` | **Novo** — Seletor de classe |
+| `src/components/channels/WhatsAppTab.tsx` | **Novo** — Tab WhatsApp completa |
+| `src/components/channels/InstagramTab.tsx` | **Novo** — Tab Instagram |
+| `src/components/TrialTimer.tsx` | **Novo** — Countdown elegante |
+| `src/components/UpgradeGate.tsx` | **Novo** — Overlay de upgrade |
+| `src/components/onboarding/SocialLinksSelector.tsx` | Fix URLs lowercase |
+| `src/components/onboarding/BusinessOverview.tsx` | Fix URLs lowercase |
+| `supabase/migrations/` | Adicionar coluna `class` em `attendants` |
+| `supabase/functions/onboarding-chat/index.ts` | Ajustar prompt para fluxo de novo agente |
+
+---
+
+## Ordem de Execução Sugerida
+
+1. Bloco 1 (fixes rápidos)
+2. Bloco 4 (migration + classes)
+3. Bloco 7 (onboarding com classe)
+4. Bloco 2 (menu redesign)
+5. Bloco 3 (canais de conexão)
+6. Bloco 8 (remover canais do config)
+7. Bloco 5 + 6 (trial timer + upgrade gates)
 
