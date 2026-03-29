@@ -48,10 +48,7 @@ export default function Index() {
       <header className="fixed top-0 inset-x-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-meteora-cyan flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs tracking-tighter">M</span>
-            </div>
-            <span className="font-semibold text-foreground tracking-tight">METEORA</span>
+            <img src={meteoraLogo} alt="Meteora Digital" className="h-7" />
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Entrar</Button></Link>
