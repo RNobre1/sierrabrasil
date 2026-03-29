@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, Plus, Play, Settings, Shield, Headphones, Lock, TrendingUp, Zap, BookOpen, Brain, ChevronRight, Wifi, WifiOff } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Bot, Plus, Play, Settings, Headphones, TrendingUp, Zap, ChevronRight, Wifi, WifiOff, Shield, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { motion } from "framer-motion";
 
 interface Attendant {
   id: string;
@@ -18,13 +15,22 @@ interface Attendant {
   class: string | null;
 }
 
-const classConfig: Record<string, { label: string; shortLabel: string; icon: React.ReactNode; dotColor: string; textColor: string }> = {
-  support: { label: "Atendimento / Suporte", shortLabel: "Suporte", icon: <Headphones className="h-3.5 w-3.5" />, dotColor: "bg-blue-500", textColor: "text-blue-400" },
-  sales: { label: "Vendas / Acompanhamento", shortLabel: "Vendas", icon: <TrendingUp className="h-3.5 w-3.5" />, dotColor: "bg-emerald-500", textColor: "text-emerald-400" },
+const CLASS_CFG: Record<string, { short: string; dot: string; text: string; accent: string }> = {
+  support: { short: "Suporte", dot: "bg-blue-400", text: "text-blue-400", accent: "from-blue-500/15 to-blue-500/5 border-blue-500/10" },
+  sales:   { short: "Vendas",  dot: "bg-emerald-400", text: "text-emerald-400", accent: "from-emerald-500/15 to-emerald-500/5 border-emerald-500/10" },
 };
 
+function ChBadge({ ch }: { ch: string }) {
+  const m: Record<string, string> = {
+    whatsapp: "text-green-400/70 border-green-500/15",
+    instagram: "text-pink-400/70 border-pink-500/15",
+    web: "text-indigo-400/70 border-indigo-500/15",
+  };
+  return <span className={`inline-flex items-center px-1.5 py-[1px] rounded text-[8px] font-bold uppercase tracking-[.05em] border bg-white/[0.02] ${m[ch] ?? m.web}`}>{ch}</span>;
+}
+
 export default function Agents() {
-  const navigate = useNavigate();
+  const nav = useNavigate();
   const { user } = useAuth();
   const [agents, setAgents] = useState<Attendant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,203 +38,161 @@ export default function Agents() {
 
   useEffect(() => {
     if (!user) return;
-    const load = async () => {
-      const { data: tenant } = await supabase.from("tenants").select("id, plan").eq("owner_id", user.id).single();
-      if (!tenant) { setLoading(false); return; }
-      setTenantPlan(tenant.plan);
-      const { data } = await supabase.from("attendants").select("id, name, status, channels, model, persona, class").eq("tenant_id", tenant.id);
+    (async () => {
+      const { data: t } = await supabase.from("tenants").select("id, plan").eq("owner_id", user.id).single();
+      if (!t) { setLoading(false); return; }
+      setTenantPlan(t.plan);
+      const { data } = await supabase.from("attendants").select("id, name, status, channels, model, persona, class").eq("tenant_id", t.id);
       setAgents((data as any) ?? []);
       setLoading(false);
-    };
-    load();
+    })();
   }, [user]);
 
   const maxAgents = tenantPlan === "starter" ? 1 : tenantPlan === "professional" ? 3 : tenantPlan === "enterprise" ? 100 : 10;
-  const canCreateMore = agents.length < maxAgents;
-  const onlineCount = agents.filter(a => a.status === "online").length;
+  const canCreate = agents.length < maxAgents;
+  const online = agents.filter(a => a.status === "online").length;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+  if (loading) return (
+    <div className="space-y-5">
+      <div className="h-7 w-44 skeleton-cosmos rounded-lg" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {[...Array(6)].map((_, i) => <div key={i} className="h-[180px] skeleton-cosmos rounded-[14px]" />)}
       </div>
-    );
-  }
-
-  const renderAgentCard = (agent: Attendant, i: number) => {
-    const cls = classConfig[agent.class || "support"] || classConfig.support;
-    const isSupport = (agent.class || "support") === "support";
-    const modelShort = agent.model ? agent.model.split("/").pop()?.replace("-preview", "") : "default";
-
-    return (
-      <motion.div
-        key={agent.id}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: i * 0.06 }}
-        className="group relative rounded-2xl border border-border/30 bg-card/50 backdrop-blur-sm hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer overflow-hidden"
-        onClick={() => navigate(`/agents/detail?id=${agent.id}`)}
-      >
-        {/* Top accent line */}
-        <div className={`h-0.5 w-full ${isSupport ? "bg-gradient-to-r from-blue-500/50 to-transparent" : "bg-gradient-to-r from-emerald-500/50 to-transparent"}`} />
-
-        <div className="p-5">
-          {/* Header row */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center border border-primary/10">
-                  <Bot className="h-5 w-5 text-primary" />
-                </div>
-                <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-card ${agent.status === "online" ? "bg-emerald-400 animate-pulse-dot" : "bg-muted-foreground/40"}`} />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-foreground truncate">{agent.name}</h3>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className={`h-1.5 w-1.5 rounded-full ${cls.dotColor}`} />
-                  <span className={`text-[10px] ${cls.textColor}`}>{cls.shortLabel}</span>
-                  <span className="text-[10px] text-muted-foreground/40">·</span>
-                  <span className="text-[10px] text-muted-foreground font-mono">{modelShort}</span>
-                </div>
-              </div>
-            </div>
-            <Badge
-              variant={agent.status === "online" ? "default" : "secondary"}
-              className={`text-[9px] h-5 ${agent.status === "online" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" : ""}`}
-            >
-              {agent.status === "online" ? "Online" : "Offline"}
-            </Badge>
-          </div>
-
-          {/* Channels */}
-          <div className="flex items-center gap-1.5 mb-4">
-            {agent.channels?.map(ch => (
-              <Badge key={ch} variant="outline" className="text-[9px] capitalize font-mono border-border/30 bg-muted/30 h-5">{ch}</Badge>
-            ))}
-            {(!agent.channels || agent.channels.length === 0) && (
-              <span className="text-[10px] text-muted-foreground/50">Nenhum canal configurado</span>
-            )}
-          </div>
-
-          {/* Quick stats row */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="rounded-lg bg-muted/20 px-2.5 py-1.5 text-center">
-              <Zap className="h-3 w-3 text-primary mx-auto mb-0.5" />
-              <p className="text-[9px] text-muted-foreground">Skills</p>
-            </div>
-            <div className="rounded-lg bg-muted/20 px-2.5 py-1.5 text-center">
-              <BookOpen className="h-3 w-3 text-primary mx-auto mb-0.5" />
-              <p className="text-[9px] text-muted-foreground">KB</p>
-            </div>
-            <div className="rounded-lg bg-muted/20 px-2.5 py-1.5 text-center">
-              <Brain className="h-3 w-3 text-primary mx-auto mb-0.5" />
-              <p className="text-[9px] text-muted-foreground">Memória</p>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-3 border-t border-border/20">
-            <div className="flex gap-1.5">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 text-[10px] gap-1 text-muted-foreground hover:text-foreground px-2"
-                onClick={(e) => { e.stopPropagation(); navigate("/attendant/playground"); }}
-              >
-                <Play className="h-3 w-3" /> Testar
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 text-[10px] gap-1 text-muted-foreground hover:text-foreground px-2"
-                onClick={(e) => { e.stopPropagation(); navigate(`/agents/detail?id=${agent.id}`); }}
-              >
-                <Settings className="h-3 w-3" /> Configurar
-              </Button>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
-          </div>
-        </div>
-      </motion.div>
-    );
-  };
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-5">
+
+      {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Seus Agentes</h1>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 flex items-center gap-2 sm:gap-3 flex-wrap">
-            <span>{agents.length}/{maxAgents} agentes</span>
-            <span className="text-muted-foreground/30">|</span>
-            <span className="flex items-center gap-1"><Wifi className="h-3 w-3 text-emerald-400" /> {onlineCount} online</span>
-            <span className="flex items-center gap-1"><WifiOff className="h-3 w-3 text-muted-foreground/50" /> {agents.length - onlineCount} offline</span>
-          </p>
+          <h1 className="text-[22px] font-display font-bold text-white tracking-[-0.03em]">Agentes</h1>
+          <div className="flex items-center gap-3 mt-1 text-[11px] text-white/30">
+            <span className="font-mono">{agents.length}/{maxAgents} agentes</span>
+            <span className="w-px h-3 bg-white/10" />
+            <span className="flex items-center gap-1"><Wifi className="h-3 w-3 text-emerald-400" /> {online} online</span>
+            {agents.length - online > 0 && (
+              <span className="flex items-center gap-1"><WifiOff className="h-3 w-3 text-white/20" /> {agents.length - online} offline</span>
+            )}
+          </div>
         </div>
-        {canCreateMore ? (
-          <Button
-            onClick={() => navigate("/onboarding?newAgent=true")}
-            className="gap-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20"
-          >
-            <Plus className="h-4 w-4" /> Novo Agente
+        {canCreate ? (
+          <Button onClick={() => nav("/onboarding?newAgent=true")} className="gap-1.5 text-[12px] rounded-[10px]">
+            <Plus className="h-3.5 w-3.5" /> Novo Agente
           </Button>
         ) : (
-          <Button
-            variant="outline"
-            className="gap-2 rounded-xl border-[hsl(var(--meteora-cyan))]/30 text-[hsl(var(--meteora-cyan))] hover:bg-[hsl(var(--meteora-cyan))]/5"
-            onClick={() => navigate("/integrations")}
-          >
-            <Zap className="h-4 w-4" /> Fazer Upgrade
+          <Button variant="outline" onClick={() => nav("/integrations")} className="gap-1.5 text-[12px] rounded-[10px] border-cyan-500/25 text-cyan-400 hover:bg-cyan-500/5">
+            <Zap className="h-3.5 w-3.5" /> Fazer Upgrade
           </Button>
         )}
       </div>
 
-      {!canCreateMore && (
-        <div className="rounded-xl border border-[hsl(var(--meteora-cyan))]/15 bg-[hsl(var(--meteora-cyan))]/5 p-4 flex items-center gap-3">
-          <Shield className="h-5 w-5 text-[hsl(var(--meteora-cyan))] shrink-0" />
+      {/* ── Limit alert ── */}
+      {!canCreate && (
+        <div className="flex items-center gap-3 rounded-[12px] border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
+          <Shield className="h-4 w-4 text-cyan-400 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-foreground">Limite de agentes atingido</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Faça upgrade para criar mais agentes e desbloquear superpoderes.
-            </p>
+            <p className="text-[12.5px] font-medium text-white/80">Limite de agentes atingido</p>
+            <p className="text-[11px] text-white/30 mt-0.5">Faça upgrade para criar mais agentes e desbloquear superpoderes.</p>
           </div>
         </div>
       )}
 
-      {/* Tabs */}
-      <Tabs defaultValue="all" className="space-y-4 overflow-x-auto">
-        <TabsList className="bg-muted/30 border border-border/30 h-9 w-full sm:w-auto flex-nowrap overflow-x-auto">
-          <TabsTrigger value="all" className="text-[11px] gap-1.5 data-[state=active]:bg-background">
-            <Bot className="h-3.5 w-3.5" /> Todos <Badge variant="secondary" className="text-[9px] h-4 px-1.5 ml-1">{agents.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="support" className="text-[11px] gap-1.5 data-[state=active]:bg-background">
-            <Headphones className="h-3.5 w-3.5" /> Suporte
-            <Badge variant="secondary" className="text-[9px] h-4 px-1.5 ml-1">{agents.filter(a => (a.class || "support") === "support").length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="sales" className="text-[11px] gap-1.5 data-[state=active]:bg-background">
-            <TrendingUp className="h-3.5 w-3.5" /> Vendas
-            <Badge variant="secondary" className="text-[9px] h-4 px-1.5 ml-1">{agents.filter(a => a.class === "sales").length}</Badge>
-          </TabsTrigger>
-        </TabsList>
+      {/* ── Status bar ── */}
+      {agents.length > 0 && (
+        <div className="flex items-center gap-2 h-2 rounded-full overflow-hidden bg-white/[0.04]">
+          {online > 0 && (
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
+              style={{ width: `${(online / agents.length) * 100}%` }}
+            />
+          )}
+        </div>
+      )}
 
-        {["all", "support", "sales"].map(tab => {
-          const filtered = tab === "all" ? agents : agents.filter(a => (a.class || "support") === tab);
+      {/* ── Agent Grid ── */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {agents.map((a, i) => {
+          const cls = CLASS_CFG[a.class || "support"] || CLASS_CFG.support;
+          const model = a.model ? a.model.split("/").pop()?.replace("-preview", "") : "default";
+
           return (
-            <TabsContent key={tab} value={tab}>
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {filtered.map((agent, i) => renderAgentCard(agent, i))}
-                {filtered.length === 0 && (
-                  <div className="col-span-full text-center py-16">
-                    <Bot className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">Nenhum agente nesta categoria</p>
+            <div
+              key={a.id}
+              onClick={() => nav(`/agents/detail?id=${a.id}`)}
+              className="group cosmos-card p-0 cursor-pointer"
+              style={{ animationDelay: `${i * 40}ms` }}
+            >
+              {/* Top accent */}
+              <div className={`h-[2px] w-full bg-gradient-to-r ${a.status === "online" ? "from-emerald-500/50 via-emerald-400/30 to-transparent" : "from-white/[0.06] to-transparent"}`} />
+
+              <div className="p-4">
+                {/* Row 1: Avatar + Name + Status */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className={`h-10 w-10 rounded-[10px] flex items-center justify-center border bg-gradient-to-br ${cls.accent}`}>
+                        <Bot className="h-4.5 w-4.5 text-white/70" />
+                      </div>
+                      <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#161822] ${a.status === "online" ? "bg-emerald-400 animate-pulse-dot" : "bg-white/20"}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-[13px] font-semibold text-white/90 truncate">{a.name}</h3>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={`h-1.5 w-1.5 rounded-full ${cls.dot}`} />
+                        <span className={`text-[9.5px] font-medium ${cls.text}`}>{cls.short}</span>
+                        <span className="text-white/10">·</span>
+                        <span className="text-[9.5px] text-white/25 font-mono">{model}</span>
+                      </div>
+                    </div>
                   </div>
-                )}
+                  <span className={`inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[9px] font-semibold border ${a.status === "online" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-white/[0.03] text-white/25 border-white/[0.06]"}`}>
+                    <Activity className="h-2.5 w-2.5" />
+                    {a.status === "online" ? "Online" : "Offline"}
+                  </span>
+                </div>
+
+                {/* Row 2: Channels */}
+                <div className="flex items-center gap-1.5 mb-3">
+                  {a.channels?.map(ch => <ChBadge key={ch} ch={ch} />)}
+                  {(!a.channels || a.channels.length === 0) && <span className="text-[9px] text-white/15 italic">Nenhum canal</span>}
+                </div>
+
+                {/* Row 3: Actions */}
+                <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]">
+                  <div className="flex gap-1">
+                    <button
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-white/30 hover:text-white/60 hover:bg-white/[0.03] transition-all"
+                      onClick={e => { e.stopPropagation(); nav("/attendant/playground"); }}
+                    >
+                      <Play className="h-3 w-3" /> Testar
+                    </button>
+                    <button
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-white/30 hover:text-white/60 hover:bg-white/[0.03] transition-all"
+                      onClick={e => { e.stopPropagation(); nav(`/agents/detail?id=${a.id}`); }}
+                    >
+                      <Settings className="h-3 w-3" /> Config
+                    </button>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-white/[0.06] group-hover:text-white/[0.15] transition-colors" />
+                </div>
               </div>
-            </TabsContent>
+            </div>
           );
         })}
-      </Tabs>
+
+        {/* Empty */}
+        {agents.length === 0 && (
+          <div className="col-span-full flex flex-col items-center justify-center py-20">
+            <div className="h-14 w-14 rounded-2xl bg-indigo-500/[0.06] border border-indigo-500/[0.1] flex items-center justify-center mb-4">
+              <Bot className="h-6 w-6 text-indigo-400/30" />
+            </div>
+            <p className="text-[13px] font-medium text-white/40">Nenhum agente criado</p>
+            <p className="text-[11px] text-white/20 mt-1">Crie seu primeiro agente para começar a atender.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
