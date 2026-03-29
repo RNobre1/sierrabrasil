@@ -4,6 +4,7 @@ import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import UserMenu from "@/components/UserMenu";
+import meteoraLogo from "@/assets/meteora-branca.png";
 
 const navItems = [
   { to: "/dashboard", icon: Home, label: "Início" },
