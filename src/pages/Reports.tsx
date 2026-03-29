@@ -468,15 +468,6 @@ export default function Reports() {
               </CardTitle>
               <CardDescription>Gere um relatório visual profissional para reuniões e apresentações</CardDescription>
             </div>
-            {plan === "enterprise" ? (
-              <Button size="sm" className="gap-1.5 text-xs bg-gradient-to-r from-primary to-[hsl(var(--meteora-cyan))]">
-                <Presentation className="h-3.5 w-3.5" /> Gerar Apresentação
-              </Button>
-            ) : (
-              <Badge variant="outline" className="text-[10px] font-mono border-primary/20 text-primary gap-1">
-                <Lock className="h-3 w-3" /> Enterprise
-              </Badge>
-            )}
           </div>
         </CardHeader>
         <CardContent>
