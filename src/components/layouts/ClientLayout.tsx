@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import UserMenu from "@/components/UserMenu";
 import meteoraLogoBranca from "@/assets/meteora-branca.png";
 import meteoraLogoPreta from "@/assets/meteora-preta.png";
+import { MeteoraSeal } from "@/components/MeteoraBrand";
 
 const navSections = [
   {
