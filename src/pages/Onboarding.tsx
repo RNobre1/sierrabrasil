@@ -55,6 +55,7 @@ export default function Onboarding() {
   const [scrapeResults, setScrapeResults] = useState<any[]>([]);
   const [scrapeComplete, setScrapeComplete] = useState(false);
   const [overviewData, setOverviewData] = useState<OverviewData>({});
+  const [sourcePreviews, setSourcePreviews] = useState<any[]>([]);
   const [showDocUpload, setShowDocUpload] = useState(false);
   const [textPasteOpen, setTextPasteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
