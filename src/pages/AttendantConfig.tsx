@@ -171,7 +171,7 @@ export default function AttendantConfig() {
           <Textarea
             value={instructions}
             onChange={e => setInstructions(e.target.value)}
-            placeholder="Você é a atendente virtual da minha clínica de estética. Nossos serviços são: limpeza de pele (R$120), peeling (R$250)..."
+            placeholder="Você é o agente virtual da minha clínica de estética. Nossos serviços são: limpeza de pele (R$120), peeling (R$250)..."
             rows={8}
             className="font-mono text-sm"
           />
