@@ -464,8 +464,8 @@ export default function Onboarding() {
         overviewData.highlights ? `DIFERENCIAIS E INFORMAÇÕES IMPORTANTES:\n${overviewData.highlights}` : "",
       ].filter(Boolean).join("\n\n");
 
-      // Use attendant name from chat, fallback to business name
-      const finalAttendantName = attendantNameFromChat || overviewData.businessName || "Meu Atendente";
+      // Use agent name from chat, fallback to business name
+      const finalAttendantName = attendantNameFromChat || overviewData.businessName || "Meu Agente";
       const finalPersona = personaFromChat || overviewData.tone || "Simpático, profissional e direto";
 
       await supabase.from("attendants").update({
