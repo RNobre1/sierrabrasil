@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import { Home, MessageSquare, Bot, BarChart3, Radio, Puzzle, Zap, ChevronRight } from "lucide-react";
+import { Home, MessageSquare, Bot, BarChart3, Radio, Puzzle, Zap, Crown, ChevronRight } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import UserMenu from "@/components/UserMenu";
 import meteoraLogoBranca from "@/assets/meteora-branca.png";
