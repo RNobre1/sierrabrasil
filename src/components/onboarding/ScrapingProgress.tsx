@@ -89,20 +89,18 @@ export default function ScrapingProgress({
       return;
     }
 
-    // Simulate smooth progress over ~90 seconds
+    // Simulate smooth progress over ~30 seconds (faster now)
     const stages = [
-      { at: 0, pct: 5, phase: "scanning" as Phase },
-      { at: 3000, pct: 12, phase: "scanning" as Phase },
-      { at: 6000, pct: 20, phase: "scraping" as Phase },
-      { at: 12000, pct: 30, phase: "scraping" as Phase },
-      { at: 20000, pct: 40, phase: "scraping" as Phase },
-      { at: 30000, pct: 50, phase: "scraping" as Phase },
-      { at: 40000, pct: 58, phase: "analyzing" as Phase },
-      { at: 50000, pct: 65, phase: "analyzing" as Phase },
-      { at: 60000, pct: 72, phase: "analyzing" as Phase },
-      { at: 75000, pct: 80, phase: "storing" as Phase },
-      { at: 90000, pct: 85, phase: "storing" as Phase },
-      { at: 110000, pct: 90, phase: "storing" as Phase },
+      { at: 0, pct: 8, phase: "scanning" as Phase },
+      { at: 2000, pct: 18, phase: "scanning" as Phase },
+      { at: 4000, pct: 28, phase: "scraping" as Phase },
+      { at: 7000, pct: 40, phase: "scraping" as Phase },
+      { at: 10000, pct: 50, phase: "scraping" as Phase },
+      { at: 14000, pct: 60, phase: "analyzing" as Phase },
+      { at: 18000, pct: 70, phase: "analyzing" as Phase },
+      { at: 22000, pct: 78, phase: "storing" as Phase },
+      { at: 26000, pct: 85, phase: "storing" as Phase },
+      { at: 29000, pct: 92, phase: "storing" as Phase },
     ];
 
     const timers = stages.map(s =>
