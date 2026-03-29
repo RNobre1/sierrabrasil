@@ -647,7 +647,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
       <OnboardingHeader
-        title="Configuração do seu Atendente"
+        title="Configuração do seu Agente"
         subtitle="Conte sobre seu negócio — por texto ou áudio"
         progress={Number(progressPct)}
       />
