@@ -145,7 +145,7 @@ async function extractSourcePreviews(platform: string, items: any[], url: string
     case "instagram": {
       const p = items[0];
       if (p) {
-        preview.profilePic = p.profilePicUrl || p.profilePicUrlHD || "";
+        preview.profilePic = await toDataUri(p.profilePicUrl || p.profilePicUrlHD || "");
         preview.displayName = p.fullName || p.username || "";
         preview.bio = p.biography || "";
         preview.followers = p.followersCount || 0;
