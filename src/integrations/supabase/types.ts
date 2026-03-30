@@ -288,6 +288,56 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_instances: {
+        Row: {
+          connected_at: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          instance_name: string
+          metadata: Json | null
+          phone_number: string | null
+          qr_code: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          connected_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          instance_name: string
+          metadata?: Json | null
+          phone_number?: string | null
+          qr_code?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          connected_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          instance_name?: string
+          metadata?: Json | null
+          phone_number?: string | null
+          qr_code?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_instances_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
