@@ -420,7 +420,7 @@ serve(async (req) => {
 
         // Extract preview data for frontend display
         const preview = (apifyItems && apifyItems.length > 0)
-          ? extractSourcePreviews(platform, apifyItems, url)
+          ? await extractSourcePreviews(platform, apifyItems, url)
           : { platform, url, displayName: url.replace(/https?:\/\/(www\.)?/, "").split("/")[0], thumbnails: [] };
 
         if (!rawContent || rawContent.length < 20) {
