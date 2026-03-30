@@ -321,7 +321,7 @@ function DetailsStep({
                 {!isEditing && (
                   <button
                     onClick={() => startEdit(f.key)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 rounded-lg bg-muted flex items-center justify-center hover:bg-primary/10"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-7 w-7 rounded-lg bg-muted flex items-center justify-center hover:bg-primary/10"
                   >
                     <Pencil className="h-3 w-3 text-muted-foreground" />
                   </button>
