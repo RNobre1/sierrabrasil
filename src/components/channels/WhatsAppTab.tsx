@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Plus, Trash2, QrCode, CheckCircle2, XCircle, AlertTriangle, Wifi, WifiOff, LogOut, Loader2 } from "lucide-react";
+import { RefreshCw, Plus, Trash2, QrCode, CheckCircle2, XCircle, AlertTriangle, Wifi, WifiOff, LogOut, Loader2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ interface WhatsAppInstance {
   phone_number: string | null;
   status: string;
   qr_code: string | null;
+  profile_pic_url: string | null;
   connected_at: string | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
@@ -308,13 +309,26 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
                 <CardContent className="pt-5 pb-4 space-y-3">
                   {/* Status + Name */}
                   <div className="flex items-start justify-between">
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-foreground truncate">
-                        {inst.display_name || inst.instance_name}
-                      </h3>
-                      <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">
-                        {inst.instance_name}
-                      </p>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {inst.profile_pic_url ? (
+                        <img
+                          src={inst.profile_pic_url}
+                          alt={inst.display_name || inst.instance_name}
+                          className="h-9 w-9 rounded-full object-cover shrink-0 border border-border/40"
+                        />
+                      ) : (
+                        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                          <Smartphone className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold text-foreground truncate">
+                          {inst.display_name || inst.instance_name}
+                        </h3>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">
+                          {inst.instance_name}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <div className={cn("h-2 w-2 rounded-full", sc.color, inst.status === "connected" && "animate-pulse")} />

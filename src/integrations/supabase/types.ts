@@ -303,6 +303,7 @@ export type Database = {
           instance_name: string
           metadata: Json | null
           phone_number: string | null
+          profile_pic_url: string | null
           qr_code: string | null
           status: string
           tenant_id: string
@@ -316,6 +317,7 @@ export type Database = {
           instance_name: string
           metadata?: Json | null
           phone_number?: string | null
+          profile_pic_url?: string | null
           qr_code?: string | null
           status?: string
           tenant_id: string
@@ -329,6 +331,7 @@ export type Database = {
           instance_name?: string
           metadata?: Json | null
           phone_number?: string | null
+          profile_pic_url?: string | null
           qr_code?: string | null
           status?: string
           tenant_id?: string
