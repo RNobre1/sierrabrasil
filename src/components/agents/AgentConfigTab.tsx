@@ -104,32 +104,32 @@ export default function AgentConfigTab({ agent, onUpdate }: AgentConfigTabProps)
         </CardContent>
       </Card>
 
-      {/* Model */}
+      {/* Conversation Mode */}
       <Card className="border-border/30 bg-card/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-display">Modelo de IA</CardTitle>
+          <CardTitle className="text-sm font-display">Modo de Conversa</CardTitle>
+          <CardDescription className="text-xs">Define o tom e estilo das respostas</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Modelo</Label>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (rápido)</SelectItem>
-                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (econômico)</SelectItem>
-                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (avançado)</SelectItem>
-                <SelectItem value="openai/gpt-5-mini">GPT-5 Mini (versátil)</SelectItem>
-                <SelectItem value="openai/gpt-5">GPT-5 (máxima qualidade)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Temperatura: {temperature.toFixed(1)}</Label>
-            <Slider value={[temperature]} onValueChange={v => setTemperature(v[0])} min={0} max={1} step={0.1} />
-            <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>Preciso (0.0)</span>
-              <span>Criativo (1.0)</span>
-            </div>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-2">
+            {CONVERSATION_MODES.map(m => {
+              const active = mode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition-all ${
+                    active
+                      ? "border-primary/40 bg-primary/10 ring-1 ring-primary/20"
+                      : "border-border/30 bg-card/30 hover:border-border/50 hover:bg-card/50"
+                  }`}
+                >
+                  <m.icon className={`h-5 w-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className={`text-xs font-semibold ${active ? "text-primary" : "text-foreground"}`}>{m.label}</span>
+                  <span className="text-[10px] text-muted-foreground text-center leading-tight">{m.desc}</span>
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

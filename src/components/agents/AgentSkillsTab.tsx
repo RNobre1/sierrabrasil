@@ -116,9 +116,15 @@ export default function AgentSkillsTab({ agentId, agentClass, plan }: Props) {
             Ative ou desative as habilidades do seu agente · {enabledSkills.size} de {SKILLS.length} ativas
           </p>
         </div>
-        <Badge variant="outline" className="text-[10px] font-mono capitalize border-border/40">
-          Plano {plan}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-[10px] font-mono capitalize border-border/40">
+            Plano {plan}
+          </Badge>
+          <Button onClick={saveSkills} disabled={saving} size="sm" className="gap-1.5">
+            <Save className="h-3.5 w-3.5" />
+            {saving ? "Salvando..." : "Salvar Skills"}
+          </Button>
+        </div>
       </div>
 
       {(["core", "advanced", "premium"] as const).map(cat => {
