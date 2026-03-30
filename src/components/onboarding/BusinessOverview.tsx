@@ -363,6 +363,11 @@ export default function BusinessOverview({
   const [currentStep, setCurrentStep] = useState(0);
   const total = steps.length;
 
+  // Sync localData when parent data changes (e.g. scraping completes)
+  useEffect(() => {
+    setLocalData(prev => ({ ...prev, ...data }));
+  }, [data]);
+
   const handleDataChange = (d: OverviewData) => {
     setLocalData(d);
     onDataChange(d);
