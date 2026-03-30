@@ -14,6 +14,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line
 } from "recharts";
 import { MeteoraWatermark } from "@/components/MeteoraBrand";
+import GuidedTour from "@/components/GuidedTour";
 
 /* ═══ Types ═══ */
 interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class?: string | null; }
@@ -375,6 +376,7 @@ export default function Dashboard() {
       </div>
 
       <MeteoraWatermark />
+      <GuidedTour />
     </div>
   );
 }

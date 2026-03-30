@@ -267,6 +267,43 @@ serve(async (req) => {
         return json({ success: true });
       }
 
+      // ─── Set Webhook ──────────────────────────────────────
+      case "set_webhook": {
+        const { instanceName } = body;
+        if (!instanceName) return json({ error: "instanceName é obrigatório" }, 400);
+
+        const { data: inst } = await supabase
+          .from("whatsapp_instances")
+          .select("id")
+          .eq("tenant_id", tenant.id)
+          .eq("instance_name", instanceName)
+          .single();
+        if (!inst) return json({ error: "Instância não encontrada" }, 404);
+
+        const webhookUrl = `${SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+
+        const evoRes = await fetch(`${baseUrl}/webhook/set/${instanceName}`, {
+          method: "POST",
+          headers: evoHeaders,
+          body: JSON.stringify({
+            url: webhookUrl,
+            webhook_by_events: false,
+            webhook_base64: false,
+            events: [
+              "MESSAGES_UPSERT",
+              "CONNECTION_UPDATE",
+            ],
+          }),
+        });
+        const evoData = await evoRes.json();
+
+        if (!evoRes.ok) {
+          return json({ error: "Erro ao configurar webhook", details: evoData }, evoRes.status);
+        }
+
+        return json({ success: true, webhookUrl, data: evoData });
+      }
+
       default:
         return json({ error: `Ação desconhecida: ${action}` }, 400);
     }

@@ -17,10 +17,10 @@ const features = [
 ];
 
 const plans = [
-  { name: "Essencial", price: "97", features: ["1 agente IA", "1.000 conversas/mês", "WhatsApp", "Dashboard básico"], popular: false },
-  { name: "Profissional", price: "247", features: ["3 agentes IA", "5.000 conversas/mês", "WhatsApp + Instagram", "Relatórios avançados", "Explorer com insights", "Ações automáticas"], popular: true },
-  { name: "Empresarial", price: "597", features: ["5 agentes IA", "Conversas ilimitadas", "Todos os canais", "API dedicada", "Suporte prioritário", "Onboarding assistido"], popular: false },
-  { name: "Enterprise", price: "2.497", features: ["Até 100 agentes IA", "Conversas ilimitadas", "Todos os canais + API", "Relatórios ilimitados + IA", "Manager dedicado", "Estratégias mensais de vendas", "SLA garantido", "Onboarding white-glove"], popular: false, enterprise: true },
+  { name: "Essencial", price: "97", features: ["1 agente IA", "100 conversas/mês", "WhatsApp", "Dashboard básico"], popular: false },
+  { name: "Profissional", price: "497", features: ["3 agentes IA", "900 conversas/mês", "WhatsApp + Instagram", "Relatórios avançados", "Explorer com insights", "Ações automáticas"], popular: true },
+  { name: "Empresarial", price: "997", features: ["5 agentes IA", "1.800 conversas/mês", "Todos os canais", "API dedicada", "Suporte prioritário", "Onboarding assistido"], popular: false },
+  { name: "Scale", price: null, features: ["Agentes ilimitados", "Conversas ilimitadas", "Todos os canais + API", "Relatórios ilimitados + IA", "Manager dedicado", "Estratégias mensais de vendas", "SLA garantido", "Onboarding white-glove"], popular: false, enterprise: true },
 ];
 
 const testimonials = [
@@ -167,9 +167,15 @@ export default function Index() {
                   {(plan as any).enterprise && <Crown className="h-4 w-4 text-[hsl(var(--meteora-cyan))]" />}
                 </div>
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-xs text-muted-foreground">R$</span>
-                  <span className="text-3xl sm:text-4xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-xs text-muted-foreground">/mês</span>
+                  {plan.price ? (
+                    <>
+                      <span className="text-xs text-muted-foreground">R$</span>
+                      <span className="text-3xl sm:text-4xl font-bold text-foreground">{plan.price}</span>
+                      <span className="text-xs text-muted-foreground">/mês</span>
+                    </>
+                  ) : (
+                    <span className="text-2xl sm:text-3xl font-bold text-foreground">Sob consulta</span>
+                  )}
                 </div>
                 <ul className="mt-6 space-y-2.5">
                   {plan.features.map((f, j) => (
@@ -187,7 +193,7 @@ export default function Index() {
                         ? "bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20"
                         : ""
                   }`} variant={plan.popular || (plan as any).enterprise ? "default" : "outline"}>
-                    {(plan as any).enterprise ? "Falar com especialista" : plan.popular ? "Começar agora" : "Escolher plano"}
+                    {(plan as any).enterprise ? "Fale com especialista" : plan.popular ? "Começar agora" : "Escolher plano"}
                   </Button>
                 </Link>
               </div>
