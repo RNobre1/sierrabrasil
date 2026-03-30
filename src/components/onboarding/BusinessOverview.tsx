@@ -242,7 +242,8 @@ function DetailsStep({
     setEditing(null);
   };
 
-  const visibleFields = fields.filter(f => (data as any)[f.key]);
+  // Show all fields — filled ones with values, empty ones with placeholder for editing
+  const visibleFields = fields;
 
   return (
     <motion.div
@@ -310,15 +311,17 @@ function DetailsStep({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                      {val}
+                    <p className={`text-sm whitespace-pre-line leading-relaxed ${val ? "text-foreground" : "text-muted-foreground italic cursor-pointer"}`}
+                      onClick={() => !val && startEdit(f.key)}
+                    >
+                      {val || "Clique para adicionar"}
                     </p>
                   )}
                 </div>
                 {!isEditing && (
                   <button
                     onClick={() => startEdit(f.key)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 rounded-lg bg-muted flex items-center justify-center hover:bg-primary/10"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-7 w-7 rounded-lg bg-muted flex items-center justify-center hover:bg-primary/10"
                   >
                     <Pencil className="h-3 w-3 text-muted-foreground" />
                   </button>
@@ -359,6 +362,11 @@ export default function BusinessOverview({
   const steps = buildSteps(sourcePreviews || []);
   const [currentStep, setCurrentStep] = useState(0);
   const total = steps.length;
+
+  // Sync localData when parent data changes (e.g. scraping completes)
+  useEffect(() => {
+    setLocalData(prev => ({ ...prev, ...data }));
+  }, [data]);
 
   const handleDataChange = (d: OverviewData) => {
     setLocalData(d);
