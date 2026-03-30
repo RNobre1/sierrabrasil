@@ -311,8 +311,10 @@ function DetailsStep({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                      {val}
+                    <p className={`text-sm whitespace-pre-line leading-relaxed ${val ? "text-foreground" : "text-muted-foreground italic cursor-pointer"}`}
+                      onClick={() => !val && startEdit(f.key)}
+                    >
+                      {val || "Clique para adicionar"}
                     </p>
                   )}
                 </div>
