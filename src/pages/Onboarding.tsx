@@ -1113,6 +1113,40 @@ function SensitiveConversationPanel({
             <Send className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Password strength indicator */}
+        {value.length > 0 && (
+          <div className="mt-3 space-y-1.5">
+            <div className="flex gap-1">
+              {[1, 2, 3, 4].map((level) => {
+                const strength = getPasswordStrength(value);
+                const colors = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-emerald-500"];
+                return (
+                  <div
+                    key={level}
+                    className={`h-1 flex-1 rounded-full transition-all ${
+                      level <= strength ? colors[strength - 1] : "bg-muted-foreground/10"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px]">
+              <span className={value.length >= 8 ? "text-emerald-500" : "text-muted-foreground/50"}>
+                {value.length >= 8 ? "✓" : "○"} 8+ caracteres
+              </span>
+              <span className={/[A-Z]/.test(value) ? "text-emerald-500" : "text-muted-foreground/50"}>
+                {/[A-Z]/.test(value) ? "✓" : "○"} Maiúscula
+              </span>
+              <span className={/[0-9]/.test(value) ? "text-emerald-500" : "text-muted-foreground/50"}>
+                {/[0-9]/.test(value) ? "✓" : "○"} Número
+              </span>
+              <span className={/[^a-zA-Z0-9]/.test(value) ? "text-emerald-500" : "text-muted-foreground/50"}>
+                {/[^a-zA-Z0-9]/.test(value) ? "✓" : "○"} Especial
+              </span>
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );
