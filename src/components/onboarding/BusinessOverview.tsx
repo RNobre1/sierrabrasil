@@ -242,7 +242,8 @@ function DetailsStep({
     setEditing(null);
   };
 
-  const visibleFields = fields.filter(f => (data as any)[f.key]);
+  // Show all fields — filled ones with values, empty ones with placeholder for editing
+  const visibleFields = fields;
 
   return (
     <motion.div
