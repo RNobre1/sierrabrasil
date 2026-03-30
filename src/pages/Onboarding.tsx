@@ -831,7 +831,20 @@ export default function Onboarding() {
     : phase === "post-scrape-chat" ? 60
     : phase === "scraping" ? 50
     : phase === "social-links" ? 35
+    : phase === "class-select" ? 15
     : `${Math.min(30, userMsgCount * 8)}`;
+
+  // ========== CLASS SELECT PHASE ==========
+  if (phase === "class-select") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
+        <OnboardingHeader title="Tipo de Agente" subtitle="Escolha o perfil ideal para o seu negócio" progress={15} />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <AgentClassSelector onSelect={handleAgentClassSelect} />
+        </div>
+      </div>
+    );
+  }
 
   // ========== SCRAPING PHASE ==========
   if (phase === "scraping") {
