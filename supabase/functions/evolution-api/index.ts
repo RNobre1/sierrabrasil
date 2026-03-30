@@ -53,6 +53,27 @@ serve(async (req) => {
 
   const baseUrl = EVOLUTION_API_URL.replace(/\/$/, "");
 
+  // Helper: fetch profile picture from Evolution API
+  async function fetchAndSaveProfilePic(instanceName: string, instId: string) {
+    try {
+      const picRes = await fetch(`${baseUrl}/chat/fetchProfilePictureUrl/${instanceName}`, {
+        method: "POST",
+        headers: evoHeaders,
+        body: JSON.stringify({ number: instanceName }),
+      });
+      if (picRes.ok) {
+        const picData = await picRes.json();
+        const picUrl = picData?.profilePictureUrl || picData?.profilePicUrl || picData?.picture || null;
+        if (picUrl) {
+          await supabase.from("whatsapp_instances").update({ profile_pic_url: picUrl }).eq("id", instId);
+          console.log("Profile pic saved for", instanceName);
+        }
+      }
+    } catch (e) {
+      console.warn("fetchProfilePic error (non-fatal):", e);
+    }
+  }
+
   try {
     switch (action) {
       // ─── Create Instance ───────────────────────────────────
