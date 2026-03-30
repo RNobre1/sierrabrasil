@@ -1,471 +1,365 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { RefreshCw, Plus, Trash2, Send, Upload, Calendar, Lock, CheckCircle2, XCircle, Clock, Eye, MailCheck, AlertTriangle, FolderOpen, FolderPlus, ChevronRight, ChevronDown, ChevronLeft, Search } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { RefreshCw, Plus, Trash2, QrCode, CheckCircle2, XCircle, AlertTriangle, Wifi, WifiOff, LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import UpgradeGate from "@/components/UpgradeGate";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type ConnectionStatus = "connected" | "disconnected" | "error";
-
-interface Template {
+interface WhatsAppInstance {
   id: string;
-  name: string;
-  status: "approved" | "pending" | "rejected";
-  category: string;
-  language: string;
-  body: string;
-  sent: number;
-  delivered: number;
-  read: number;
-  folder: string;
+  tenant_id: string;
+  instance_name: string;
+  display_name: string | null;
+  phone_number: string | null;
+  status: string;
+  qr_code: string | null;
+  connected_at: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
 }
 
-const mockTemplates: Template[] = [
-  { id: "1", name: "boas_vindas", status: "approved", category: "MARKETING", language: "pt_BR", body: "Olá {{1}}, bem-vindo(a) à {{2}}! 🎉", sent: 1240, delivered: 1198, read: 876, folder: "Marketing" },
-  { id: "2", name: "agendamento_confirmacao", status: "approved", category: "UTILITY", language: "pt_BR", body: "{{1}}, seu agendamento para {{2}} está confirmado! ✅", sent: 890, delivered: 872, read: 654, folder: "Utilidade" },
-  { id: "3", name: "promocao_mensal", status: "pending", category: "MARKETING", language: "pt_BR", body: "{{1}}, temos uma oferta especial para você! 🔥", sent: 0, delivered: 0, read: 0, folder: "Marketing" },
-  { id: "4", name: "cobranca_lembrete", status: "approved", category: "UTILITY", language: "pt_BR", body: "{{1}}, seu pagamento de {{2}} vence amanhã.", sent: 430, delivered: 421, read: 310, folder: "Financeiro" },
-  { id: "5", name: "follow_up_venda", status: "approved", category: "MARKETING", language: "pt_BR", body: "{{1}}, ainda interessado em {{2}}? Temos condições especiais!", sent: 210, delivered: 205, read: 142, folder: "Marketing" },
-  { id: "6", name: "feedback_pos_atendimento", status: "pending", category: "UTILITY", language: "pt_BR", body: "{{1}}, como foi seu atendimento? Avalie de 1 a 5.", sent: 0, delivered: 0, read: 0, folder: "Utilidade" },
-];
+async function callEvolutionApi(action: string, body?: Record<string, unknown>, params?: Record<string, string>) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("Sessão expirada");
 
-const ITEMS_PER_PAGE = 4;
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  const url = new URL(`https://${projectId}.supabase.co/functions/v1/evolution-api`);
+  url.searchParams.set("action", action);
+  if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+  const res = await fetch(url.toString(), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(body || {}),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Erro na requisição");
+  return data;
+}
+
+const statusConfig: Record<string, { color: string; text: string; icon: React.ReactNode }> = {
+  connected: { color: "bg-emerald-500", text: "Conectado", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+  connecting: { color: "bg-amber-500", text: "Conectando", icon: <Loader2 className="h-3.5 w-3.5 animate-spin" /> },
+  disconnected: { color: "bg-muted-foreground/50", text: "Desconectado", icon: <XCircle className="h-3.5 w-3.5" /> },
+  created: { color: "bg-blue-500", text: "Criado", icon: <QrCode className="h-3.5 w-3.5" /> },
+  error: { color: "bg-destructive", text: "Erro", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+};
 
 export default function WhatsAppTab({ plan }: { plan: string }) {
-  const [status, setStatus] = useState<ConnectionStatus>("disconnected");
-  const [phoneNumberId, setPhoneNumberId] = useState("");
-  const [businessAccountId, setBusinessAccountId] = useState("");
-  const [apiToken, setApiToken] = useState("");
-  const [templates, setTemplates] = useState<Template[]>(mockTemplates);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [showNewTemplate, setShowNewTemplate] = useState(false);
-  const [newTemplateName, setNewTemplateName] = useState("");
-  const [newTemplateCategory, setNewTemplateCategory] = useState("MARKETING");
-  const [newTemplateBody, setNewTemplateBody] = useState("");
-  const [newTemplateFolder, setNewTemplateFolder] = useState("Marketing");
+  const { user } = useAuth();
+  const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<{ instanceName: string; qr: string } | null>(null);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
-  // Folder & pagination state
-  const [activeFolder, setActiveFolder] = useState<string | null>(null);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
-  const [templateSearch, setTemplateSearch] = useState("");
-  const [showNewFolder, setShowNewFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
-  const [customFolders, setCustomFolders] = useState<string[]>([]);
-
-  // Bulk messaging
-  const [selectedTemplate, setSelectedTemplate] = useState("");
-  const [bulkMessage, setBulkMessage] = useState("");
-  const [scheduleDate, setScheduleDate] = useState("");
-
-  const isPremium = plan !== "starter";
-
-  // Derive folders from templates + custom
-  const folders = useMemo(() => {
-    const fromTemplates = [...new Set(templates.map(t => t.folder))];
-    const all = [...new Set([...fromTemplates, ...customFolders])].sort();
-    return all;
-  }, [templates, customFolders]);
-
-  // Filter templates
-  const filteredTemplates = useMemo(() => {
-    let list = templates;
-    if (activeFolder) list = list.filter(t => t.folder === activeFolder);
-    if (templateSearch) {
-      const q = templateSearch.toLowerCase();
-      list = list.filter(t => t.name.includes(q) || t.body.toLowerCase().includes(q));
+  const fetchInstances = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await callEvolutionApi("list");
+      setInstances(data.instances || []);
+    } catch (e) {
+      console.error("Fetch instances error:", e);
+    } finally {
+      setLoading(false);
     }
-    return list;
-  }, [templates, activeFolder, templateSearch]);
+  }, [user]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE));
-  const paginatedTemplates = filteredTemplates.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  useEffect(() => { fetchInstances(); }, [fetchInstances]);
 
-  // Reset page on filter change
-  useEffect(() => { setCurrentPage(1); }, [activeFolder, templateSearch]);
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise(r => setTimeout(r, 1500));
-    setLastRefresh(new Date());
-    if (phoneNumberId && apiToken) setStatus("connected");
-    setRefreshing(false);
-  }, [phoneNumberId, apiToken]);
-
+  // Poll status for connecting instances
   useEffect(() => {
-    const interval = setInterval(handleRefresh, 300000);
+    const connectingInstances = instances.filter(i => i.status === "connecting");
+    if (connectingInstances.length === 0) return;
+
+    const interval = setInterval(async () => {
+      for (const inst of connectingInstances) {
+        try {
+          const result = await callEvolutionApi("status", {}, { instanceName: inst.instance_name });
+          if (result.status === "connected") {
+            toast.success(`${inst.display_name || inst.instance_name} conectado!`);
+            setQrData(null);
+            fetchInstances();
+          }
+        } catch (e) {
+          console.error("Poll error:", e);
+        }
+      }
+    }, 5000);
+
     return () => clearInterval(interval);
-  }, [handleRefresh]);
+  }, [instances, fetchInstances]);
 
-  const statusConfig = {
-    connected: { color: "bg-meteora-green", text: "Conectado", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-    disconnected: { color: "bg-muted-foreground/50", text: "Desconectado", icon: <XCircle className="h-3.5 w-3.5" /> },
-    error: { color: "bg-destructive", text: "Erro", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
-  };
-
-  const sc = statusConfig[status];
-
-  const handleCreateTemplate = () => {
-    if (!newTemplateName || !newTemplateBody) return;
-    setTemplates(prev => [...prev, {
-      id: String(Date.now()),
-      name: newTemplateName.toLowerCase().replace(/\s+/g, "_"),
-      status: "pending",
-      category: newTemplateCategory,
-      language: "pt_BR",
-      body: newTemplateBody,
-      sent: 0, delivered: 0, read: 0,
-      folder: newTemplateFolder,
-    }]);
-    setShowNewTemplate(false);
-    setNewTemplateName("");
-    setNewTemplateBody("");
-  };
-
-  const handleDeleteTemplate = (id: string) => {
-    setTemplates(prev => prev.filter(t => t.id !== id));
-  };
-
-  const handleCreateFolder = () => {
-    if (!newFolderName.trim()) return;
-    setCustomFolders(prev => [...prev, newFolderName.trim()]);
-    setShowNewFolder(false);
-    setNewFolderName("");
-  };
-
-  const toggleFolder = (folder: string) => {
-    if (activeFolder === folder) {
-      setActiveFolder(null);
-    } else {
-      setActiveFolder(folder);
+  const handleCreate = async () => {
+    if (!newName.trim()) return;
+    setCreating(true);
+    try {
+      await callEvolutionApi("create_instance", {
+        instanceName: newName.trim(),
+        displayName: newDisplayName.trim() || newName.trim(),
+      });
+      toast.success("Instância criada com sucesso!");
+      setShowCreate(false);
+      setNewName("");
+      setNewDisplayName("");
+      fetchInstances();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao criar instância");
+    } finally {
+      setCreating(false);
     }
   };
 
-  const templateCountByFolder = useMemo(() => {
-    const counts: Record<string, number> = {};
-    templates.forEach(t => { counts[t.folder] = (counts[t.folder] || 0) + 1; });
-    return counts;
-  }, [templates]);
+  const handleConnect = async (inst: WhatsAppInstance) => {
+    setConnectingId(inst.id);
+    try {
+      const result = await callEvolutionApi("connect", { instanceName: inst.instance_name });
+      if (result.qrCode) {
+        setQrData({ instanceName: inst.instance_name, qr: result.qrCode });
+      }
+      fetchInstances();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao conectar");
+    } finally {
+      setConnectingId(null);
+    }
+  };
+
+  const handleRefreshStatus = async (inst: WhatsAppInstance) => {
+    setRefreshingId(inst.id);
+    try {
+      const result = await callEvolutionApi("status", {}, { instanceName: inst.instance_name });
+      toast.info(`Status: ${result.status}`);
+      fetchInstances();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setRefreshingId(null);
+    }
+  };
+
+  const handleLogout = async (inst: WhatsAppInstance) => {
+    try {
+      await callEvolutionApi("logout", { instanceName: inst.instance_name });
+      toast.success("Desconectado com sucesso");
+      fetchInstances();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleDelete = async (inst: WhatsAppInstance) => {
+    if (!confirm(`Excluir instância "${inst.display_name || inst.instance_name}"? Esta ação não pode ser desfeita.`)) return;
+    try {
+      await callEvolutionApi("delete", { instanceName: inst.instance_name });
+      toast.success("Instância removida");
+      fetchInstances();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Connection Status */}
+      {/* Header */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base font-display">Status da Conexão</CardTitle>
-              <CardDescription>API do WhatsApp Business</CardDescription>
+              <CardTitle className="text-base font-display">Instâncias WhatsApp</CardTitle>
+              <CardDescription>
+                Gerencie suas conexões WhatsApp via Evolution API
+              </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/50 bg-card">
-                <div className={`h-2 w-2 rounded-full ${sc.color} ${status === "connected" ? "animate-pulse-dot" : ""}`} />
-                <span className="text-xs font-medium text-foreground">{sc.text}</span>
-              </div>
-              <Button size="sm" variant="ghost" onClick={handleRefresh} disabled={refreshing} className="gap-1.5">
-                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-                {refreshing ? "" : "Atualizar"}
+              <Button size="sm" variant="ghost" onClick={fetchInstances} className="gap-1.5">
+                <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+                Atualizar
               </Button>
+              <Dialog open={showCreate} onOpenChange={setShowCreate}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gap-1.5">
+                    <Plus className="h-3.5 w-3.5" /> Nova Instância
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Criar Instância WhatsApp</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Nome da Instância (identificador)</Label>
+                      <Input
+                        value={newName}
+                        onChange={e => setNewName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ""))}
+                        placeholder="ex: loja-principal"
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Apenas letras, números, - e _</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Nome de Exibição</Label>
+                      <Input
+                        value={newDisplayName}
+                        onChange={e => setNewDisplayName(e.target.value)}
+                        placeholder="ex: Loja Principal"
+                        className="text-sm"
+                      />
+                    </div>
+                    <Button onClick={handleCreate} disabled={creating || !newName.trim()} className="w-full">
+                      {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                      Criar Instância
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Phone Number ID</Label>
-              <Input value={phoneNumberId} onChange={e => setPhoneNumberId(e.target.value)} placeholder="Ex: 123456789..." className="font-mono text-xs" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Business Account ID</Label>
-              <Input value={businessAccountId} onChange={e => setBusinessAccountId(e.target.value)} placeholder="Ex: 987654321..." className="font-mono text-xs" />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">API Token</Label>
-            <Input type="password" value={apiToken} onChange={e => setApiToken(e.target.value)} placeholder="EAA..." className="font-mono text-xs" />
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] text-muted-foreground font-mono">
-              Último refresh: {lastRefresh.toLocaleTimeString("pt-BR")} · Auto-refresh a cada 5min
-            </p>
-            <Button size="sm" onClick={handleRefresh} disabled={!phoneNumberId || !apiToken}>
-              Conectar
-            </Button>
-          </div>
-        </CardContent>
       </Card>
 
-      {/* Templates with Folders */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base font-display">Templates de Mensagem</CardTitle>
-              <CardDescription>{templates.length} templates em {folders.length} pastas</CardDescription>
+      {/* QR Code Modal */}
+      {qrData && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="py-6 flex flex-col items-center gap-4">
+            <div className="text-center">
+              <h3 className="text-sm font-semibold">Escaneie o QR Code</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Abra o WhatsApp no celular → Menu → Aparelhos conectados → Conectar
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setShowNewFolder(true)} className="gap-1.5 text-xs">
-                <FolderPlus className="h-3.5 w-3.5" /> Pasta
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowNewTemplate(true)} className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" /> Novo Template
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* New folder inline */}
-          {showNewFolder && (
-            <div className="mb-4 flex items-center gap-2">
-              <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-              <Input
-                value={newFolderName}
-                onChange={e => setNewFolderName(e.target.value)}
-                placeholder="Nome da pasta..."
-                className="text-sm h-8 max-w-[200px]"
-                autoFocus
-                onKeyDown={e => e.key === "Enter" && handleCreateFolder()}
+            <div className="bg-white p-4 rounded-xl">
+              <img
+                src={qrData.qr.startsWith("data:") ? qrData.qr : `data:image/png;base64,${qrData.qr}`}
+                alt="QR Code WhatsApp"
+                className="w-64 h-64 object-contain"
               />
-              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={handleCreateFolder}>Criar</Button>
-              <Button size="sm" variant="ghost" className="h-8 text-xs text-muted-foreground" onClick={() => setShowNewFolder(false)}>Cancelar</Button>
             </div>
-          )}
-
-          {/* Search */}
-          <div className="relative mb-4 max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-            <Input
-              placeholder="Buscar template..."
-              value={templateSearch}
-              onChange={e => setTemplateSearch(e.target.value)}
-              className="pl-8 h-8 text-xs bg-secondary/30 border-border/30"
-            />
-          </div>
-
-          {/* Folder sidebar + templates */}
-          <div className="flex gap-4">
-            {/* Folder list */}
-            <div className="w-[160px] shrink-0 space-y-0.5">
-              <button
-                onClick={() => setActiveFolder(null)}
-                className={cn(
-                  "flex items-center gap-2 w-full rounded-lg px-2.5 py-2 text-xs font-medium transition-all",
-                  !activeFolder
-                    ? "bg-primary/8 text-primary border border-primary/10"
-                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                )}
-              >
-                <FolderOpen className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">Todas</span>
-                <span className="ml-auto text-[10px] font-mono opacity-60">{templates.length}</span>
-              </button>
-              {folders.map(folder => (
-                <button
-                  key={folder}
-                  onClick={() => toggleFolder(folder)}
-                  className={cn(
-                    "flex items-center gap-2 w-full rounded-lg px-2.5 py-2 text-xs font-medium transition-all",
-                    activeFolder === folder
-                      ? "bg-primary/8 text-primary border border-primary/10"
-                      : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                  )}
-                >
-                  <FolderOpen className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{folder}</span>
-                  <span className="ml-auto text-[10px] font-mono opacity-60">{templateCountByFolder[folder] || 0}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Template list */}
-            <div className="flex-1 min-w-0">
-              {showNewTemplate && (
-                <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Nome do Template</Label>
-                      <Input value={newTemplateName} onChange={e => setNewTemplateName(e.target.value)} placeholder="ex: lembrete_pagamento" className="text-sm" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Categoria</Label>
-                      <Select value={newTemplateCategory} onValueChange={setNewTemplateCategory}>
-                        <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="MARKETING">Marketing</SelectItem>
-                          <SelectItem value="UTILITY">Utilidade</SelectItem>
-                          <SelectItem value="AUTHENTICATION">Autenticação</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Pasta</Label>
-                      <Select value={newTemplateFolder} onValueChange={setNewTemplateFolder}>
-                        <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {folders.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Corpo da Mensagem</Label>
-                    <Textarea value={newTemplateBody} onChange={e => setNewTemplateBody(e.target.value)} placeholder="Use {{1}}, {{2}} para variáveis..." rows={3} className="text-sm" />
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button size="sm" variant="ghost" onClick={() => setShowNewTemplate(false)}>Cancelar</Button>
-                    <Button size="sm" onClick={handleCreateTemplate} className="gap-1.5">
-                      <Send className="h-3 w-3" /> Enviar para Aprovação
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {paginatedTemplates.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <FolderOpen className="h-8 w-8 text-muted-foreground/20 mb-2" />
-                  <p className="text-xs text-muted-foreground">
-                    {templateSearch ? `Nenhum template encontrado para "${templateSearch}"` : "Nenhum template nesta pasta"}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {paginatedTemplates.map((t) => {
-                    const readRate = t.delivered > 0 ? Math.round((t.read / t.delivered) * 100) : 0;
-                    return (
-                      <div key={t.id} className="group rounded-xl border border-border/30 bg-card/30 p-4 hover:border-border/60 transition-all">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-foreground font-mono">{t.name}</span>
-                              <Badge
-                                variant={t.status === "approved" ? "default" : t.status === "pending" ? "secondary" : "destructive"}
-                                className="text-[9px]"
-                              >
-                                {t.status === "approved" ? "✓ Aprovado" : t.status === "pending" ? "⏳ Pendente" : "✕ Rejeitado"}
-                              </Badge>
-                              <span className="text-[10px] text-muted-foreground/50 font-mono">{t.folder}</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">{t.category} · {t.language}</p>
-                          </div>
-                          <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 text-destructive/60 hover:text-destructive h-7 w-7 p-0" onClick={() => handleDeleteTemplate(t.id)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-3 font-mono">{t.body}</p>
-                        <div className="flex gap-4 text-[11px] text-muted-foreground">
-                          <span className="flex items-center gap-1"><Send className="h-3 w-3" /> {t.sent.toLocaleString()} envios</span>
-                          <span className="flex items-center gap-1"><MailCheck className="h-3 w-3" /> {t.delivered.toLocaleString()} entregas</span>
-                          <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {t.read.toLocaleString()} leituras</span>
-                          <span className="flex items-center gap-1 font-medium text-foreground">{readRate}% leitura</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/20">
-                  <p className="text-[10px] text-muted-foreground font-mono">
-                    {filteredTemplates.length} templates · Página {currentPage} de {totalPages}
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(p => p - 1)}
-                    >
-                      <ChevronLeft className="h-3.5 w-3.5" />
-                    </Button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                      <Button
-                        key={page}
-                        size="sm"
-                        variant={page === currentPage ? "default" : "ghost"}
-                        className={cn("h-7 w-7 p-0 text-xs", page === currentPage && "bg-primary/10 text-primary")}
-                        onClick={() => setCurrentPage(page)}
-                      >
-                        {page}
-                      </Button>
-                    ))}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      disabled={currentPage === totalPages}
-                      onClick={() => setCurrentPage(p => p + 1)}
-                    >
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Bulk Messaging */}
-      <div className="relative">
-        <Card className={!isPremium ? "pointer-events-none select-none" : ""}>
-          <CardHeader>
-            <CardTitle className="text-base font-display">Envio em Massa</CardTitle>
-            <CardDescription className="max-w-lg">
-              Envie mensagens para milhares de clientes com um clique — sem risco de banimento ou queda do número.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Template da Mensagem</Label>
-                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                  <SelectTrigger className="text-sm"><SelectValue placeholder="Selecione um template" /></SelectTrigger>
-                  <SelectContent>
-                    {templates.filter(t => t.status === "approved").map(t => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Agendar Envio</Label>
-                <Input type="datetime-local" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} className="text-sm" />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Mensagem personalizada</Label>
-              <Textarea value={bulkMessage} onChange={e => setBulkMessage(e.target.value)} placeholder="Olá {nome}, temos uma novidade para você..." rows={3} className="text-sm" />
-              <p className="text-[10px] text-muted-foreground">Use {"{nome}"} para personalizar com o nome do contato</p>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Planilha de Contatos</Label>
-              <div className="border-2 border-dashed border-border/50 rounded-xl p-6 text-center hover:border-primary/30 transition-colors cursor-pointer">
-                <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">Arraste um arquivo CSV ou XLSX aqui</p>
-                <p className="text-[10px] text-muted-foreground/60 mt-1">Colunas: nome, telefone</p>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" className="gap-1.5">
-                <Calendar className="h-3.5 w-3.5" /> Agendar
-              </Button>
-              <Button className="gap-1.5 bg-gradient-to-r from-primary to-primary/80">
-                <Send className="h-3.5 w-3.5" /> Enviar Agora
-              </Button>
-            </div>
+            <Button size="sm" variant="ghost" onClick={() => setQrData(null)}>
+              Fechar
+            </Button>
           </CardContent>
         </Card>
-        {!isPremium && <UpgradeGate message="Para usar envio em massa, faça upgrade do seu plano" />}
-      </div>
+      )}
+
+      {/* Instances List */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : instances.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 flex flex-col items-center text-center">
+            <WifiOff className="h-10 w-10 text-muted-foreground/20 mb-3" />
+            <p className="text-sm text-muted-foreground">Nenhuma instância criada</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Clique em "Nova Instância" para começar</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {instances.map((inst) => {
+            const sc = statusConfig[inst.status] || statusConfig.created;
+            return (
+              <Card key={inst.id} className="group hover:border-border/60 transition-all">
+                <CardContent className="pt-5 pb-4 space-y-3">
+                  {/* Status + Name */}
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-foreground truncate">
+                        {inst.display_name || inst.instance_name}
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">
+                        {inst.instance_name}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <div className={cn("h-2 w-2 rounded-full", sc.color, inst.status === "connected" && "animate-pulse")} />
+                      <span className="text-[10px] font-medium text-muted-foreground">{sc.text}</span>
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  {inst.phone_number && (
+                    <p className="text-xs text-muted-foreground font-mono">📱 {inst.phone_number}</p>
+                  )}
+
+                  {/* Connected at */}
+                  {inst.connected_at && (
+                    <p className="text-[10px] text-muted-foreground/60">
+                      Conectado em {new Date(inst.connected_at).toLocaleString("pt-BR")}
+                    </p>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1.5 pt-1">
+                    {inst.status !== "connected" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1"
+                        onClick={() => handleConnect(inst)}
+                        disabled={connectingId === inst.id}
+                      >
+                        {connectingId === inst.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <QrCode className="h-3 w-3" />
+                        )}
+                        Conectar
+                      </Button>
+                    )}
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => handleRefreshStatus(inst)}
+                      disabled={refreshingId === inst.id}
+                    >
+                      <RefreshCw className={cn("h-3 w-3", refreshingId === inst.id && "animate-spin")} />
+                    </Button>
+
+                    {inst.status === "connected" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs gap-1 text-amber-600"
+                        onClick={() => handleLogout(inst)}
+                      >
+                        <LogOut className="h-3 w-3" /> Desconectar
+                      </Button>
+                    )}
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs gap-1 text-destructive opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+                      onClick={() => handleDelete(inst)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
