@@ -119,15 +119,33 @@ async function runApifyActor(actorId: string, input: any, apiKey: string): Promi
   return await dataResp.json();
 }
 
+/** Download an image and return as base64 data URI, or empty string on failure */
+async function toDataUri(imageUrl: string): Promise<string> {
+  if (!imageUrl) return "";
+  try {
+    const resp = await fetch(imageUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; MeteoraBot/1.0)" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!resp.ok) return "";
+    const contentType = resp.headers.get("content-type") || "image/jpeg";
+    const buf = await resp.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    return `data:${contentType};base64,${base64}`;
+  } catch {
+    return "";
+  }
+}
+
 /** Extract preview data (images, thumbnails) from scraped results */
-function extractSourcePreviews(platform: string, items: any[], url: string): any {
+async function extractSourcePreviews(platform: string, items: any[], url: string): Promise<any> {
   const preview: any = { platform, url, thumbnails: [] };
   
   switch (platform) {
     case "instagram": {
       const p = items[0];
       if (p) {
-        preview.profilePic = p.profilePicUrl || p.profilePicUrlHD || "";
+        preview.profilePic = await toDataUri(p.profilePicUrl || p.profilePicUrlHD || "");
         preview.displayName = p.fullName || p.username || "";
         preview.bio = p.biography || "";
         preview.followers = p.followersCount || 0;
@@ -402,7 +420,7 @@ serve(async (req) => {
 
         // Extract preview data for frontend display
         const preview = (apifyItems && apifyItems.length > 0)
-          ? extractSourcePreviews(platform, apifyItems, url)
+          ? await extractSourcePreviews(platform, apifyItems, url)
           : { platform, url, displayName: url.replace(/https?:\/\/(www\.)?/, "").split("/")[0], thumbnails: [] };
 
         if (!rawContent || rawContent.length < 20) {
