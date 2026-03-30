@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Building2, Clock, MapPin, ShoppingBag, DollarSign, Globe, Pencil, Check,
   ArrowRight, Sparkles, Phone, MessageCircle, Star, Instagram, Youtube,
@@ -57,7 +57,9 @@ const platformLabels: Record<string, string> = {
 type Step = { type: "source"; source: SourcePreview } | { type: "details" };
 
 function buildSteps(sources: SourcePreview[]): Step[] {
-  const steps: Step[] = sources.map(s => ({ type: "source" as const, source: s }));
+  const steps: Step[] = sources
+    .filter((source) => Boolean(source?.url))
+    .map(s => ({ type: "source" as const, source: s }));
   steps.push({ type: "details" as const });
   return steps;
 }
@@ -438,26 +440,23 @@ export default function BusinessOverview({
 
         {/* Content */}
         <div className="p-6 min-h-[400px] flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            {step.type === "source" ? (
-              <SourceStep
-                key={`source-${currentStep}`}
-                source={step.source}
-                onConfirm={next}
-                onEdit={(url) => {
-                  // Update source URL in local state
-                  next();
-                }}
-              />
-            ) : (
-              <DetailsStep
-                key={`details-${sourceCount}`}
-                data={localData}
-                onDataChange={handleDataChange}
-                onConfirm={next}
-              />
-            )}
-          </AnimatePresence>
+          {step.type === "source" ? (
+            <SourceStep
+              key={`source-${currentStep}`}
+              source={step.source}
+              onConfirm={next}
+              onEdit={() => {
+                next();
+              }}
+            />
+          ) : (
+            <DetailsStep
+              key={`details-${sourceCount}`}
+              data={localData}
+              onDataChange={handleDataChange}
+              onConfirm={next}
+            />
+          )}
         </div>
       </motion.div>
     </div>
