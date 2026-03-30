@@ -245,9 +245,24 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
           <CardContent className="py-6 flex flex-col items-center gap-4">
             <div className="text-center">
               <h3 className="text-sm font-semibold">Escaneie o QR Code</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Abra o WhatsApp no celular → Menu → Aparelhos conectados → Conectar
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                Siga os passos abaixo para conectar:
               </p>
+            </div>
+            {/* Step-by-step guide */}
+            <div className="flex flex-col gap-2 text-xs text-muted-foreground w-full max-w-sm">
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/30">
+                <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+                Abra o <strong className="text-foreground">WhatsApp</strong> no celular
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/30">
+                <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+                Vá em <strong className="text-foreground">Aparelhos conectados</strong>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/30">
+                <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
+                Aponte a câmera para o <strong className="text-foreground">QR Code</strong> abaixo
+              </div>
             </div>
             <div className="bg-white p-4 rounded-xl">
               <img
