@@ -117,20 +117,49 @@ serve(async (req) => {
           method: "GET",
           headers: evoHeaders,
         });
-        const evoData = await evoRes.json();
+
+        const evoText = await evoRes.text();
+        console.log("Evolution connect raw response:", evoText);
+
+        let evoData: Record<string, unknown>;
+        try {
+          evoData = JSON.parse(evoText);
+        } catch {
+          console.error("Failed to parse Evolution response as JSON");
+          return json({ error: "Resposta inválida da Evolution API", raw: evoText }, 502);
+        }
 
         if (!evoRes.ok) {
           console.error("Evolution connect error:", evoData);
           return json({ error: "Erro ao conectar instância", details: evoData }, evoRes.status);
         }
 
-        // Update QR code in DB
-        const qrCode = evoData?.base64 || evoData?.qrcode?.base64 || null;
+        // Extract QR code - support multiple response formats
+        const qrCode = (evoData?.base64 as string) ||
+                        ((evoData?.qrcode as Record<string, unknown>)?.base64 as string) ||
+                        (evoData?.code as string) ||
+                        ((evoData?.qr as Record<string, unknown>)?.base64 as string) ||
+                        null;
+
+        console.log("QR code extracted:", qrCode ? `found (${qrCode.substring(0, 50)}...)` : "null");
+        console.log("Response keys:", Object.keys(evoData));
+
         if (qrCode) {
           await supabase
             .from("whatsapp_instances")
             .update({ qr_code: qrCode, status: "connecting" })
             .eq("id", inst.id);
+        } else {
+          // Check if already connected
+          const state = (evoData?.instance as Record<string, unknown>)?.state as string;
+          if (state === "open") {
+            await supabase
+              .from("whatsapp_instances")
+              .update({ status: "connected", connected_at: new Date().toISOString(), qr_code: null })
+              .eq("id", inst.id);
+            return json({ success: true, alreadyConnected: true });
+          }
+          console.warn("No QR code found in response and instance not connected");
         }
 
         return json({ success: true, qrCode, raw: evoData });
