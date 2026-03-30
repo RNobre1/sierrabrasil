@@ -1,18 +1,29 @@
 import { useState, useMemo } from "react";
-import { Save, Check } from "lucide-react";
+import { Save, Check, Brain, Smile, Briefcase } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 
 const CHANNELS = ["whatsapp", "instagram", "web"] as const;
+
+const CONVERSATION_MODES = [
+  { id: "precise", label: "Preciso", desc: "Respostas objetivas e técnicas", icon: Brain, model: "google/gemini-2.5-pro", temperature: 0.3 },
+  { id: "friendly", label: "Amigável", desc: "Tom leve e simpático", icon: Smile, model: "google/gemini-3-flash-preview", temperature: 0.7 },
+  { id: "formal", label: "Formal", desc: "Linguagem corporativa", icon: Briefcase, model: "openai/gpt-5-mini", temperature: 0.4 },
+] as const;
+
+function detectMode(model: string | null, temp: number | null): string {
+  const m = model ?? "";
+  const t = temp ?? 0.7;
+  if (m.includes("2.5-pro") && t <= 0.4) return "precise";
+  if (m.includes("gpt-5") && t <= 0.5) return "formal";
+  return "friendly";
+}
 
 interface AgentConfigTabProps {
   agent: any;
@@ -23,28 +34,30 @@ export default function AgentConfigTab({ agent, onUpdate }: AgentConfigTabProps)
   const [name, setName] = useState(agent.name);
   const [persona, setPersona] = useState(agent.persona ?? "");
   const [instructions, setInstructions] = useState(agent.instructions ?? "");
-  const [model, setModel] = useState(agent.model ?? "google/gemini-3-flash-preview");
-  const [temperature, setTemperature] = useState(agent.temperature ?? 0.7);
+  const [mode, setMode] = useState(() => detectMode(agent.model, agent.temperature));
   const [channels, setChannels] = useState<string[]>(agent.channels ?? []);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const selectedMode = CONVERSATION_MODES.find(m => m.id === mode) ?? CONVERSATION_MODES[1];
+
   const isDirty = useMemo(() => {
+    const origMode = detectMode(agent.model, agent.temperature);
     return name !== agent.name || persona !== (agent.persona ?? "") || instructions !== (agent.instructions ?? "") ||
-      model !== (agent.model ?? "google/gemini-3-flash-preview") || temperature !== (agent.temperature ?? 0.7) ||
+      mode !== origMode ||
       JSON.stringify([...channels].sort()) !== JSON.stringify([...(agent.channels ?? [])].sort());
-  }, [name, persona, instructions, model, temperature, channels, agent]);
+  }, [name, persona, instructions, mode, channels, agent]);
 
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
     const { error } = await supabase.from("attendants").update({
-      name, persona, instructions, model, temperature, channels,
+      name, persona, instructions, model: selectedMode.model, temperature: selectedMode.temperature, channels,
     }).eq("id", agent.id);
     setSaving(false);
     if (!error) {
       setSaved(true);
-      onUpdate({ name, persona, instructions, model, temperature, channels });
+      onUpdate({ name, persona, instructions, model: selectedMode.model, temperature: selectedMode.temperature, channels });
       setTimeout(() => setSaved(false), 3000);
     }
   };
@@ -91,32 +104,32 @@ export default function AgentConfigTab({ agent, onUpdate }: AgentConfigTabProps)
         </CardContent>
       </Card>
 
-      {/* Model */}
+      {/* Conversation Mode */}
       <Card className="border-border/30 bg-card/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-display">Modelo de IA</CardTitle>
+          <CardTitle className="text-sm font-display">Modo de Conversa</CardTitle>
+          <CardDescription className="text-xs">Define o tom e estilo das respostas</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Modelo</Label>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (rápido)</SelectItem>
-                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (econômico)</SelectItem>
-                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (avançado)</SelectItem>
-                <SelectItem value="openai/gpt-5-mini">GPT-5 Mini (versátil)</SelectItem>
-                <SelectItem value="openai/gpt-5">GPT-5 (máxima qualidade)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Temperatura: {temperature.toFixed(1)}</Label>
-            <Slider value={[temperature]} onValueChange={v => setTemperature(v[0])} min={0} max={1} step={0.1} />
-            <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>Preciso (0.0)</span>
-              <span>Criativo (1.0)</span>
-            </div>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-2">
+            {CONVERSATION_MODES.map(m => {
+              const active = mode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition-all ${
+                    active
+                      ? "border-primary/40 bg-primary/10 ring-1 ring-primary/20"
+                      : "border-border/30 bg-card/30 hover:border-border/50 hover:bg-card/50"
+                  }`}
+                >
+                  <m.icon className={`h-5 w-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className={`text-xs font-semibold ${active ? "text-primary" : "text-foreground"}`}>{m.label}</span>
+                  <span className="text-[10px] text-muted-foreground text-center leading-tight">{m.desc}</span>
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

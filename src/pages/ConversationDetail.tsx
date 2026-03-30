@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, Clock, Hash } from "lucide-react";
+import { ArrowLeft, Phone, Clock, Hash, Bot, User, ToggleLeft, ToggleRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -21,6 +22,7 @@ interface Conversation {
   status: string;
   started_at: string;
   ended_at: string | null;
+  human_takeover: boolean;
 }
 
 const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
@@ -35,6 +37,7 @@ export default function ConversationDetail() {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -44,13 +47,34 @@ export default function ConversationDetail() {
         supabase.from("conversations").select("*").eq("id", id).single(),
         supabase.from("messages").select("*").eq("conversation_id", id).order("created_at", { ascending: true }),
       ]);
-      setConversation(convRes.data);
+      if (convRes.data) {
+        setConversation({
+          ...convRes.data,
+          human_takeover: (convRes.data as any).human_takeover ?? false,
+        });
+      }
       setMessages(msgsRes.data ?? []);
       setLoading(false);
     };
 
     fetch();
   }, [id]);
+
+  const toggleHandover = async () => {
+    if (!conversation || !id) return;
+    setToggling(true);
+    const newVal = !conversation.human_takeover;
+    const { error } = await supabase.from("conversations").update({
+      human_takeover: newVal,
+    } as any).eq("id", id);
+    setToggling(false);
+    if (!error) {
+      setConversation({ ...conversation, human_takeover: newVal });
+      toast.success(newVal ? "Você assumiu a conversa" : "Conversa devolvida para a IA");
+    } else {
+      toast.error("Erro ao alterar modo");
+    }
+  };
 
   const formatTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -78,6 +102,7 @@ export default function ConversationDetail() {
   }
 
   const st = statusMap[conversation.status] || statusMap.active;
+  const isHuman = conversation.human_takeover;
 
   return (
     <div className="space-y-4">
@@ -90,6 +115,10 @@ export default function ConversationDetail() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-display font-semibold">{conversation.contact_name}</h1>
             <Badge variant={st.variant}>{st.label}</Badge>
+            <Badge variant="outline" className={`gap-1 text-[10px] ${isHuman ? "border-amber-500/30 text-amber-400 bg-amber-500/10" : "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"}`}>
+              {isHuman ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+              {isHuman ? "Humano" : "IA"}
+            </Badge>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
             {conversation.contact_phone && (
@@ -99,6 +128,15 @@ export default function ConversationDetail() {
             <span className="flex items-center gap-1"><Hash className="h-3 w-3 capitalize" /> {conversation.channel}</span>
           </div>
         </div>
+        <Button
+          variant={isHuman ? "default" : "outline"}
+          size="sm"
+          onClick={toggleHandover}
+          disabled={toggling}
+          className="gap-1.5 text-xs"
+        >
+          {isHuman ? <><ToggleRight className="h-4 w-4" /> Devolver para IA</> : <><ToggleLeft className="h-4 w-4" /> Assumir conversa</>}
+        </Button>
       </div>
 
       {/* Chat */}

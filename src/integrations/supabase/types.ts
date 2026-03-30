@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       attendants: {
         Row: {
+          active_skills: string[] | null
           channels: string[] | null
           class: string | null
           created_at: string
@@ -30,6 +31,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_skills?: string[] | null
           channels?: string[] | null
           class?: string | null
           created_at?: string
@@ -44,6 +46,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_skills?: string[] | null
           channels?: string[] | null
           class?: string | null
           created_at?: string
@@ -74,6 +77,7 @@ export type Database = {
           contact_name: string
           contact_phone: string | null
           ended_at: string | null
+          human_takeover: boolean | null
           id: string
           metadata: Json | null
           started_at: string
@@ -86,6 +90,7 @@ export type Database = {
           contact_name: string
           contact_phone?: string | null
           ended_at?: string | null
+          human_takeover?: boolean | null
           id?: string
           metadata?: Json | null
           started_at?: string
@@ -98,6 +103,7 @@ export type Database = {
           contact_name?: string
           contact_phone?: string | null
           ended_at?: string | null
+          human_takeover?: boolean | null
           id?: string
           metadata?: Json | null
           started_at?: string
