@@ -123,10 +123,27 @@ export default function Onboarding() {
   const userName = user?.user_metadata?.full_name || profile?.full_name || "";
   const companyName = user?.user_metadata?.company_name || "";
 
+  const isNewAgent = new URLSearchParams(window.location.search).get("newAgent") === "true";
+
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
-    // Start with user intro message, then agent greeting with password request
+
+    // If creating a new agent (returning user), skip password and go to class select
+    if (isNewAgent) {
+      const firstName = userName ? userName.split(" ")[0] : "";
+      setMessages([{
+        role: "assistant",
+        content: firstName
+          ? `Olá, ${firstName}! Vamos criar um novo agente. Escolha o tipo ideal para você:`
+          : "Vamos criar um novo agente! Escolha o tipo ideal para você:",
+      }]);
+      setPasswordPhase("done");
+      setPhase("class-select");
+      return;
+    }
+
+    // First-time onboarding: start with password
     setTimeout(() => {
       const firstName = userName ? userName.split(" ")[0] : "";
       const introMsg = firstName
