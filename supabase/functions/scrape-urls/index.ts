@@ -194,12 +194,19 @@ async function extractSourcePreviews(platform: string, items: any[], url: string
     }
     case "website":
     default: {
-      // Try to extract OG images from website pages
+      // Try to get OG image as profile pic (hero screenshot of the site)
+      const firstPage = items[0];
+      const heroImg = firstPage?.screenshotUrl || firstPage?.ogImage || firstPage?.metadata?.ogImage || "";
+      if (heroImg) {
+        preview.profilePic = await toDataUri(heroImg);
+      }
+      // Additional thumbnails from other pages
       for (const page of items.slice(0, 3)) {
-        const ogImg = page.screenshotUrl || page.ogImage || "";
+        const ogImg = page.screenshotUrl || page.ogImage || page.metadata?.ogImage || "";
         if (ogImg) preview.thumbnails.push(ogImg);
       }
-      preview.displayName = items[0]?.title || url.replace(/https?:\/\/(www\.)?/, "").split("/")[0];
+      preview.displayName = firstPage?.title || firstPage?.metadata?.title || url.replace(/https?:\/\/(www\.)?/, "").split("/")[0];
+      preview.bio = firstPage?.metadata?.description || firstPage?.description || "";
       break;
     }
   }
