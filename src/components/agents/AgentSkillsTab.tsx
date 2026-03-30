@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Zap, Lock, Info, Check, ShoppingCart, Crown, MessageSquare, Calendar, FileText, Globe, BarChart3, Users, Mail, Bell, Shield, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Zap, Lock, Info, Check, ShoppingCart, Crown, MessageSquare, Calendar, FileText, Globe, BarChart3, Users, Mail, Bell, Shield, Sparkles, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
