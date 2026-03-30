@@ -53,21 +53,49 @@ interface Props {
 }
 
 export default function AgentSkillsTab({ agentId, agentClass, plan }: Props) {
-  const [enabledSkills, setEnabledSkills] = useState<Set<string>>(
-    new Set(SKILLS.filter(s => s.includedIn.includes(plan)).map(s => s.id))
-  );
+  const [enabledSkills, setEnabledSkills] = useState<Set<string>>(new Set());
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Load saved skills from DB
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("attendants").select("active_skills").eq("id", agentId).single();
+      const saved = (data as any)?.active_skills as string[] | null;
+      if (saved && saved.length > 0) {
+        setEnabledSkills(new Set(saved));
+      } else {
+        // Default: enable core skills included in plan
+        setEnabledSkills(new Set(SKILLS.filter(s => s.category === "core" && s.includedIn.includes(plan)).map(s => s.id)));
+      }
+      setLoaded(true);
+    })();
+  }, [agentId, plan]);
 
   const isIncluded = (skill: Skill) => skill.includedIn.includes(plan);
   const isEnabled = (id: string) => enabledSkills.has(id);
 
   const toggleSkill = (skill: Skill) => {
-    if (!isIncluded(skill)) return; // locked
+    if (!isIncluded(skill)) return;
     setEnabledSkills(prev => {
       const next = new Set(prev);
       if (next.has(skill.id)) next.delete(skill.id); else next.add(skill.id);
       return next;
     });
+  };
+
+  const saveSkills = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("attendants").update({
+      active_skills: Array.from(enabledSkills),
+    } as any).eq("id", agentId);
+    setSaving(false);
+    if (!error) {
+      toast.success("Skills salvas com sucesso");
+    } else {
+      toast.error("Erro ao salvar skills");
+    }
   };
 
   const grouped = {
