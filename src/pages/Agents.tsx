@@ -116,15 +116,9 @@ export default function Agents() {
             )}
           </div>
         </div>
-        {canCreate ? (
-          <Button onClick={() => nav("/onboarding?newAgent=true")} className="gap-1.5 text-[12px] rounded-[10px]">
-            <Plus className="h-3.5 w-3.5" /> Novo Agente
-          </Button>
-        ) : (
-          <Button variant="outline" onClick={() => nav("/integrations")} className="gap-1.5 text-[12px] rounded-[10px] border-cyan-500/25 text-cyan-400 hover:bg-cyan-500/5">
-            <Zap className="h-3.5 w-3.5" /> Fazer Upgrade
-          </Button>
-        )}
+        <Button onClick={handleCreateAgent} className="gap-1.5 text-[12px] rounded-[10px]">
+          <Plus className="h-3.5 w-3.5" /> Novo Agente
+        </Button>
       </div>
 
       {/* ── Limit alert ── */}
