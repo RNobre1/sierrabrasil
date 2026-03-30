@@ -52,12 +52,12 @@ export default function AgentConfigTab({ agent, onUpdate }: AgentConfigTabProps)
     setSaving(true);
     setSaved(false);
     const { error } = await supabase.from("attendants").update({
-      name, persona, instructions, model, temperature, channels,
+      name, persona, instructions, model: selectedMode.model, temperature: selectedMode.temperature, channels,
     }).eq("id", agent.id);
     setSaving(false);
     if (!error) {
       setSaved(true);
-      onUpdate({ name, persona, instructions, model, temperature, channels });
+      onUpdate({ name, persona, instructions, model: selectedMode.model, temperature: selectedMode.temperature, channels });
       setTimeout(() => setSaved(false), 3000);
     }
   };
