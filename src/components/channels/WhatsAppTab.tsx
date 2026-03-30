@@ -132,6 +132,12 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
       if (result.qrCode) {
         setQrData({ instanceName: inst.instance_name, qr: result.qrCode });
       }
+      // Auto-configure webhook
+      try {
+        await callEvolutionApi("set_webhook", { instanceName: inst.instance_name });
+      } catch (e) {
+        console.warn("Webhook setup warning:", e);
+      }
       fetchInstances();
     } catch (e: any) {
       toast.error(e.message || "Erro ao conectar");
