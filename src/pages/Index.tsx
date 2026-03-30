@@ -167,9 +167,15 @@ export default function Index() {
                   {(plan as any).enterprise && <Crown className="h-4 w-4 text-[hsl(var(--meteora-cyan))]" />}
                 </div>
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-xs text-muted-foreground">R$</span>
-                  <span className="text-3xl sm:text-4xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-xs text-muted-foreground">/mês</span>
+                  {plan.price ? (
+                    <>
+                      <span className="text-xs text-muted-foreground">R$</span>
+                      <span className="text-3xl sm:text-4xl font-bold text-foreground">{plan.price}</span>
+                      <span className="text-xs text-muted-foreground">/mês</span>
+                    </>
+                  ) : (
+                    <span className="text-2xl sm:text-3xl font-bold text-foreground">Sob consulta</span>
+                  )}
                 </div>
                 <ul className="mt-6 space-y-2.5">
                   {plan.features.map((f, j) => (
