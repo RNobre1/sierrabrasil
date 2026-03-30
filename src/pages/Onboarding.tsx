@@ -676,7 +676,7 @@ export default function Onboarding() {
       ...prev,
       {
         role: "assistant",
-        content: "Ótimo! Agora, você tem algum material que pode nos ajudar a treinar melhor seu agente? 📄\n\nPode ser catálogo, cardápio, tabela de preços, apresentação da empresa, FAQ... qualquer documento que descreva seu negócio.\n\nVocê também pode colar texto direto!",
+        content: "Ótimo! Agora, envie arquivos que descrevam seu negócio: catálogo, tabela de preços, cardápio, apresentação ou qualquer documento útil. 📄\n\n**Quanto mais informação, melhor seu agente atende.**\n\nVocê também pode colar texto direto no campo abaixo!",
       },
     ]);
     setShowDocUpload(true);

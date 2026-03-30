@@ -376,6 +376,7 @@ export default function Dashboard() {
       </div>
 
       <MeteoraWatermark />
+      <GuidedTour />
     </div>
   );
 }

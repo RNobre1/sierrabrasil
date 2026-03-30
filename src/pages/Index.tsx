@@ -193,7 +193,7 @@ export default function Index() {
                         ? "bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20"
                         : ""
                   }`} variant={plan.popular || (plan as any).enterprise ? "default" : "outline"}>
-                    {(plan as any).enterprise ? "Falar com especialista" : plan.popular ? "Começar agora" : "Escolher plano"}
+                    {(plan as any).enterprise ? "Fale com especialista" : plan.popular ? "Começar agora" : "Escolher plano"}
                   </Button>
                 </Link>
               </div>

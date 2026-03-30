@@ -179,33 +179,36 @@ export default function AttendantConfig() {
         </CardContent>
       </Card>
 
-      {/* Model Config */}
+      {/* Conversation Mode */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-display">Modelo de IA</CardTitle>
-          <CardDescription>Configurações do modelo que alimenta as respostas</CardDescription>
+          <CardTitle className="text-base font-display">Modo de Conversa</CardTitle>
+          <CardDescription>Como seu agente se comunica com os clientes</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Modelo</Label>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (rápido, equilibrado)</SelectItem>
-                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (econômico)</SelectItem>
-                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (avançado)</SelectItem>
-                <SelectItem value="openai/gpt-5-mini">GPT-5 Mini (versátil)</SelectItem>
-                <SelectItem value="openai/gpt-5">GPT-5 (máxima qualidade)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Temperatura: {temperature.toFixed(1)}</Label>
-            <Slider value={[temperature]} onValueChange={v => setTemperature(v[0])} min={0} max={1} step={0.1} className="w-full" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Preciso (0.0)</span>
-              <span>Criativo (1.0)</span>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { value: "precise", label: "Preciso e direto", desc: "Respostas objetivas, sem enrolação", temp: 0.3, model: "google/gemini-3-flash-preview" },
+              { value: "friendly", label: "Amigável e detalhado", desc: "Conversa natural, explica bem", temp: 0.7, model: "google/gemini-3-flash-preview" },
+              { value: "formal", label: "Profissional e formal", desc: "Tom corporativo, vocabulário refinado", temp: 0.5, model: "google/gemini-2.5-pro" },
+            ].map((mode) => {
+              const isActive = temperature === mode.temp && model === mode.model;
+              return (
+                <button
+                  key={mode.value}
+                  type="button"
+                  onClick={() => { setTemperature(mode.temp); setModel(mode.model); }}
+                  className={`text-left p-4 rounded-xl border transition-all ${
+                    isActive
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                      : "border-border hover:border-border/80 hover:bg-muted/30"
+                  }`}
+                >
+                  <p className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>{mode.label}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{mode.desc}</p>
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
