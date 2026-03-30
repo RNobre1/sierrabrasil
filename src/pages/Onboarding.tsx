@@ -372,11 +372,10 @@ export default function Onboarding() {
         setPasswordPhase("done");
         setMessages(prev => [...prev, {
           role: "assistant",
-          content: companyName
-            ? `Senha definida com sucesso. 🔒\n\nAgora vamos falar do seu negócio: em qual setor a **${companyName}** atua?`
-            : "Senha definida com sucesso. 🔒\n\nAgora vamos falar do seu negócio: qual é o nome da sua empresa?",
+          content: "Senha definida com sucesso! 🔒\n\nAgora vamos escolher o tipo de agente ideal para o seu negócio.",
         }]);
         setIsLoading(false);
+        setPhase("class-select");
       });
       return;
     }
