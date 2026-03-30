@@ -175,9 +175,10 @@ async function extractSourcePreviews(platform: string, items: any[], url: string
     case "linkedin": {
       const co = items[0];
       if (co) {
-        preview.profilePic = co.logo || "";
+        preview.profilePic = await toDataUri(co.logo || co.logoUrl || co.imageUrl || "");
         preview.displayName = co.name || "";
         preview.bio = co.description?.slice(0, 200) || "";
+        preview.followers = co.followersCount || co.staffCount || 0;
       }
       break;
     }
