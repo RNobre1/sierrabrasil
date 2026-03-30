@@ -194,7 +194,7 @@ serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(30);
 
-      // 7. Build system prompt
+      // 7. Build system prompt with skills
       let knowledgeContext = "";
       if (knowledge && knowledge.length > 0) {
         const kbSections = knowledge.map((k) => {
@@ -202,6 +202,24 @@ serve(async (req) => {
           return `[${tag}: ${k.source_name}]\n${k.content}`;
         });
         knowledgeContext = `\n\n## BASE DE CONHECIMENTO\n${kbSections.join("\n\n---\n\n")}`;
+      }
+
+      // Build skills instructions
+      const activeSkills: string[] = (attendant as any).active_skills ?? [];
+      let skillsBlock = "";
+      const skillInstructions: Record<string, string> = {
+        "faq": "## SKILL: FAQ INTELIGENTE\nQuando identificar perguntas recorrentes ou frequentes, responda de forma direta e instantânea usando sua base de conhecimento, sem rodeios.",
+        "greeting": "## SKILL: SAUDAÇÃO PERSONALIZADA\nAo iniciar uma conversa, envie uma saudação personalizada usando o nome do cliente. Adapte o tom ao horário (bom dia/boa tarde/boa noite).",
+        "escalation": "## SKILL: ESCALONAMENTO HUMANO\nSe o cliente pedir para falar com um humano, demonstrar frustração extrema, ou o assunto estiver fora do seu escopo, diga: 'Vou transferir você para um atendente humano. Aguarde um momento.' e encerre sua participação.",
+        "lead-capture": "## SKILL: CAPTURA DE LEADS\nDurante a conversa, identifique oportunidades naturais para coletar nome completo, email e telefone do cliente. Faça isso de forma sutil e contextualizada, nunca como um formulário.",
+        "auto-reply": "## SKILL: RESPOSTA AUTOMÁTICA\nResponda todas as perguntas de forma contextualizada usando sua base de conhecimento e instruções.",
+        "sentiment": "## SKILL: ANÁLISE DE SENTIMENTO\nAdapte o tom da resposta baseado no sentimento detectado na mensagem. Se frustrado, seja mais empático. Se positivo, seja mais entusiasmado.",
+        "follow-up": "## SKILL: FOLLOW-UP\nSe o cliente não respondeu por muito tempo e volta, faça referência à conversa anterior e pergunte se pode ajudar com algo mais.",
+      };
+      for (const sk of activeSkills) {
+        if (skillInstructions[sk]) {
+          skillsBlock += "\n\n" + skillInstructions[sk];
+        }
       }
 
       const systemPrompt = `## IDENTIDADE
@@ -219,7 +237,7 @@ ${attendant.persona ? `Personalidade: ${attendant.persona}` : ""}
 8. NÃO use markdown (negrito, itálico, listas). WhatsApp não renderiza markdown.
 9. Use emojis com moderação para parecer natural.
 
-${attendant.instructions ? `## INSTRUÇÕES DO NEGÓCIO\n${attendant.instructions}` : ""}${knowledgeContext}`;
+${attendant.instructions ? `## INSTRUÇÕES DO NEGÓCIO\n${attendant.instructions}` : ""}${skillsBlock}${knowledgeContext}`;
 
       // Convert message history to OpenAI format
       const aiMessages = (history || []).map((m) => ({
