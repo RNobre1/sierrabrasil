@@ -220,6 +220,11 @@ serve(async (req) => {
           })
           .eq("id", inst.id);
 
+        // Fetch profile pic when newly connected
+        if (newStatus === "connected") {
+          await fetchAndSaveProfilePic(instanceName, inst.id);
+        }
+
         return json({ success: true, state: evoData?.instance?.state, status: newStatus });
       }
 
