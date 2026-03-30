@@ -233,7 +233,7 @@ export default function Agents() {
                       <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#161822] ${a.status === "online" ? "bg-emerald-400 animate-pulse-dot" : "bg-white/20"}`} />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-[13px] font-semibold text-white/90 truncate">{a.name}</h3>
+                      <h3 className="text-[13px] font-semibold text-white/90 truncate max-w-[180px]" title={a.name}>{a.name.length > 30 ? a.name.slice(0, 30) + "…" : a.name}</h3>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className={`h-1.5 w-1.5 rounded-full ${cls.dot}`} />
                         <span className={`text-[9.5px] font-medium ${cls.text}`}>{cls.short}</span>

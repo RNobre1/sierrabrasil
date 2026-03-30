@@ -51,6 +51,7 @@ export default function GuidedTour() {
   const dismiss = () => {
     setVisible(false);
     localStorage.setItem(TOUR_KEY, "true");
+    sessionStorage.setItem(TOUR_KEY, "true");
   };
 
   const next = () => {
