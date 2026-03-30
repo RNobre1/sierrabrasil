@@ -106,7 +106,7 @@ serve(async (req) => {
       // 2. Find the tenant's active attendant
       const { data: attendant } = await supabase
         .from("attendants")
-        .select("id, name, persona, instructions, model, temperature")
+        .select("id, name, persona, instructions, model, temperature, active_skills")
         .eq("tenant_id", instance.tenant_id)
         .eq("status", "online")
         .limit(1)
