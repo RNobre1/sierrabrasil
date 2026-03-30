@@ -121,16 +121,23 @@ export default function Agents() {
         </Button>
       </div>
 
-      {/* ── Limit alert ── */}
-      {!canCreate && (
-        <div className="flex items-center gap-3 rounded-[12px] border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
-          <Shield className="h-4 w-4 text-cyan-400 shrink-0" />
-          <div>
-            <p className="text-[12.5px] font-medium text-white/80">Limite de agentes atingido</p>
-            <p className="text-[11px] text-white/30 mt-0.5">Faça upgrade para criar mais agentes e desbloquear superpoderes.</p>
+      {/* ── Limit modal ── */}
+      <Dialog open={showLimitModal} onOpenChange={setShowLimitModal}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <div className="flex flex-col items-center text-center py-4 space-y-4">
+            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-display font-semibold text-foreground">Limite de agentes atingido</h3>
+              <p className="text-sm text-muted-foreground mt-2">Seu plano atual permite até <strong>{maxAgents}</strong> agente{maxAgents > 1 ? "s" : ""}. Faça upgrade para criar mais agentes e desbloquear superpoderes.</p>
+            </div>
+            <Button onClick={() => { setShowLimitModal(false); nav("/integrations"); }} className="gap-2">
+              Fazer Upgrade <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
 
       {/* ── Filter bar ── */}
