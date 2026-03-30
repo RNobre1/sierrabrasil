@@ -55,6 +55,7 @@ export default function Onboarding() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [phase, setPhase] = useState<OnboardingPhase>("chat");
+  const [selectedAgentClass, setSelectedAgentClass] = useState<"support" | "sales" | null>(null);
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
   const [scrapeUrls, setScrapeUrls] = useState<string[]>([]);
   const [scrapeResults, setScrapeResults] = useState<any[]>([]);
