@@ -14,6 +14,7 @@ import ScrapingProgress from "@/components/onboarding/ScrapingProgress";
 import SocialLinksSelector from "@/components/onboarding/SocialLinksSelector";
 import TextPasteModal from "@/components/onboarding/TextPasteModal";
 import BusinessOverview from "@/components/onboarding/BusinessOverview";
+import AgentClassSelector from "@/components/onboarding/AgentClassSelector";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
