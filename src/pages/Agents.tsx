@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, Plus, Play, Settings, Headphones, TrendingUp, Zap, ChevronRight, Wifi, WifiOff, Shield, Activity, Search, X } from "lucide-react";
+import { Bot, Plus, Play, Settings, Headphones, TrendingUp, Zap, ChevronRight, Wifi, WifiOff, Shield, Activity, Search, X, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface Attendant {
   id: string;
@@ -54,6 +55,15 @@ export default function Agents() {
   const maxAgents = tenantPlan === "starter" ? 1 : tenantPlan === "professional" ? 3 : tenantPlan === "enterprise" ? 100 : 10;
   const canCreate = agents.length < maxAgents;
   const online = agents.filter(a => a.status === "online").length;
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  const handleCreateAgent = () => {
+    if (canCreate) {
+      nav("/onboarding?newAgent=true");
+    } else {
+      setShowLimitModal(true);
+    }
+  };
 
   const toggleClass = (cls: string) => {
     setClassFilters(prev => {
@@ -106,27 +116,28 @@ export default function Agents() {
             )}
           </div>
         </div>
-        {canCreate ? (
-          <Button onClick={() => nav("/onboarding?newAgent=true")} className="gap-1.5 text-[12px] rounded-[10px]">
-            <Plus className="h-3.5 w-3.5" /> Novo Agente
-          </Button>
-        ) : (
-          <Button variant="outline" onClick={() => nav("/integrations")} className="gap-1.5 text-[12px] rounded-[10px] border-cyan-500/25 text-cyan-400 hover:bg-cyan-500/5">
-            <Zap className="h-3.5 w-3.5" /> Fazer Upgrade
-          </Button>
-        )}
+        <Button onClick={handleCreateAgent} className="gap-1.5 text-[12px] rounded-[10px]">
+          <Plus className="h-3.5 w-3.5" /> Novo Agente
+        </Button>
       </div>
 
-      {/* ── Limit alert ── */}
-      {!canCreate && (
-        <div className="flex items-center gap-3 rounded-[12px] border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
-          <Shield className="h-4 w-4 text-cyan-400 shrink-0" />
-          <div>
-            <p className="text-[12.5px] font-medium text-white/80">Limite de agentes atingido</p>
-            <p className="text-[11px] text-white/30 mt-0.5">Faça upgrade para criar mais agentes e desbloquear superpoderes.</p>
+      {/* ── Limit modal ── */}
+      <Dialog open={showLimitModal} onOpenChange={setShowLimitModal}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <div className="flex flex-col items-center text-center py-4 space-y-4">
+            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-display font-semibold text-foreground">Limite de agentes atingido</h3>
+              <p className="text-sm text-muted-foreground mt-2">Seu plano atual permite até <strong>{maxAgents}</strong> agente{maxAgents > 1 ? "s" : ""}. Faça upgrade para criar mais agentes e desbloquear superpoderes.</p>
+            </div>
+            <Button onClick={() => { setShowLimitModal(false); nav("/integrations"); }} className="gap-2">
+              Fazer Upgrade <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
 
       {/* ── Filter bar ── */}
@@ -222,7 +233,7 @@ export default function Agents() {
                       <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#161822] ${a.status === "online" ? "bg-emerald-400 animate-pulse-dot" : "bg-white/20"}`} />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-[13px] font-semibold text-white/90 truncate">{a.name}</h3>
+                      <h3 className="text-[13px] font-semibold text-white/90 truncate max-w-[180px]" title={a.name}>{a.name.length > 30 ? a.name.slice(0, 30) + "…" : a.name}</h3>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className={`h-1.5 w-1.5 rounded-full ${cls.dot}`} />
                         <span className={`text-[9.5px] font-medium ${cls.text}`}>{cls.short}</span>
