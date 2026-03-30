@@ -427,9 +427,24 @@ serve(async (req) => {
         }
 
         // Extract preview data for frontend display
-        const preview = (apifyItems && apifyItems.length > 0)
-          ? await extractSourcePreviews(platform, apifyItems, url)
-          : { platform, url, displayName: url.replace(/https?:\/\/(www\.)?/, "").split("/")[0], thumbnails: [] };
+        let preview: any;
+        if (apifyItems && apifyItems.length > 0) {
+          preview = await extractSourcePreviews(platform, apifyItems, url);
+        } else {
+          // Fallback: try to extract OG image from raw scraped content
+          const ogMatch = rawContent.match(/IMAGEM:\s*(\S+)/);
+          const titleMatch = rawContent.match(/TÍTULO:\s*(.+)/);
+          const descMatch = rawContent.match(/DESCRIÇÃO:\s*(.+)/);
+          const ogUrl = ogMatch?.[1] || "";
+          preview = {
+            platform,
+            url,
+            displayName: titleMatch?.[1]?.trim() || url.replace(/https?:\/\/(www\.)?/, "").split("/")[0],
+            bio: descMatch?.[1]?.trim().slice(0, 200) || "",
+            profilePic: ogUrl ? await toDataUri(ogUrl) : "",
+            thumbnails: [],
+          };
+        }
 
         if (!rawContent || rawContent.length < 20) {
           return { result: { url, platform, status: "empty", details: "Nenhum conteúdo extraído" } as any, rawContent: "", preview };
