@@ -19,6 +19,7 @@ interface WhatsAppInstance {
   phone_number: string | null;
   status: string;
   qr_code: string | null;
+  profile_pic_url: string | null;
   connected_at: string | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
