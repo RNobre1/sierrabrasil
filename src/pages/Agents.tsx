@@ -55,6 +55,15 @@ export default function Agents() {
   const maxAgents = tenantPlan === "starter" ? 1 : tenantPlan === "professional" ? 3 : tenantPlan === "enterprise" ? 100 : 10;
   const canCreate = agents.length < maxAgents;
   const online = agents.filter(a => a.status === "online").length;
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  const handleCreateAgent = () => {
+    if (canCreate) {
+      nav("/onboarding?newAgent=true");
+    } else {
+      setShowLimitModal(true);
+    }
+  };
 
   const toggleClass = (cls: string) => {
     setClassFilters(prev => {
