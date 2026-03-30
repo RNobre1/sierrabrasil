@@ -123,7 +123,7 @@ serve(async (req) => {
       let conversationId: string;
       const { data: existingConv } = await supabase
         .from("conversations")
-        .select("id, metadata")
+        .select("id, human_takeover")
         .eq("tenant_id", instance.tenant_id)
         .eq("contact_phone", contactPhone)
         .eq("status", "active")
