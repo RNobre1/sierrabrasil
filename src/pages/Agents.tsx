@@ -27,7 +27,7 @@ function ChBadge({ ch }: { ch: string }) {
     instagram: "text-pink-400/70 border-pink-500/15",
     web: "text-indigo-400/70 border-indigo-500/15",
   };
-  return <span className={`inline-flex items-center px-1.5 py-[1px] rounded text-[8px] font-bold uppercase tracking-[.05em] border bg-white/[0.02] ${m[ch] ?? m.web}`}>{ch}</span>;
+  return <span className={`inline-flex items-center whitespace-nowrap px-2 py-[2px] rounded text-[8px] font-bold uppercase tracking-[.05em] border bg-white/[0.02] ${m[ch] ?? m.web}`}>{ch}</span>;
 }
 
 export default function Agents() {
