@@ -23,6 +23,7 @@ const PROCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-k
 const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
 
 type OnboardingPhase =
+  | "class-select"
   | "chat"
   | "social-links"
   | "scraping"
