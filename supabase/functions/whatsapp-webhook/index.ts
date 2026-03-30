@@ -134,8 +134,7 @@ serve(async (req) => {
       if (existingConv) {
         conversationId = existingConv.id;
         // Check for human takeover
-        const meta = existingConv.metadata as Record<string, unknown> | null;
-        if (meta?.human_takeover === true) {
+        if ((existingConv as any).human_takeover === true) {
           // Don't auto-respond, just save the message
           await supabase.from("messages").insert({
             conversation_id: conversationId,
