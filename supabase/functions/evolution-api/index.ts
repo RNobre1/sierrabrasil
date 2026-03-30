@@ -178,6 +178,8 @@ serve(async (req) => {
               .from("whatsapp_instances")
               .update({ status: "connected", connected_at: new Date().toISOString(), qr_code: null })
               .eq("id", inst.id);
+            // Fetch profile pic on connection
+            await fetchAndSaveProfilePic(instanceName, inst.id);
             return json({ success: true, alreadyConnected: true });
           }
           console.warn("No QR code found in response and instance not connected");
