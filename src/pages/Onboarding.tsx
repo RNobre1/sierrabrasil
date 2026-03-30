@@ -14,6 +14,7 @@ import ScrapingProgress from "@/components/onboarding/ScrapingProgress";
 import SocialLinksSelector from "@/components/onboarding/SocialLinksSelector";
 import TextPasteModal from "@/components/onboarding/TextPasteModal";
 import BusinessOverview from "@/components/onboarding/BusinessOverview";
+import AgentClassSelector from "@/components/onboarding/AgentClassSelector";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -22,6 +23,7 @@ const PROCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-k
 const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
 
 type OnboardingPhase =
+  | "class-select"
   | "chat"
   | "social-links"
   | "scraping"
@@ -53,6 +55,7 @@ export default function Onboarding() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [phase, setPhase] = useState<OnboardingPhase>("chat");
+  const [selectedAgentClass, setSelectedAgentClass] = useState<"support" | "sales" | null>(null);
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
   const [scrapeUrls, setScrapeUrls] = useState<string[]>([]);
   const [scrapeResults, setScrapeResults] = useState<any[]>([]);
@@ -120,10 +123,27 @@ export default function Onboarding() {
   const userName = user?.user_metadata?.full_name || profile?.full_name || "";
   const companyName = user?.user_metadata?.company_name || "";
 
+  const isNewAgent = new URLSearchParams(window.location.search).get("newAgent") === "true";
+
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
-    // Start with user intro message, then agent greeting with password request
+
+    // If creating a new agent (returning user), skip password and go to class select
+    if (isNewAgent) {
+      const firstName = userName ? userName.split(" ")[0] : "";
+      setMessages([{
+        role: "assistant",
+        content: firstName
+          ? `Olá, ${firstName}! Vamos criar um novo agente. Escolha o tipo ideal para você:`
+          : "Vamos criar um novo agente! Escolha o tipo ideal para você:",
+      }]);
+      setPasswordPhase("done");
+      setPhase("class-select");
+      return;
+    }
+
+    // First-time onboarding: start with password
     setTimeout(() => {
       const firstName = userName ? userName.split(" ")[0] : "";
       const introMsg = firstName
@@ -369,11 +389,10 @@ export default function Onboarding() {
         setPasswordPhase("done");
         setMessages(prev => [...prev, {
           role: "assistant",
-          content: companyName
-            ? `Senha definida com sucesso. 🔒\n\nAgora vamos falar do seu negócio: em qual setor a **${companyName}** atua?`
-            : "Senha definida com sucesso. 🔒\n\nAgora vamos falar do seu negócio: qual é o nome da sua empresa?",
+          content: "Senha definida com sucesso! 🔒\n\nAgora vamos escolher o tipo de agente ideal para o seu negócio.",
         }]);
         setIsLoading(false);
+        setPhase("class-select");
       });
       return;
     }
@@ -387,6 +406,35 @@ export default function Onboarding() {
 
     sendToChat(text);
   };
+
+  const handleAgentClassSelect = (cls: "support" | "sales") => {
+    setSelectedAgentClass(cls);
+    const label = cls === "support" ? "Atendimento / Suporte" : "Vendas / Acompanhamento";
+    setMessages(prev => [...prev, { role: "user", content: `Quero criar um agente de **${label}**.` }]);
+    setPhase("chat");
+
+    // Update the attendant class in the database
+    if (user) {
+      (async () => {
+        const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).maybeSingle();
+        if (tenant) {
+          const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).maybeSingle();
+          if (att) {
+            await supabase.from("attendants").update({ class: cls }).eq("id", att.id);
+          }
+        }
+      })();
+    }
+
+    // Send to AI so it continues the conversation knowing the class
+    setTimeout(() => {
+      const classContext = cls === "support"
+        ? "Escolhi um agente de Atendimento/Suporte. Habilidades: FAQ, resolução de problemas, escalonamento, feedback."
+        : "Escolhi um agente de Vendas/Acompanhamento. Habilidades: qualificação de leads, follow-up, propostas, pós-venda.";
+      sendToChat(classContext);
+    }, 300);
+  };
+
   const handleAudioTranscribed = (text: string) => {
     sendToChat(`🎤 ${text}`);
   };
@@ -800,7 +848,20 @@ export default function Onboarding() {
     : phase === "post-scrape-chat" ? 60
     : phase === "scraping" ? 50
     : phase === "social-links" ? 35
+    : phase === "class-select" ? 15
     : `${Math.min(30, userMsgCount * 8)}`;
+
+  // ========== CLASS SELECT PHASE ==========
+  if (phase === "class-select") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
+        <OnboardingHeader title="Tipo de Agente" subtitle="Escolha o perfil ideal para o seu negócio" progress={15} />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <AgentClassSelector onSelect={handleAgentClassSelect} />
+        </div>
+      </div>
+    );
+  }
 
   // ========== SCRAPING PHASE ==========
   if (phase === "scraping") {
