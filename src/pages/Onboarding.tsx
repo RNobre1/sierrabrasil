@@ -389,6 +389,35 @@ export default function Onboarding() {
 
     sendToChat(text);
   };
+
+  const handleAgentClassSelect = (cls: "support" | "sales") => {
+    setSelectedAgentClass(cls);
+    const label = cls === "support" ? "Atendimento / Suporte" : "Vendas / Acompanhamento";
+    setMessages(prev => [...prev, { role: "user", content: `Quero criar um agente de **${label}**.` }]);
+    setPhase("chat");
+
+    // Update the attendant class in the database
+    if (user) {
+      (async () => {
+        const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).maybeSingle();
+        if (tenant) {
+          const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).maybeSingle();
+          if (att) {
+            await supabase.from("attendants").update({ class: cls }).eq("id", att.id);
+          }
+        }
+      })();
+    }
+
+    // Send to AI so it continues the conversation knowing the class
+    setTimeout(() => {
+      const classContext = cls === "support"
+        ? "Escolhi um agente de Atendimento/Suporte. Habilidades: FAQ, resolução de problemas, escalonamento, feedback."
+        : "Escolhi um agente de Vendas/Acompanhamento. Habilidades: qualificação de leads, follow-up, propostas, pós-venda.";
+      sendToChat(classContext);
+    }, 300);
+  };
+
   const handleAudioTranscribed = (text: string) => {
     sendToChat(`🎤 ${text}`);
   };
