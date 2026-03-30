@@ -362,11 +362,16 @@ export default function BusinessOverview({
   const steps = buildSteps(sourcePreviews || []);
   const [currentStep, setCurrentStep] = useState(0);
   const total = steps.length;
+  const sourceCount = sourcePreviews?.length || 0;
 
   // Sync localData when parent data changes (e.g. scraping completes)
   useEffect(() => {
     setLocalData(prev => ({ ...prev, ...data }));
   }, [data]);
+
+  useEffect(() => {
+    setCurrentStep((prev) => Math.min(prev, Math.max(steps.length - 1, 0)));
+  }, [steps.length]);
 
   const handleDataChange = (d: OverviewData) => {
     setLocalData(d);
@@ -374,11 +379,12 @@ export default function BusinessOverview({
   };
 
   const next = () => {
-    if (currentStep < total - 1) {
-      setCurrentStep(s => s + 1);
-    } else {
+    if (step.type === "details") {
       onConfirm(localData);
+      return;
     }
+
+    setCurrentStep((s) => Math.min(s + 1, total - 1));
   };
 
   const prev = () => {
@@ -387,6 +393,12 @@ export default function BusinessOverview({
   };
 
   const step = steps[currentStep];
+  const isDetailsStep = step.type === "details";
+  const stepLabel = isDetailsStep
+    ? "Revisão final"
+    : sourceCount > 0
+    ? `Fonte ${currentStep + 1} de ${sourceCount}`
+    : "Revisão";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md">
@@ -419,8 +431,8 @@ export default function BusinessOverview({
               />
             ))}
           </div>
-          <span className="text-[10px] text-muted-foreground font-mono">
-            {currentStep + 1}/{total}
+          <span className="text-[10px] text-muted-foreground font-medium text-right max-w-[108px] leading-tight">
+            {stepLabel}
           </span>
         </div>
 
@@ -439,7 +451,7 @@ export default function BusinessOverview({
               />
             ) : (
               <DetailsStep
-                key="details"
+                key={`details-${sourceCount}`}
                 data={localData}
                 onDataChange={handleDataChange}
                 onConfirm={next}
