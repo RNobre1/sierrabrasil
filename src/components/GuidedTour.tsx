@@ -40,7 +40,7 @@ export default function GuidedTour() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const done = localStorage.getItem(TOUR_KEY);
+    const done = sessionStorage.getItem(TOUR_KEY) || localStorage.getItem(TOUR_KEY);
     if (!done) {
       // Small delay so dashboard content loads first
       const t = setTimeout(() => setVisible(true), 1500);
