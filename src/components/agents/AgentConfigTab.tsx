@@ -11,6 +11,20 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const CHANNELS = ["whatsapp", "instagram", "web"] as const;
 
+const CONVERSATION_MODES = [
+  { id: "precise", label: "Preciso", desc: "Respostas objetivas e técnicas", icon: Brain, model: "google/gemini-2.5-pro", temperature: 0.3 },
+  { id: "friendly", label: "Amigável", desc: "Tom leve e simpático", icon: Smile, model: "google/gemini-3-flash-preview", temperature: 0.7 },
+  { id: "formal", label: "Formal", desc: "Linguagem corporativa", icon: Briefcase, model: "openai/gpt-5-mini", temperature: 0.4 },
+] as const;
+
+function detectMode(model: string | null, temp: number | null): string {
+  const m = model ?? "";
+  const t = temp ?? 0.7;
+  if (m.includes("2.5-pro") && t <= 0.4) return "precise";
+  if (m.includes("gpt-5") && t <= 0.5) return "formal";
+  return "friendly";
+}
+
 interface AgentConfigTabProps {
   agent: any;
   onUpdate: (values: any) => void;
@@ -20,17 +34,19 @@ export default function AgentConfigTab({ agent, onUpdate }: AgentConfigTabProps)
   const [name, setName] = useState(agent.name);
   const [persona, setPersona] = useState(agent.persona ?? "");
   const [instructions, setInstructions] = useState(agent.instructions ?? "");
-  const [model, setModel] = useState(agent.model ?? "google/gemini-3-flash-preview");
-  const [temperature, setTemperature] = useState(agent.temperature ?? 0.7);
+  const [mode, setMode] = useState(() => detectMode(agent.model, agent.temperature));
   const [channels, setChannels] = useState<string[]>(agent.channels ?? []);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const selectedMode = CONVERSATION_MODES.find(m => m.id === mode) ?? CONVERSATION_MODES[1];
+
   const isDirty = useMemo(() => {
+    const origMode = detectMode(agent.model, agent.temperature);
     return name !== agent.name || persona !== (agent.persona ?? "") || instructions !== (agent.instructions ?? "") ||
-      model !== (agent.model ?? "google/gemini-3-flash-preview") || temperature !== (agent.temperature ?? 0.7) ||
+      mode !== origMode ||
       JSON.stringify([...channels].sort()) !== JSON.stringify([...(agent.channels ?? [])].sort());
-  }, [name, persona, instructions, model, temperature, channels, agent]);
+  }, [name, persona, instructions, mode, channels, agent]);
 
   const handleSave = async () => {
     setSaving(true);
