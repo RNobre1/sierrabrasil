@@ -129,8 +129,16 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
     setConnectingId(inst.id);
     try {
       const result = await callEvolutionApi("connect", { instanceName: inst.instance_name });
+      console.log("Connect result:", result);
+      if (result.alreadyConnected) {
+        toast.success("Instância já está conectada!");
+        fetchInstances();
+        return;
+      }
       if (result.qrCode) {
         setQrData({ instanceName: inst.instance_name, qr: result.qrCode });
+      } else {
+        toast.warning("QR Code não retornado. Verifique os logs da Evolution API.");
       }
       // Auto-configure webhook
       try {
