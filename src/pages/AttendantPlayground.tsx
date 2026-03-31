@@ -161,13 +161,15 @@ export default function AttendantPlayground() {
                       <Bot className="h-4 w-4 text-primary" />
                     </div>
                   )}
-                  <div className={`rounded-2xl px-4 py-2.5 ${
-                    isUser
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-muted text-foreground rounded-bl-md"
-                  }`}>
-                    <p className="text-sm whitespace-pre-line">{msg.content}</p>
-                  </div>
+                  {(isUser ? [msg.content] : msg.content.split("[BREAK]").map(s => s.trim()).filter(Boolean)).map((part, pi) => (
+                    <div key={pi} className={`rounded-2xl px-4 py-2.5 ${pi > 0 ? "mt-1.5" : ""} ${
+                      isUser
+                        ? "bg-primary text-primary-foreground rounded-br-md"
+                        : "bg-muted text-foreground rounded-bl-md"
+                    }`}>
+                      <p className="text-sm whitespace-pre-line">{part}</p>
+                    </div>
+                  ))}
                   {isUser && (
                     <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
                       <User className="h-4 w-4 text-muted-foreground" />

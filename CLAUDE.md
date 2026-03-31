@@ -347,7 +347,8 @@ agent_memories (
 
 ## Backlog (Pos-Sprint de 4 Dias)
 
-- [ ] **Publicar Google OAuth** — Sair de "Testing" para producao. Requer: verificacao de dominio, pagina de privacidade, branding review pelo Google (pode levar semanas)
+- [ ] **Previews de redes sociais no onboarding** — Mostrar prints/screenshots das home pages das redes sociais (ja funciona parcial, melhorar)
+- [ ] **Envio de imagens pelo agente** — Nova funcionalidade pra agentes enviarem fotos/catalogo via WhatsApp
 - [ ] **Audit de seguranca da codebase Lovable** — .env exposto, secrets hardcoded, validacao de inputs, codigo morto
 - [ ] Manter dados mockados/seed por enquanto (uteis para demo)
 - [ ] Schema multi-usuario por tenant (`tenant_members`)

@@ -93,6 +93,7 @@ export default function ClientLayout() {
                     <NavLink
                       key={item.to}
                       to={item.to}
+                      data-tour={item.to === "/conversations" ? "conversations-link" : item.to === "/channels" ? "channels-link" : undefined}
                       className="group relative flex items-center gap-2.5 rounded-lg px-3 py-[9px] text-[13.5px] font-medium text-white/50 transition-all duration-200 hover:bg-white/[0.04] hover:text-white/80"
                       activeClassName="bg-cosmos-indigo/[0.15] text-cosmos-indigo"
                     >

@@ -321,14 +321,14 @@ export default function Dashboard() {
         </div>
 
         {/* Agents compact grid */}
-        <div className="cosmos-card p-0 lg:col-span-3">
+        <div className="cosmos-card p-0 lg:col-span-3" data-tour="agent-card">
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <div className="flex items-center gap-2">
               <Bot className="h-3 w-3 text-indigo-400" />
               <span className="text-[11px] font-display font-semibold text-white/60">Agentes</span>
               <span className="text-[9px] font-mono text-emerald-400 ml-1">{onlineAg} online</span>
             </div>
-            <button onClick={() => nav("/agents")} className="text-[8px] font-medium text-white/15 hover:text-white/30 transition-colors flex items-center gap-0.5">
+            <button data-tour="test-button" onClick={() => nav("/agents")} className="text-[8px] font-medium text-white/15 hover:text-white/30 transition-colors flex items-center gap-0.5">
               Ver todos <ArrowRight className="h-2.5 w-2.5" />
             </button>
           </div>

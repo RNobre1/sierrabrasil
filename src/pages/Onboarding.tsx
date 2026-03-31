@@ -212,57 +212,61 @@ export default function Onboarding() {
     }, 500);
   }, []);
 
-  // Streaming helper
+  // Streaming helper with timeout protection
   const streamChat = async (allMessages: Msg[], onChunk: (text: string) => void): Promise<string> => {
-    const resp = await fetch(CHAT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      },
-      body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || userName, companyName }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
-    if (!resp.ok) {
-      const errData = await resp.json().catch(() => ({}));
-      throw new Error(errData.error || `Erro ${resp.status}`);
-    }
-    if (!resp.body) throw new Error("No body");
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || userName, companyName }),
+        signal: controller.signal,
+      });
 
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let full = "";
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Erro ${resp.status}`);
+      }
+      if (!resp.body) throw new Error("No body");
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let full = "";
 
-      let idx: number;
-      while ((idx = buffer.indexOf("\n")) !== -1) {
-        let line = buffer.slice(0, idx);
-        buffer = buffer.slice(idx + 1);
-        if (line.endsWith("\r")) line = line.slice(0, -1);
-        if (line.startsWith(":") || line.trim() === "") continue;
-        if (!line.startsWith("data: ")) continue;
-        const jsonStr = line.slice(6).trim();
-        if (jsonStr === "[DONE]") break;
-        try {
-          const parsed = JSON.parse(jsonStr);
-          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-          if (content) {
-            full += content;
-            onChunk(full);
-          }
-        } catch {
-          buffer = line + "\n" + buffer;
-          break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const rawLine of lines) {
+          const line = rawLine.replace(/\r$/, "");
+          if (!line || line.startsWith(":") || !line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              full += content;
+              onChunk(full);
+            }
+          } catch {}
         }
       }
-    }
 
-    return full;
+      return full;
+    } finally {
+      clearTimeout(timeout);
+    }
   };
 
   const cleanDisplay = (text: string) =>
@@ -464,10 +468,8 @@ export default function Onboarding() {
     if (!template) return;
 
     setSelectedAgentClass(template.class);
-    setMessages(prev => [...prev, { role: "user", content: `Quero criar um agente de ${template.name}.` }]);
     setPhase("chat");
 
-    // Update the attendant with template_id and class
     if (user) {
       (async () => {
         const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).maybeSingle();
@@ -480,10 +482,32 @@ export default function Onboarding() {
       })();
     }
 
-    // Send to AI so it continues the conversation knowing the template
-    setTimeout(() => {
-      const classContext = `Escolhi um agente de ${template.name}. Descricao: ${template.description || template.name}`;
-      sendToChat(classContext);
+    // Show short message, send full context to AI hidden
+    const visibleMsg: Msg = { role: "user", content: `Quero criar um agente de ${template.name}.` };
+    const hiddenContext: Msg = { role: "user", content: `[SISTEMA: Template escolhido: ${template.name} (${template.class}). ${template.description || ""}. Nao mencione isso, siga a conversa.]` };
+    const currentMessages = [...messages, visibleMsg];
+    setMessages(currentMessages);
+    setIsLoading(true);
+
+    setTimeout(async () => {
+      try {
+        const fullText = await streamChat([...currentMessages, hiddenContext], (chunk) => {
+          const display = cleanDisplay(chunk);
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant") {
+              return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: display } : m));
+            }
+            return [...prev, { role: "assistant", content: display }];
+          });
+        });
+        if (fullText.includes("```social_links```")) setPhase("social-links");
+      } catch (e) {
+        console.error("Template chat error:", e);
+        toast({ title: "Erro", description: "Falha ao conectar com a IA. Tente de novo.", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
     }, 300);
   };
 
@@ -880,8 +904,8 @@ export default function Onboarding() {
       }
 
       clearPersisted();
-      toast({ title: "Agente configurado! 🎉", description: "Seu agente está online." });
-      navigate("/dashboard");
+      toast({ title: "Agente configurado!", description: "Agora conecte seu WhatsApp pra ele comecar a atender!" });
+      navigate("/channels");
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
     }
