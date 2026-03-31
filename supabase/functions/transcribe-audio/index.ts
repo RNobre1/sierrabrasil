@@ -56,11 +56,12 @@ serve(async (req) => {
 
     // Poll for completion
     let transcript: any = null;
-    for (let i = 0; i < 60; i++) {
-      await new Promise(r => setTimeout(r, 2000));
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => setTimeout(r, 3000));
       const pollResp = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
         headers: { authorization: ASSEMBLYAI_API_KEY },
       });
+      if (!pollResp.ok) continue;
       transcript = await pollResp.json();
       if (transcript.status === "completed") break;
       if (transcript.status === "error") throw new Error(transcript.error || "Transcription failed");

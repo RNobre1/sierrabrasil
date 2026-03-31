@@ -10,6 +10,10 @@ import AgentSkillsTab from "@/components/agents/AgentSkillsTab";
 import AgentKnowledgeTab from "@/components/agents/AgentKnowledgeTab";
 import AgentMemoryTab from "@/components/agents/AgentMemoryTab";
 import AgentConfigTab from "@/components/agents/AgentConfigTab";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale/pt-BR";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const classLabels: Record<string, { label: string; color: string }> = {
   support: { label: "Atendimento / Suporte", color: "text-blue-400" },
@@ -26,6 +30,8 @@ export default function AgentDetail() {
   const [tenantId, setTenantId] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("config");
+  const [knowledgeBase, setKnowledgeBase] = useState<any[]>([]);
+  const [kbLoading, setKbLoading] = useState(true);
 
   useEffect(() => {
     if (!user || !agentId) return;
@@ -36,6 +42,17 @@ export default function AgentDetail() {
       setTenantId(tenant.id);
       const { data } = await supabase.from("attendants").select("*").eq("id", agentId).single();
       if (data) setAgent(data);
+
+      const { data: kbData } = await supabase
+        .from("knowledge_base")
+        .select("id, source_type, source_name, source_url, content, created_at")
+        .eq("attendant_id", agentId);
+        
+      if (kbData) {
+        setKnowledgeBase(kbData);
+      }
+      setKbLoading(false);
+      
       setLoading(false);
     };
     load();
@@ -67,6 +84,21 @@ export default function AgentDetail() {
 
   const cls = classLabels[agent.class || "support"] || classLabels.support;
   const isSupport = (agent.class || "support") === "support";
+
+  const groupedSources = Object.values(
+    knowledgeBase.reduce((acc, curr) => {
+      const name = curr.source_name || "Desconhecido";
+      if (!acc[name]) {
+        acc[name] = { ...curr, source_name: name, chunks: 0 };
+      }
+      acc[name].chunks += 1;
+      // Mantém a data do chunk mais recente
+      if (new Date(curr.created_at) > new Date(acc[name].created_at)) {
+        acc[name].created_at = curr.created_at;
+      }
+      return acc;
+    }, {} as Record<string, any>)
+  ).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (
     <div className="space-y-6">
@@ -110,9 +142,13 @@ export default function AgentDetail() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-muted/50 border border-border/30 h-9 sm:h-10 w-full sm:w-auto flex-nowrap overflow-x-auto">
+      {/* 2-Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] xl:grid-cols-[1fr_400px] gap-6 items-start">
+        {/* Esquerda: Conteúdo existente */}
+        <div className="min-w-0">
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="bg-muted/50 border border-border/30 h-9 sm:h-10 w-full sm:w-auto flex-nowrap overflow-x-auto">
           <TabsTrigger value="config" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
             <Settings className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Configuração</span><span className="xs:hidden">Config</span>
           </TabsTrigger>
@@ -137,9 +173,77 @@ export default function AgentDetail() {
           <AgentKnowledgeTab agentId={agent.id} tenantId={tenantId} plan={tenantPlan} />
         </TabsContent>
         <TabsContent value="memory">
-          <AgentMemoryTab agentId={agent.id} plan={tenantPlan} />
-        </TabsContent>
-      </Tabs>
+            <AgentMemoryTab agentId={agent.id} plan={tenantPlan} />
+          </TabsContent>
+        </Tabs>
+        </div>
+
+        {/* Direita: Painel Base de Conhecimento */}
+        <div className="hidden lg:block">
+          <Card className="border-border/50 shadow-sm bg-card/50 backdrop-blur-sm relative overflow-hidden flex flex-col max-h-[calc(100vh-200px)] h-full">
+            <CardHeader className="border-b border-border/10 pb-4 shrink-0">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  Base de Conhecimento
+                </CardTitle>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-medium text-muted-foreground">{groupedSources.length}</span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 flex-1 overflow-hidden">
+              <ScrollArea className="h-[calc(100vh-270px)] px-4 py-4">
+                {kbLoading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                ) : groupedSources.length === 0 ? (
+                  <div className="text-center py-10 px-4">
+                    <p className="text-sm text-muted-foreground">Nenhuma fonte adicionada ainda</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {groupedSources.map((kb: any) => (
+                      <div key={kb.id || kb.source_name} className="p-3 rounded-lg border border-border/50 bg-background/50 flex flex-col gap-2 relative group hover:border-border/80 transition-colors">
+                        <div className="flex items-start justify-between gap-2">
+                          <Badge 
+                            variant="outline" 
+                            className={`text-[9px] font-medium border-0 px-1.5 py-0 rounded uppercase tracking-wider ${
+                              kb.source_type === 'document' ? 'bg-cosmos-indigo/10 text-cosmos-indigo' :
+                              kb.source_type === 'website' ? 'bg-cosmos-cyan/10 text-cosmos-cyan' :
+                              kb.source_type === 'social' ? 'bg-cosmos-violet/10 text-cosmos-violet' :
+                              kb.source_type === 'manual' ? 'bg-cosmos-emerald/10 text-cosmos-emerald' : 
+                              'bg-muted text-muted-foreground'
+                            }`}
+                          >
+                            {kb.source_type}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                            {formatDistanceToNow(new Date(kb.created_at), { addSuffix: true, locale: ptBR })}
+                          </span>
+                        </div>
+                        <div>
+                          {kb.source_url ? (
+                            <a href={kb.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary hover:underline line-clamp-2">
+                              {kb.source_name}
+                            </a>
+                          ) : (
+                            <p className="text-xs font-medium text-foreground line-clamp-2">{kb.source_name}</p>
+                          )}
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            {kb.chunks} chunk{kb.chunks !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

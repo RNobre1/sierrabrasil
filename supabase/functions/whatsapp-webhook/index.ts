@@ -7,6 +7,59 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// === CAMADA 1: Identidade e Seguranca (fixo) ===
+const getLayer1 = (agentName: string) => `## QUEM VOCE E
+Voce e ${agentName}, agente virtual atendendo pelo WhatsApp.
+Voce e reativo: responde mensagens, nunca inicia conversa.
+
+## REGRAS INVIOLAVEIS
+1. NUNCA invente informacoes. Use APENAS o que esta nas instrucoes e na base de conhecimento.
+2. NUNCA diga que e IA, robo ou bot. Voce e ${agentName}.
+3. Se o cliente pedir humano, diga: "Vou te transferir pra um atendente. Aguarda um momento."
+4. Se nao souber a resposta, diga: "Vou verificar com a equipe e ja te retorno."
+5. Precos e servicos: use EXATAMENTE os valores da base de conhecimento.
+
+## FORMATO WHATSAPP
+- SEM formatacao Markdown (sem **, sem ##, sem listas numeradas).
+- Mensagens CURTAS: 1-3 frases. Se precisar de mais, use o delimitador [BREAK] para separar.
+- Use emojis com moderacao (1-2 por mensagem, nem sempre).
+
+## HUMANIZACAO PT-BR
+- Contracoes naturais: "pra", "ta", "ne", "to".
+- Interjeicoes: "Opa!", "Claro!", "Entendi!", "Show!".
+- NUNCA: "Compreendo sua solicitacao", "Gostaria de informar", "Desculpe pelo inconveniente".
+- Se frustrado, seja empatico: "Poxa, sinto muito por isso".`;
+
+// Helper: send typing indicator
+async function sendComposing(baseUrl: string, apiKey: string, instanceName: string, phone: string) {
+  try {
+    await fetch(`${baseUrl}/chat/updatePresence/${instanceName}`, {
+      method: "POST",
+      headers: { apikey: apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ number: phone, presence: "composing" }),
+    });
+  } catch (e) {
+    console.warn("composing error (non-fatal):", e);
+  }
+}
+
+// Helper: send text message
+async function sendText(baseUrl: string, apiKey: string, instanceName: string, phone: string, text: string) {
+  const resp = await fetch(`${baseUrl}/message/sendText/${instanceName}`, {
+    method: "POST",
+    headers: { apikey: apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ number: phone, text }),
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error("Evolution send error:", resp.status, err);
+  }
+  return resp.ok;
+}
+
+// Helper: delay
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -22,7 +75,6 @@ serve(async (req) => {
     const body = await req.json();
     console.log("Webhook received:", JSON.stringify(body).slice(0, 500));
 
-    // Evolution API sends different event types
     const event = body.event;
     const instanceName = body.instance;
     const data = body.data;
@@ -33,11 +85,11 @@ serve(async (req) => {
       });
     }
 
-    // Handle connection status updates
+    // === CONNECTION UPDATE ===
     if (event === "connection.update") {
       const state = data.state;
       const newStatus = state === "open" ? "connected" : state === "close" ? "disconnected" : "connecting";
-      
+
       await supabase
         .from("whatsapp_instances")
         .update({
@@ -46,27 +98,25 @@ serve(async (req) => {
         })
         .eq("instance_name", instanceName);
 
-      console.log(`Connection update: ${instanceName} → ${newStatus}`);
+      console.log(`Connection update: ${instanceName} -> ${newStatus}`);
       return new Response(JSON.stringify({ ok: true, event: "connection.update", status: newStatus }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Handle incoming messages
+    // === INCOMING MESSAGE ===
     if (event === "messages.upsert") {
       const message = data.message || data;
       const key = message.key || {};
-      const isFromMe = key.fromMe === true;
-      
-      // Skip messages sent by us
-      if (isFromMe) {
+
+      // Skip own messages, groups, status broadcasts
+      if (key.fromMe === true) {
         return new Response(JSON.stringify({ ok: true, skipped: "fromMe" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const remoteJid = key.remoteJid || "";
-      // Skip group messages and status broadcasts
       if (remoteJid.includes("@g.us") || remoteJid === "status@broadcast") {
         return new Response(JSON.stringify({ ok: true, skipped: "group or status" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -74,8 +124,8 @@ serve(async (req) => {
       }
 
       const contactPhone = remoteJid.replace("@s.whatsapp.net", "");
-      const messageContent = message.message?.conversation 
-        || message.message?.extendedTextMessage?.text 
+      const messageContent = message.message?.conversation
+        || message.message?.extendedTextMessage?.text
         || "";
 
       if (!messageContent) {
@@ -85,10 +135,9 @@ serve(async (req) => {
       }
 
       const contactName = message.pushName || contactPhone;
+      console.log(`Message from ${contactName} (${contactPhone}): ${messageContent.slice(0, 100)}`);
 
-      console.log(`Message from ${contactName} (${contactPhone}) on ${instanceName}: ${messageContent.slice(0, 100)}`);
-
-      // 1. Find the WhatsApp instance and its tenant
+      // 1. Find instance and tenant
       const { data: instance } = await supabase
         .from("whatsapp_instances")
         .select("id, tenant_id")
@@ -98,22 +147,22 @@ serve(async (req) => {
       if (!instance) {
         console.error(`Instance not found: ${instanceName}`);
         return new Response(JSON.stringify({ ok: false, error: "instance not found" }), {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // 2. Find the tenant's active attendant
+      // 2. Find active attendant (with template JOIN)
       const { data: attendant } = await supabase
         .from("attendants")
-        .select("id, name, persona, instructions, model, temperature, active_skills")
+        .select(`id, name, persona, instructions, model, temperature, active_skills,
+          agent_templates ( prompt_template )`)
         .eq("tenant_id", instance.tenant_id)
         .eq("status", "online")
         .limit(1)
         .single();
 
       if (!attendant) {
-        console.log("No online attendant found for tenant:", instance.tenant_id);
+        console.log("No online attendant for tenant:", instance.tenant_id);
         return new Response(JSON.stringify({ ok: true, skipped: "no online attendant" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -133,15 +182,11 @@ serve(async (req) => {
 
       if (existingConv) {
         conversationId = existingConv.id;
-        // Check for human takeover
         if ((existingConv as any).human_takeover === true) {
-          // Don't auto-respond, just save the message
           await supabase.from("messages").insert({
-            conversation_id: conversationId,
-            role: "contact",
-            content: messageContent,
+            conversation_id: conversationId, role: "contact", content: messageContent,
           });
-          console.log("Human takeover active, skipping AI response");
+          console.log("Human takeover active, skipping AI");
           return new Response(JSON.stringify({ ok: true, skipped: "human_takeover" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
@@ -150,12 +195,9 @@ serve(async (req) => {
         const { data: newConv, error: convErr } = await supabase
           .from("conversations")
           .insert({
-            tenant_id: instance.tenant_id,
-            attendant_id: attendant.id,
-            contact_name: contactName,
-            contact_phone: contactPhone,
-            channel: "whatsapp",
-            status: "active",
+            tenant_id: instance.tenant_id, attendant_id: attendant.id,
+            contact_name: contactName, contact_phone: contactPhone,
+            channel: "whatsapp", status: "active",
           })
           .select("id")
           .single();
@@ -163,8 +205,7 @@ serve(async (req) => {
         if (convErr || !newConv) {
           console.error("Failed to create conversation:", convErr);
           return new Response(JSON.stringify({ ok: false, error: "failed to create conversation" }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
         conversationId = newConv.id;
@@ -172,12 +213,16 @@ serve(async (req) => {
 
       // 4. Save incoming message
       await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        role: "contact",
-        content: messageContent,
+        conversation_id: conversationId, role: "contact", content: messageContent,
       });
 
-      // 5. Get conversation history (last 20 messages)
+      // 5. Send typing indicator
+      const baseUrl = EVOLUTION_API_URL?.replace(/\/$/, "") || "";
+      if (baseUrl && EVOLUTION_API_KEY) {
+        await sendComposing(baseUrl, EVOLUTION_API_KEY, instanceName, contactPhone);
+      }
+
+      // 6. Get conversation history (last 20)
       const { data: history } = await supabase
         .from("messages")
         .select("role, content")
@@ -185,7 +230,40 @@ serve(async (req) => {
         .order("created_at", { ascending: true })
         .limit(20);
 
-      // 6. Get knowledge base
+      // 7. Build 4-layer system prompt
+      // --- Layer 1: Identity ---
+      const layer1 = getLayer1(attendant.name);
+
+      // --- Layer 2: Template ---
+      let layer2 = "";
+      const templateData = attendant.agent_templates;
+      const promptTemplate = Array.isArray(templateData)
+        ? templateData[0]?.prompt_template
+        : (templateData as any)?.prompt_template;
+
+      if (promptTemplate) {
+        layer2 = `\n\n${promptTemplate}`;
+      }
+
+      // --- Layer 3: Business ---
+      let layer3 = "";
+      if (attendant.persona || attendant.instructions) {
+        layer3 = "\n\n## INSTRUCOES DO NEGOCIO";
+        if (attendant.persona) layer3 += `\nPersonalidade: ${attendant.persona}`;
+        if (attendant.instructions) layer3 += `\n${attendant.instructions}`;
+      }
+
+      // --- Layer 4: Dynamic context ---
+      const tzHour = (new Date().getUTCHours() - 3 + 24) % 24;
+      let greeting = "Bom dia";
+      if (tzHour >= 12 && tzHour < 18) greeting = "Boa tarde";
+      else if (tzHour >= 18 || tzHour < 6) greeting = "Boa noite";
+
+      let layer4 = `\n\n## CONTEXTO
+Saudacao: use "${greeting}" quando apropriado.
+Nome do cliente: ${contactName}.`;
+
+      // Knowledge base
       const { data: knowledge } = await supabase
         .from("knowledge_base")
         .select("content, source_type, source_name")
@@ -193,65 +271,42 @@ serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(30);
 
-      // 7. Build system prompt with skills
-      let knowledgeContext = "";
       if (knowledge && knowledge.length > 0) {
         const kbSections = knowledge.map((k) => {
           const tag = k.source_type === "social" ? "REDE SOCIAL" : k.source_type === "website" ? "SITE" : "DOCUMENTO";
           return `[${tag}: ${k.source_name}]\n${k.content}`;
         });
-        knowledgeContext = `\n\n## BASE DE CONHECIMENTO\n${kbSections.join("\n\n---\n\n")}`;
+        layer4 += `\n\n## BASE DE CONHECIMENTO\nUse SOMENTE estas informacoes para responder. Se nao estiver aqui, diga que vai verificar.\n\n${kbSections.join("\n\n---\n\n")}`;
       }
 
-      // Build skills instructions
+      // Skills
       const activeSkills: string[] = (attendant as any).active_skills ?? [];
-      let skillsBlock = "";
-      const skillInstructions: Record<string, string> = {
-        "faq": "## SKILL: FAQ INTELIGENTE\nQuando identificar perguntas recorrentes ou frequentes, responda de forma direta e instantânea usando sua base de conhecimento, sem rodeios.",
-        "greeting": "## SKILL: SAUDAÇÃO PERSONALIZADA\nAo iniciar uma conversa, envie uma saudação personalizada usando o nome do cliente. Adapte o tom ao horário (bom dia/boa tarde/boa noite).",
-        "escalation": "## SKILL: ESCALONAMENTO HUMANO\nSe o cliente pedir para falar com um humano, demonstrar frustração extrema, ou o assunto estiver fora do seu escopo, diga: 'Vou transferir você para um atendente humano. Aguarde um momento.' e encerre sua participação.",
-        "lead-capture": "## SKILL: CAPTURA DE LEADS\nDurante a conversa, identifique oportunidades naturais para coletar nome completo, email e telefone do cliente. Faça isso de forma sutil e contextualizada, nunca como um formulário.",
-        "auto-reply": "## SKILL: RESPOSTA AUTOMÁTICA\nResponda todas as perguntas de forma contextualizada usando sua base de conhecimento e instruções.",
-        "sentiment": "## SKILL: ANÁLISE DE SENTIMENTO\nAdapte o tom da resposta baseado no sentimento detectado na mensagem. Se frustrado, seja mais empático. Se positivo, seja mais entusiasmado.",
-        "follow-up": "## SKILL: FOLLOW-UP\nSe o cliente não respondeu por muito tempo e volta, faça referência à conversa anterior e pergunte se pode ajudar com algo mais.",
+      const skillMap: Record<string, string> = {
+        "greeting": `Use "${greeting}" personalizado com o nome do cliente na primeira interacao.`,
+        "escalation": "Se o cliente pedir humano ou demonstrar frustracao extrema, diga que vai transferir e encerre.",
+        "lead-capture": "Identifique oportunidades naturais pra coletar nome, email e telefone. Faca de forma sutil.",
+        "sentiment": "Adapte o tom conforme o sentimento. Frustrado = mais empatico. Positivo = mais animado.",
+        "follow-up": "Se o cliente volta apos um tempo, faca referencia a conversa anterior.",
       };
-      for (const sk of activeSkills) {
-        if (skillInstructions[sk]) {
-          skillsBlock += "\n\n" + skillInstructions[sk];
-        }
+      const skillLines = activeSkills.map(s => skillMap[s]).filter(Boolean);
+      if (skillLines.length > 0) {
+        layer4 += `\n\n## HABILIDADES ATIVAS\n${skillLines.map(s => `- ${s}`).join("\n")}`;
       }
 
-      const systemPrompt = `## IDENTIDADE
-Você é ${attendant.name}, agente virtual atendendo pelo WhatsApp.
-${attendant.persona ? `Personalidade: ${attendant.persona}` : ""}
-
-## REGRAS INVIOLÁVEIS
-1. NUNCA invente informações. Use APENAS o que está nas instruções e na base de conhecimento.
-2. NUNCA diga que é IA, robô ou bot. Você é ${attendant.name}.
-3. Respostas curtas e diretas. Máximo 2 parágrafos.
-4. Responda sempre em português brasileiro.
-5. Se o cliente pedir humano, diga: "Vou transferir você para um atendente. Aguarde um momento."
-6. Se não souber a resposta, diga que vai verificar com a equipe.
-7. Quando mencionar preços ou serviços, use EXATAMENTE os valores da base de conhecimento.
-8. NÃO use markdown (negrito, itálico, listas). WhatsApp não renderiza markdown.
-9. Use emojis com moderação para parecer natural.
-
-${attendant.instructions ? `## INSTRUÇÕES DO NEGÓCIO\n${attendant.instructions}` : ""}${skillsBlock}${knowledgeContext}`;
-
-      // Convert message history to OpenAI format
-      const aiMessages = (history || []).map((m) => ({
-        role: m.role === "contact" ? "user" : "assistant",
-        content: m.content,
-      }));
+      const systemPrompt = `${layer1}${layer2}${layer3}${layer4}`;
 
       // 8. Call AI
       if (!OPENROUTER_API_KEY) {
         console.error("OPENROUTER_API_KEY not configured");
         return new Response(JSON.stringify({ ok: false, error: "AI not configured" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      const aiMessages = (history || []).map((m) => ({
+        role: m.role === "contact" ? "user" : "assistant",
+        content: m.content,
+      }));
 
       const aiResp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -260,11 +315,8 @@ ${attendant.instructions ? `## INSTRUÇÕES DO NEGÓCIO\n${attendant.instruction
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: attendant.model || "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...aiMessages,
-          ],
+          model: attendant.model || "google/gemini-2.5-flash",
+          messages: [{ role: "system", content: systemPrompt }, ...aiMessages],
           temperature: attendant.temperature || 0.7,
           max_tokens: 500,
         }),
@@ -274,8 +326,7 @@ ${attendant.instructions ? `## INSTRUÇÕES DO NEGÓCIO\n${attendant.instruction
         const errText = await aiResp.text();
         console.error("AI error:", aiResp.status, errText);
         return new Response(JSON.stringify({ ok: false, error: "AI error" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -285,55 +336,42 @@ ${attendant.instructions ? `## INSTRUÇÕES DO NEGÓCIO\n${attendant.instruction
       if (!aiReply) {
         console.error("Empty AI response");
         return new Response(JSON.stringify({ ok: false, error: "empty AI response" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // 9. Save AI response as message
+      // 9. Save full AI response
       await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        role: "attendant",
-        content: aiReply,
+        conversation_id: conversationId, role: "attendant", content: aiReply,
       });
 
-      // 10. Send reply via Evolution API
-      if (EVOLUTION_API_URL && EVOLUTION_API_KEY) {
-        const baseUrl = EVOLUTION_API_URL.replace(/\/$/, "");
-        const sendResp = await fetch(`${baseUrl}/message/sendText/${instanceName}`, {
-          method: "POST",
-          headers: {
-            apikey: EVOLUTION_API_KEY,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            number: contactPhone,
-            text: aiReply,
-          }),
-        });
+      // 10. Send reply with message splitting on [BREAK]
+      if (baseUrl && EVOLUTION_API_KEY) {
+        const parts = aiReply.split("[BREAK]").map((p: string) => p.trim()).filter((p: string) => p.length > 0);
 
-        if (!sendResp.ok) {
-          const sendErr = await sendResp.text();
-          console.error("Evolution send error:", sendResp.status, sendErr);
-        } else {
-          console.log(`Reply sent to ${contactPhone}: ${aiReply.slice(0, 100)}`);
+        for (let i = 0; i < parts.length; i++) {
+          if (i > 0) {
+            await sendComposing(baseUrl, EVOLUTION_API_KEY, instanceName, contactPhone);
+            await sleep(1500);
+          }
+          await sendText(baseUrl, EVOLUTION_API_KEY, instanceName, contactPhone, parts[i]);
+          console.log(`Reply ${i + 1}/${parts.length} sent to ${contactPhone}: ${parts[i].slice(0, 80)}`);
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, replied: true }), {
+      return new Response(JSON.stringify({ ok: true, replied: true, parts: aiReply.split("[BREAK]").length }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Other events - just acknowledge
+    // Other events
     return new Response(JSON.stringify({ ok: true, event, skipped: "unhandled event" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("Webhook error:", e);
     return new Response(JSON.stringify({ ok: false, error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

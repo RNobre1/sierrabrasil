@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, Clock, Hash, Bot, User, ToggleLeft, ToggleRight } from "lucide-react";
+import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   id: string;
@@ -34,6 +35,7 @@ const statusMap: Record<string, { label: string; variant: "default" | "secondary
 export default function ConversationDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,10 +66,17 @@ export default function ConversationDetail() {
     if (!conversation || !id) return;
     setToggling(true);
     const newVal = !conversation.human_takeover;
-    const { error } = await supabase.from("conversations").update({
+    
+    // Assumir ou devolver
+    const updateData = {
       human_takeover: newVal,
-    } as any).eq("id", id);
+      takeover_by: newVal ? user?.id : null,
+      takeover_at: newVal ? new Date().toISOString() : null,
+    };
+
+    const { error } = await supabase.from("conversations").update(updateData as any).eq("id", id);
     setToggling(false);
+    
     if (!error) {
       setConversation({ ...conversation, human_takeover: newVal });
       toast.success(newVal ? "Você assumiu a conversa" : "Conversa devolvida para a IA");
@@ -115,9 +124,9 @@ export default function ConversationDetail() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-display font-semibold">{conversation.contact_name}</h1>
             <Badge variant={st.variant}>{st.label}</Badge>
-            <Badge variant="outline" className={`gap-1 text-[10px] ${isHuman ? "border-amber-500/30 text-amber-400 bg-amber-500/10" : "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"}`}>
-              {isHuman ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
-              {isHuman ? "Humano" : "IA"}
+            <Badge variant="outline" className={`gap-1 pr-3 text-[11px] font-medium border ${isHuman ? "border-amber-500/30 text-amber-500 bg-amber-500/10 dark:text-amber-400 dark:bg-amber-500/10" : "border-emerald-500/30 text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 dark:bg-emerald-500/10"}`}>
+              {isHuman ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+              {isHuman ? "Atendimento Humano" : "IA Ativa"}
             </Badge>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
@@ -129,13 +138,15 @@ export default function ConversationDetail() {
           </div>
         </div>
         <Button
-          variant={isHuman ? "default" : "outline"}
+          variant={isHuman ? "outline" : "default"}
           size="sm"
           onClick={toggleHandover}
           disabled={toggling}
-          className="gap-1.5 text-xs"
+          className={`gap-1.5 text-xs transition-colors ${
+            !isHuman ? "bg-cosmos-indigo hover:bg-cosmos-indigo/90 text-white shadow-cosmos-sm hover:shadow-glow-indigo border-transparent" : "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
+          }`}
         >
-          {isHuman ? <><ToggleRight className="h-4 w-4" /> Devolver para IA</> : <><ToggleLeft className="h-4 w-4" /> Assumir conversa</>}
+          {isHuman ? <><Bot className="h-4 w-4" /> Devolver para Agente</> : <><UserCheck className="h-4 w-4" /> Assumir Conversa</>}
         </Button>
       </div>
 

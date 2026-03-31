@@ -238,11 +238,13 @@ O banco possui 6 tenants realistas de setores distintos (saude, imobiliario, foo
 
 ### Integracao WhatsApp (Evolution API)
 
-- **Evolution API** como bridge para WhatsApp, hospedada em Droplet DigitalOcean (porta 8080)
-- Infraestrutura: PostgreSQL + Redis no mesmo droplet; dados de acesso documentados em canvas no Slack (#devs-geral)
-- Edge functions: `evolution-api` (conexao/gerenciamento de instancia), `whatsapp-webhook` (recebimento de mensagens)
+- **Evolution API v2.2.3** como bridge para WhatsApp, hospedada em Droplet DigitalOcean (nyc3, 2vCPU/4GB)
+- Stack: Docker Compose (Evolution API + PostgreSQL 16 + Redis 7) em `/opt/evolution-api/`
+- Dados de acesso completos em `docs/srcdoc.pdf` e canvas no Slack (#devs-geral)
+- Edge functions: `evolution-api` (conexao/gerenciamento), `whatsapp-webhook` (mensagens + typing + [BREAK] splitting)
 - Tabela `whatsapp_instances` armazena QR code e profile_pic_url
 - Fluxo: conectar instancia → escanear QR → receber/enviar mensagens
+- Plano de escalabilidade em `docs/plano-escalabilidade.md`
 
 ### Modelos de IA e OpenRouter
 
@@ -364,7 +366,10 @@ agent_memories (
 
 | Recurso | Onde encontrar |
 |---|---|
-| Credenciais Evolution API (IP, API Key, PostgreSQL, Redis) | Canvas no Slack `#devs-geral` |
+| Credenciais Evolution API (IP, API Key, PostgreSQL, Redis) | `docs/srcdoc.pdf` + Canvas no Slack `#devs-geral` |
+| Plano de escalabilidade de infraestrutura | `docs/plano-escalabilidade.md` |
+| Referencia pratica da Evolution API | `docs/referencia-evolution-api.md` |
+| Pesquisa de prompt engineering | `docs/pesquisa-prompts.md` |
 | Plano de arquitetura v2 e cronograma | `docs/plano-arquitetura-v2.md` |
 | Anotacoes da reuniao de planejamento | `docs/Projeto novo.txt` |
 | Plano inicial (Sprint 1 Lovable) | `docs/plano-inicial-lovablemd` |
@@ -373,4 +378,4 @@ agent_memories (
 
 ## Licoes Aprendidas
 
-<!-- Registre aqui erros corrigidos e regras descobertas durante o desenvolvimento -->
+1. **TDD nao foi seguido no sprint inicial.** Codigo de producao foi escrito sem testes. A partir de agora, NENHUM codigo de producao deve ser escrito antes dos testes correspondentes. Ao receber uma feature: (1) criar testes primeiro, (2) rodar e ver falhar, (3) so entao implementar. Isso vale para componentes React (Testing Library), edge functions (mocks), e logica de negocio.
