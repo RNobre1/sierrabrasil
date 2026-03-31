@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# MCP config (contains secrets)
+.mcp.json
+
 # Logs
 logs
 *.log
