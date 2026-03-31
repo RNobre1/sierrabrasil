@@ -55,31 +55,50 @@ export default function Onboarding() {
   const { user, profile, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  // Restore persisted state from localStorage
   const STORAGE_KEY = "theagent_onboarding";
-  const [persisted] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch { return null; }
-  });
 
-  const [messages, setMessages] = useState<Msg[]>(persisted?.messages || []);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [phase, setPhase] = useState<OnboardingPhase>(persisted?.phase || "chat");
-  const [selectedAgentClass, setSelectedAgentClass] = useState<string | null>(persisted?.selectedAgentClass || null);
+  const [phase, setPhase] = useState<OnboardingPhase>("chat");
+  const [selectedAgentClass, setSelectedAgentClass] = useState<string | null>(null);
   const [agentTemplates, setAgentTemplates] = useState<AgentTemplate[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(persisted?.selectedTemplateId || null);
-  const [socialLinks, setSocialLinks] = useState<Record<string, string>>(persisted?.socialLinks || {});
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
   const [scrapeUrls, setScrapeUrls] = useState<string[]>([]);
   const [scrapeResults, setScrapeResults] = useState<any[]>([]);
   const [scrapeComplete, setScrapeComplete] = useState(false);
-  const [overviewData, setOverviewData] = useState<OverviewData>(persisted?.overviewData || {});
-  const [sourcePreviews, setSourcePreviews] = useState<any[]>(persisted?.sourcePreviews || []);
+  const [overviewData, setOverviewData] = useState<OverviewData>({});
+  const [sourcePreviews, setSourcePreviews] = useState<any[]>([]);
   const [showDocUpload, setShowDocUpload] = useState(false);
   const [textPasteOpen, setTextPasteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [pastedTexts, setPastedTexts] = useState<string[]>(persisted?.pastedTexts || []);
-  const [attendantNameFromChat, setAttendantNameFromChat] = useState(persisted?.attendantNameFromChat || "");
-  const [personaFromChat, setPersonaFromChat] = useState(persisted?.personaFromChat || "");
+  const [pastedTexts, setPastedTexts] = useState<string[]>([]);
+  const [attendantNameFromChat, setAttendantNameFromChat] = useState("");
+  const [personaFromChat, setPersonaFromChat] = useState("");
+
+  // Restore persisted state from localStorage (once on mount)
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (p?.messages?.length > 0) setMessages(p.messages);
+      if (p?.phase) setPhase(p.phase);
+      if (p?.selectedAgentClass) setSelectedAgentClass(p.selectedAgentClass);
+      if (p?.selectedTemplateId) setSelectedTemplateId(p.selectedTemplateId);
+      if (p?.socialLinks) setSocialLinks(p.socialLinks);
+      if (p?.overviewData) setOverviewData(p.overviewData);
+      if (p?.sourcePreviews) setSourcePreviews(p.sourcePreviews);
+      if (p?.pastedTexts) setPastedTexts(p.pastedTexts);
+      if (p?.attendantNameFromChat) setAttendantNameFromChat(p.attendantNameFromChat);
+      if (p?.personaFromChat) setPersonaFromChat(p.personaFromChat);
+      if (p?.passwordPhase) setPasswordPhase(p.passwordPhase);
+    } catch {}
+  }, []);
 
   // Persist state to localStorage on changes
   useEffect(() => {
@@ -101,7 +120,7 @@ export default function Onboarding() {
   const scrapeDeadlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrapeAbortControllerRef = useRef<AbortController | null>(null);
   // Password collection state
-  const [passwordPhase, setPasswordPhase] = useState<"none" | "awaiting" | "confirming" | "done">(persisted?.passwordPhase || "none");
+  const [passwordPhase, setPasswordPhase] = useState<"none" | "awaiting" | "confirming" | "done">("none");
   const [tempPassword, setTempPassword] = useState("");
   const [isPasswordInput, setIsPasswordInput] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -159,7 +178,13 @@ export default function Onboarding() {
     hasStarted.current = true;
 
     // If we have persisted data with messages, skip initialization
-    if (persisted?.messages?.length > 0) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p?.messages?.length > 0) return;
+      }
+    } catch {}
 
     // Check if user logged in via OAuth (has provider in app_metadata)
     const isOAuth = user?.app_metadata?.provider && user.app_metadata.provider !== "email";
