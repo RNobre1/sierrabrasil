@@ -16,7 +16,6 @@ import TextPasteModal from "@/components/onboarding/TextPasteModal";
 import BusinessOverview from "@/components/onboarding/BusinessOverview";
 import AgentTemplateSelector from "@/components/onboarding/AgentTemplateSelector";
 import type { AgentTemplate } from "@/components/onboarding/AgentTemplateSelector";
-import PhoneCollectStep from "@/components/onboarding/PhoneCollectStep";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -25,7 +24,6 @@ const PROCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-k
 const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
 
 type OnboardingPhase =
-  | "phone-collect"
   | "class-select"
   | "chat"
   | "social-links"
@@ -54,9 +52,6 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
   const { toast } = useToast();
-
-  const STORAGE_KEY = "theagent_onboarding";
-
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -76,39 +71,6 @@ export default function Onboarding() {
   const [pastedTexts, setPastedTexts] = useState<string[]>([]);
   const [attendantNameFromChat, setAttendantNameFromChat] = useState("");
   const [personaFromChat, setPersonaFromChat] = useState("");
-
-  // Restore persisted state from localStorage (once on mount)
-  const restoredRef = useRef(false);
-  useEffect(() => {
-    if (restoredRef.current) return;
-    restoredRef.current = true;
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const p = JSON.parse(raw);
-      if (p?.messages?.length > 0) setMessages(p.messages);
-      if (p?.phase) setPhase(p.phase);
-      if (p?.selectedAgentClass) setSelectedAgentClass(p.selectedAgentClass);
-      if (p?.selectedTemplateId) setSelectedTemplateId(p.selectedTemplateId);
-      if (p?.socialLinks) setSocialLinks(p.socialLinks);
-      if (p?.overviewData) setOverviewData(p.overviewData);
-      if (p?.sourcePreviews) setSourcePreviews(p.sourcePreviews);
-      if (p?.pastedTexts) setPastedTexts(p.pastedTexts);
-      if (p?.attendantNameFromChat) setAttendantNameFromChat(p.attendantNameFromChat);
-      if (p?.personaFromChat) setPersonaFromChat(p.personaFromChat);
-      if (p?.passwordPhase) setPasswordPhase(p.passwordPhase);
-    } catch {}
-  }, []);
-
-  // Persist state to localStorage on changes
-  useEffect(() => {
-    const data = {
-      messages, phase, selectedAgentClass, selectedTemplateId,
-      socialLinks, overviewData, sourcePreviews, pastedTexts,
-      attendantNameFromChat, personaFromChat, passwordPhase,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [messages, phase, selectedAgentClass, selectedTemplateId, socialLinks, overviewData, sourcePreviews, pastedTexts, attendantNameFromChat, personaFromChat, passwordPhase]);
   // Background scraping state
   const scrapeDataRef = useRef<{ results: any[]; overview: any; sourcePreviews: any[]; done: boolean }>({ results: [], overview: null, sourcePreviews: [], done: false });
   const [postScrapeStep, setPostScrapeStep] = useState(0);
@@ -161,6 +123,26 @@ export default function Onboarding() {
     phaseRef.current = phase;
   }, [phase]);
 
+  // === Persistencia do onboarding ===
+  const persistKey = "theagent_onboarding";
+  const didRestore = useRef(false);
+
+  // Salvar estado no localStorage a cada mudanca relevante
+  useEffect(() => {
+    if (!didRestore.current) return;
+    try {
+      localStorage.setItem(persistKey, JSON.stringify({
+        messages, phase, passwordPhase, selectedAgentClass, selectedTemplateId,
+        overviewData, attendantNameFromChat, personaFromChat,
+      }));
+    } catch {}
+  }, [messages, phase, passwordPhase, selectedAgentClass, selectedTemplateId, overviewData, attendantNameFromChat, personaFromChat]);
+
+  // Limpar localStorage quando finalizar o onboarding
+  const clearPersisted = useCallback(() => {
+    try { localStorage.removeItem(persistKey); } catch {}
+  }, []);
+
   const userName = user?.user_metadata?.full_name || profile?.full_name || "";
   const companyName = user?.user_metadata?.company_name || "";
 
@@ -177,39 +159,26 @@ export default function Onboarding() {
     if (hasStarted.current) return;
     hasStarted.current = true;
 
-    // If we have persisted data with messages, skip initialization
+    // Tentar restaurar estado persistido
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(persistKey);
       if (raw) {
         const p = JSON.parse(raw);
-        if (p?.messages?.length > 0) return;
+        if (p && p.messages && p.messages.length > 0) {
+          setMessages(p.messages);
+          if (p.phase) setPhase(p.phase);
+          if (p.passwordPhase) setPasswordPhase(p.passwordPhase);
+          if (p.selectedAgentClass) setSelectedAgentClass(p.selectedAgentClass);
+          if (p.selectedTemplateId) setSelectedTemplateId(p.selectedTemplateId);
+          if (p.overviewData) setOverviewData(p.overviewData);
+          if (p.attendantNameFromChat) setAttendantNameFromChat(p.attendantNameFromChat);
+          if (p.personaFromChat) setPersonaFromChat(p.personaFromChat);
+          didRestore.current = true;
+          return;
+        }
       }
     } catch {}
-
-    // Check if user logged in via OAuth (has provider in app_metadata)
-    const isOAuth = user?.app_metadata?.provider && user.app_metadata.provider !== "email";
-    const hasPhone = !!user?.user_metadata?.whatsapp || !!user?.user_metadata?.phone;
-
-    // OAuth user without phone: collect phone first
-    if (isOAuth && !hasPhone) {
-      setPasswordPhase("done");
-      setPhase("phone-collect");
-      return;
-    }
-
-    // OAuth user with phone: skip password, go to class select
-    if (isOAuth && hasPhone) {
-      const firstName = userName ? userName.split(" ")[0] : "";
-      setMessages([{
-        role: "assistant",
-        content: firstName
-          ? `Oi, ${firstName}! Vamos configurar seu agente. Escolha o tipo ideal:`
-          : "Vamos configurar seu agente! Escolha o tipo:",
-      }]);
-      setPasswordPhase("done");
-      setPhase("class-select");
-      return;
-    }
+    didRestore.current = true;
 
     // If creating a new agent (returning user), skip password and go to class select
     if (isNewAgent) {
@@ -495,6 +464,7 @@ export default function Onboarding() {
     if (!template) return;
 
     setSelectedAgentClass(template.class);
+    setMessages(prev => [...prev, { role: "user", content: `Quero criar um agente de ${template.name}.` }]);
     setPhase("chat");
 
     // Update the attendant with template_id and class
@@ -510,36 +480,10 @@ export default function Onboarding() {
       })();
     }
 
-    // Show only the short message to the user, but send full context to AI
-    const visibleMsg: Msg = { role: "user", content: `Quero criar um agente de ${template.name}.` };
-    const hiddenContext = `[CONTEXTO DO SISTEMA: O cliente escolheu o template "${template.name}" (${template.class}). Descricao: ${template.description || template.name}. Continue a conversa normalmente, sem repetir essas informacoes.]`;
-
-    setMessages(prev => [...prev, visibleMsg]);
-    setIsLoading(true);
-
-    setTimeout(async () => {
-      try {
-        const allMessages = [...messages, visibleMsg, { role: "user" as const, content: hiddenContext }];
-
-        const fullText = await streamChat(allMessages, (chunk) => {
-          const display = cleanDisplay(chunk);
-          setMessages((prev) => {
-            const last = prev[prev.length - 1];
-            if (last?.role === "assistant") {
-              return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: display } : m));
-            }
-            return [...prev, { role: "assistant", content: display }];
-          });
-        });
-
-        if (fullText.includes("```social_links```")) {
-          setPhase("social-links");
-        }
-      } catch (e: any) {
-        console.error("Chat error after template select:", e);
-      } finally {
-        setIsLoading(false);
-      }
+    // Send to AI so it continues the conversation knowing the template
+    setTimeout(() => {
+      const classContext = `Escolhi um agente de ${template.name}. Descricao: ${template.description || template.name}`;
+      sendToChat(classContext);
     }, 300);
   };
 
@@ -935,8 +879,8 @@ export default function Onboarding() {
         }).catch(e => console.error("Process knowledge error:", e));
       }
 
-      localStorage.removeItem(STORAGE_KEY);
-      toast({ title: "Agente configurado!", description: "Seu agente esta online." });
+      clearPersisted();
+      toast({ title: "Agente configurado! 🎉", description: "Seu agente está online." });
       navigate("/dashboard");
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
@@ -959,35 +903,6 @@ export default function Onboarding() {
     : phase === "social-links" ? 35
     : phase === "class-select" ? 15
     : `${Math.min(30, userMsgCount * 8)}`;
-
-  // ========== PHONE COLLECT PHASE ==========
-  if (phase === "phone-collect") {
-    const handlePhoneSubmit = async (phone: string) => {
-      // Save phone to user metadata
-      await supabase.auth.updateUser({ data: { whatsapp: phone } });
-      // Also save to profile
-      if (user) {
-        await supabase.from("profiles").update({ phone }).eq("user_id", user.id);
-      }
-      const firstName = userName ? userName.split(" ")[0] : "";
-      setMessages([{
-        role: "assistant",
-        content: firstName
-          ? `Oi, ${firstName}! Vamos configurar seu agente. Escolha o tipo ideal:`
-          : "Vamos configurar seu agente! Escolha o tipo:",
-      }]);
-      setPhase("class-select");
-    };
-
-    return (
-      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
-        <OnboardingHeader title="Seu numero" subtitle="Precisamos do seu WhatsApp pra continuar" progress={5} />
-        <div className="flex-1 flex items-center justify-center p-6">
-          <PhoneCollectStep onSubmit={handlePhoneSubmit} userName={userName ? userName.split(" ")[0] : undefined} />
-        </div>
-      </div>
-    );
-  }
 
   // ========== CLASS SELECT PHASE ==========
   if (phase === "class-select") {
