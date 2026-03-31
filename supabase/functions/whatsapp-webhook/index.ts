@@ -14,7 +14,7 @@ serve(async (req) => {
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL");
   const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -245,18 +245,18 @@ ${attendant.instructions ? `## INSTRUÇÕES DO NEGÓCIO\n${attendant.instruction
       }));
 
       // 8. Call AI
-      if (!LOVABLE_API_KEY) {
-        console.error("LOVABLE_API_KEY not configured");
+      if (!OPENROUTER_API_KEY) {
+        console.error("OPENROUTER_API_KEY not configured");
         return new Response(JSON.stringify({ ok: false, error: "AI not configured" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const aiResp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

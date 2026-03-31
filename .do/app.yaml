@@ -1,0 +1,24 @@
+name: sierrabrasil
+region: nyc
+static_sites:
+  - name: frontend
+    github:
+      repo: RNobre1/sierrabrasil
+      branch: main
+      deploy_on_push: true
+    build_command: npm install && npm run build
+    output_dir: dist
+    environment_slug: node-js
+    envs:
+      - key: VITE_SUPABASE_URL
+        scope: BUILD_TIME
+        type: SECRET
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        scope: BUILD_TIME
+        type: SECRET
+      - key: VITE_SUPABASE_PROJECT_ID
+        scope: BUILD_TIME
+        type: SECRET
+    routes:
+      - path: /
+    catchall_document: index.html

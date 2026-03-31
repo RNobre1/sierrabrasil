@@ -325,8 +325,8 @@ function formatApifyResults(platform: string, items: any[], url: string): string
 }
 
 async function buildStructuredOverview(allContent: string, pastedText: string): Promise<any> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) return null;
+  const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
+  if (!OPENROUTER_API_KEY) return null;
 
   const combinedInput = [
     allContent ? `DADOS DAS REDES SOCIAIS E SITE:\n${allContent}` : "",
@@ -336,10 +336,10 @@ async function buildStructuredOverview(allContent: string, pastedText: string): 
   if (!combinedInput) return null;
 
   try {
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
