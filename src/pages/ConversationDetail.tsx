@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck } from "lucide-react";
+import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck, Send, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +41,9 @@ export default function ConversationDetail() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -82,6 +86,91 @@ export default function ConversationDetail() {
       toast.success(newVal ? "Você assumiu a conversa" : "Conversa devolvida para a IA");
     } else {
       toast.error("Erro ao alterar modo");
+    }
+  };
+
+  // Poll for new messages every 3s
+  useEffect(() => {
+    if (!id) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", id)
+        .order("created_at", { ascending: true });
+      if (data && data.length !== messages.length) {
+        setMessages(data);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [id, messages.length]);
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendReply = async () => {
+    if (!replyText.trim() || !conversation?.contact_phone || sending) return;
+    setSending(true);
+
+    try {
+      // 1. Find connected instance for this tenant
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Sessão expirada");
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const url = `https://${projectId}.supabase.co/functions/v1/evolution-api?action=send_message`;
+
+      // Get instance name from whatsapp_instances
+      const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user?.id).single();
+      if (!tenant) throw new Error("Tenant não encontrado");
+
+      const { data: instance } = await supabase
+        .from("whatsapp_instances")
+        .select("instance_name")
+        .eq("tenant_id", tenant.id)
+        .eq("status", "connected")
+        .limit(1)
+        .single();
+
+      if (!instance) throw new Error("Nenhuma instância WhatsApp conectada");
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          instanceName: instance.instance_name,
+          number: conversation.contact_phone,
+          text: replyText.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao enviar");
+
+      // 2. Save message in DB
+      await supabase.from("messages").insert({
+        conversation_id: id,
+        role: "attendant",
+        content: replyText.trim(),
+      });
+
+      setReplyText("");
+      // Refresh messages
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", id)
+        .order("created_at", { ascending: true });
+      if (msgs) setMessages(msgs);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar mensagem");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -183,7 +272,39 @@ export default function ConversationDetail() {
           {messages.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-8">Nenhuma mensagem nesta conversa</p>
           )}
+          <div ref={chatEndRef} />
         </div>
+
+        {/* Reply input — visible only during human takeover */}
+        {isHuman && (
+          <div className="flex items-center gap-2 pt-3 border-t border-border mt-2">
+            <Input
+              placeholder="Digite sua mensagem..."
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendReply()}
+              disabled={sending}
+              className="flex-1"
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+              disabled
+              title="Áudio em breve"
+            >
+              <Mic className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              onClick={sendReply}
+              disabled={sending || !replyText.trim()}
+              className="bg-cosmos-indigo hover:bg-cosmos-indigo/90 text-white shadow-cosmos-sm"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );
