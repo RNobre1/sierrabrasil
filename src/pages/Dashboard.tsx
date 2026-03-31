@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { MeteoraWatermark } from "@/components/MeteoraBrand";
 import GuidedTour from "@/components/GuidedTour";
+import WhatsAppConnectBanner from "@/components/WhatsAppConnectBanner";
 
 /* ═══ Types ═══ */
 interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class?: string | null; }
@@ -71,6 +72,7 @@ export default function Dashboard() {
   const [tenantCreatedAt, setTenantCreatedAt] = useState("");
   const [tenantPlan, setTenantPlan] = useState("starter");
   const [loading, setLoading] = useState(true);
+  const [hasWhatsApp, setHasWhatsApp] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -89,6 +91,15 @@ export default function Dashboard() {
       setRecentConvs(conv.data ?? []);
       setAllConvs(allC.data ?? []);
       setTotalMsgs(msg.count ?? 0);
+
+      const { data: wpInstances } = await supabase
+        .from("whatsapp_instances")
+        .select("id, status")
+        .eq("tenant_id", t.id)
+        .eq("status", "connected")
+        .limit(1);
+      setHasWhatsApp((wpInstances ?? []).length > 0);
+
       setLoading(false);
     })();
   }, [user]);
@@ -376,6 +387,7 @@ export default function Dashboard() {
       </div>
 
       <MeteoraWatermark />
+      <WhatsAppConnectBanner isConnected={hasWhatsApp} />
       <GuidedTour />
     </div>
   );
