@@ -15,10 +15,15 @@ Voce e reativo: responde mensagens, nunca inicia conversa.
 ## REGRAS INVIOLAVEIS
 1. NUNCA invente informacoes. Use APENAS o que esta nas instrucoes e na base de conhecimento.
 2. NUNCA diga que e IA, robo ou bot. Voce e ${agentName}.
-3. Se o cliente pedir humano, diga: "Vou te transferir pra um atendente. Aguarda um momento."
-4. Se nao souber a resposta sobre o negocio, diga: "Vou verificar com a equipe e ja te retorno."
-5. Precos e servicos: use EXATAMENTE os valores da base de conhecimento.
-6. Voce SO pode enviar TEXTO. NUNCA prometa enviar fotos, imagens, videos ou audios. Se pedirem, diga que pode descrever por texto ou que a equipe envia.
+3. Se nao souber a resposta sobre o negocio, diga: "Vou verificar com a equipe e ja te retorno."
+4. Precos e servicos: use EXATAMENTE os valores da base de conhecimento.
+5. Voce SO pode enviar TEXTO. NUNCA prometa enviar fotos, imagens, videos ou audios. Se pedirem, diga que pode descrever por texto ou que a equipe envia.
+
+## TAGS DE CONTROLE (invisivel pro cliente)
+Adicione UMA tag no FINAL da resposta quando aplicavel (NUNCA explique a tag pro cliente):
+- [ESCALATE] — Quando: cliente pede humano, frustracao extrema, assunto fora do escopo, ou voce nao consegue resolver apos 2 tentativas. Antes da tag, diga algo como "Vou te transferir pra um atendente. Aguarda um momento."
+- [RESOLVED] — Quando: cliente agradece e se despede, problema foi resolvido, ou cliente confirma que nao precisa de mais nada.
+Se a conversa continua normalmente, NAO use nenhuma tag.
 
 ## FORMATO WHATSAPP
 - SEM formatacao Markdown (sem **, sem ##, sem listas numeradas).
@@ -352,14 +357,38 @@ Nome do cliente: ${contactName}.`;
         });
       }
 
-      // 9. Save full AI response
+      // 9. Parse control tags and clean reply
+      const hasEscalate = aiReply.includes("[ESCALATE]");
+      const hasResolved = aiReply.includes("[RESOLVED]");
+      const cleanReply = aiReply
+        .replace(/\s*\[ESCALATE\]\s*/g, "")
+        .replace(/\s*\[RESOLVED\]\s*/g, "")
+        .trim();
+
+      // 10. Save cleaned AI response
       await supabase.from("messages").insert({
-        conversation_id: conversationId, role: "attendant", content: aiReply,
+        conversation_id: conversationId, role: "attendant", content: cleanReply,
       });
 
-      // 10. Send reply with message splitting on [BREAK]
+      // 11. Update conversation status based on AI tags
+      if (hasEscalate) {
+        await supabase.from("conversations").update({
+          status: "escalated",
+          human_takeover: true,
+          takeover_at: new Date().toISOString(),
+        } as any).eq("id", conversationId);
+        console.log(`Conversation ${conversationId} ESCALATED by AI`);
+      } else if (hasResolved) {
+        await supabase.from("conversations").update({
+          status: "resolved",
+          ended_at: new Date().toISOString(),
+        }).eq("id", conversationId);
+        console.log(`Conversation ${conversationId} RESOLVED by AI`);
+      }
+
+      // 12. Send reply with message splitting on [BREAK]
       if (baseUrl && EVOLUTION_API_KEY) {
-        const parts = aiReply.split("[BREAK]").map((p: string) => p.trim()).filter((p: string) => p.length > 0);
+        const parts = cleanReply.split("[BREAK]").map((p: string) => p.trim()).filter((p: string) => p.length > 0);
 
         for (let i = 0; i < parts.length; i++) {
           if (i > 0) {
@@ -371,7 +400,7 @@ Nome do cliente: ${contactName}.`;
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, replied: true, parts: aiReply.split("[BREAK]").length }), {
+      return new Response(JSON.stringify({ ok: true, replied: true, escalated: hasEscalate, resolved: hasResolved }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

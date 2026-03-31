@@ -172,7 +172,7 @@ export default function ConversationDetail() {
                     ? "bg-muted text-foreground rounded-bl-md"
                     : "bg-primary text-primary-foreground rounded-br-md"
                 }`}>
-                  <p className="text-sm whitespace-pre-line">{msg.content}</p>
+                  <p className="text-sm whitespace-pre-line">{msg.content.replace(/\[BREAK\]/g, "\n")}</p>
                   <p className={`mt-1 text-[10px] ${isContact ? "text-muted-foreground" : "text-primary-foreground/70"}`}>
                     {formatTime(msg.created_at)}
                   </p>
