@@ -52,25 +52,43 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Msg[]>([]);
+
+  // Restore persisted state from localStorage
+  const STORAGE_KEY = "theagent_onboarding";
+  const saved = useRef(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch { return null; }
+  });
+  const persisted = saved.current();
+
+  const [messages, setMessages] = useState<Msg[]>(persisted?.messages || []);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [phase, setPhase] = useState<OnboardingPhase>("chat");
-  const [selectedAgentClass, setSelectedAgentClass] = useState<string | null>(null);
+  const [phase, setPhase] = useState<OnboardingPhase>(persisted?.phase || "chat");
+  const [selectedAgentClass, setSelectedAgentClass] = useState<string | null>(persisted?.selectedAgentClass || null);
   const [agentTemplates, setAgentTemplates] = useState<AgentTemplate[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(persisted?.selectedTemplateId || null);
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>(persisted?.socialLinks || {});
   const [scrapeUrls, setScrapeUrls] = useState<string[]>([]);
   const [scrapeResults, setScrapeResults] = useState<any[]>([]);
   const [scrapeComplete, setScrapeComplete] = useState(false);
-  const [overviewData, setOverviewData] = useState<OverviewData>({});
-  const [sourcePreviews, setSourcePreviews] = useState<any[]>([]);
+  const [overviewData, setOverviewData] = useState<OverviewData>(persisted?.overviewData || {});
+  const [sourcePreviews, setSourcePreviews] = useState<any[]>(persisted?.sourcePreviews || []);
   const [showDocUpload, setShowDocUpload] = useState(false);
   const [textPasteOpen, setTextPasteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [pastedTexts, setPastedTexts] = useState<string[]>([]);
-  const [attendantNameFromChat, setAttendantNameFromChat] = useState("");
-  const [personaFromChat, setPersonaFromChat] = useState("");
+  const [pastedTexts, setPastedTexts] = useState<string[]>(persisted?.pastedTexts || []);
+  const [attendantNameFromChat, setAttendantNameFromChat] = useState(persisted?.attendantNameFromChat || "");
+  const [personaFromChat, setPersonaFromChat] = useState(persisted?.personaFromChat || "");
+
+  // Persist state to localStorage on changes
+  useEffect(() => {
+    const data = {
+      messages, phase, selectedAgentClass, selectedTemplateId,
+      socialLinks, overviewData, sourcePreviews, pastedTexts,
+      attendantNameFromChat, personaFromChat, passwordPhase,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }, [messages, phase, selectedAgentClass, selectedTemplateId, socialLinks, overviewData, sourcePreviews, pastedTexts, attendantNameFromChat, personaFromChat, passwordPhase]);
   // Background scraping state
   const scrapeDataRef = useRef<{ results: any[]; overview: any; sourcePreviews: any[]; done: boolean }>({ results: [], overview: null, sourcePreviews: [], done: false });
   const [postScrapeStep, setPostScrapeStep] = useState(0);
@@ -82,7 +100,7 @@ export default function Onboarding() {
   const scrapeDeadlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrapeAbortControllerRef = useRef<AbortController | null>(null);
   // Password collection state
-  const [passwordPhase, setPasswordPhase] = useState<"none" | "awaiting" | "confirming" | "done">("none");
+  const [passwordPhase, setPasswordPhase] = useState<"none" | "awaiting" | "confirming" | "done">(persisted?.passwordPhase || "none");
   const [tempPassword, setTempPassword] = useState("");
   const [isPasswordInput, setIsPasswordInput] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -138,6 +156,9 @@ export default function Onboarding() {
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
+
+    // If we have persisted data with messages, skip initialization
+    if (persisted?.messages?.length > 0) return;
 
     // If creating a new agent (returning user), skip password and go to class select
     if (isNewAgent) {
@@ -423,7 +444,6 @@ export default function Onboarding() {
     if (!template) return;
 
     setSelectedAgentClass(template.class);
-    setMessages(prev => [...prev, { role: "user", content: `Quero criar um agente de ${template.name}.` }]);
     setPhase("chat");
 
     // Update the attendant with template_id and class
@@ -439,10 +459,36 @@ export default function Onboarding() {
       })();
     }
 
-    // Send to AI so it continues the conversation knowing the template
-    setTimeout(() => {
-      const classContext = `Escolhi um agente de ${template.name}. Descricao: ${template.description || template.name}`;
-      sendToChat(classContext);
+    // Show only the short message to the user, but send full context to AI
+    const visibleMsg: Msg = { role: "user", content: `Quero criar um agente de ${template.name}.` };
+    const hiddenContext = `[CONTEXTO DO SISTEMA: O cliente escolheu o template "${template.name}" (${template.class}). Descricao: ${template.description || template.name}. Continue a conversa normalmente, sem repetir essas informacoes.]`;
+
+    setMessages(prev => [...prev, visibleMsg]);
+    setIsLoading(true);
+
+    setTimeout(async () => {
+      try {
+        const allMessages = [...messages, visibleMsg, { role: "user" as const, content: hiddenContext }];
+
+        const fullText = await streamChat(allMessages, (chunk) => {
+          const display = cleanDisplay(chunk);
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant") {
+              return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: display } : m));
+            }
+            return [...prev, { role: "assistant", content: display }];
+          });
+        });
+
+        if (fullText.includes("```social_links```")) {
+          setPhase("social-links");
+        }
+      } catch (e: any) {
+        console.error("Chat error after template select:", e);
+      } finally {
+        setIsLoading(false);
+      }
     }, 300);
   };
 
@@ -838,7 +884,8 @@ export default function Onboarding() {
         }).catch(e => console.error("Process knowledge error:", e));
       }
 
-      toast({ title: "Agente configurado! 🎉", description: "Seu agente está online." });
+      localStorage.removeItem(STORAGE_KEY);
+      toast({ title: "Agente configurado!", description: "Seu agente esta online." });
       navigate("/dashboard");
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
