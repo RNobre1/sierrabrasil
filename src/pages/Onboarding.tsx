@@ -55,10 +55,9 @@ export default function Onboarding() {
 
   // Restore persisted state from localStorage
   const STORAGE_KEY = "theagent_onboarding";
-  const saved = useRef(() => {
+  const [persisted] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch { return null; }
   });
-  const persisted = saved.current();
 
   const [messages, setMessages] = useState<Msg[]>(persisted?.messages || []);
   const [input, setInput] = useState("");
