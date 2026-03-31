@@ -108,8 +108,17 @@ serve(async (req) => {
 
     // === INCOMING MESSAGE ===
     if (event === "messages.upsert") {
-      const message = data.message || data;
-      const key = message.key || {};
+      // v1.8.x: data is the message object (with key, pushName, message, messageType)
+      // Some versions send data as array — handle both
+      const msgData = Array.isArray(data) ? data[0] : data;
+
+      if (!msgData) {
+        return new Response(JSON.stringify({ ok: true, skipped: "empty data" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const key = msgData.key || {};
 
       // Skip own messages, groups, status broadcasts
       if (key.fromMe === true) {
@@ -126,17 +135,18 @@ serve(async (req) => {
       }
 
       const contactPhone = remoteJid.replace("@s.whatsapp.net", "");
-      const messageContent = message.message?.conversation
-        || message.message?.extendedTextMessage?.text
+      const messageContent = msgData.message?.conversation
+        || msgData.message?.extendedTextMessage?.text
         || "";
 
       if (!messageContent) {
+        console.log("No text content. msgData keys:", Object.keys(msgData), "message keys:", msgData.message ? Object.keys(msgData.message) : "none");
         return new Response(JSON.stringify({ ok: true, skipped: "no text content" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const contactName = message.pushName || contactPhone;
+      const contactName = msgData.pushName || contactPhone;
       console.log(`Message from ${contactName} (${contactPhone}): ${messageContent.slice(0, 100)}`);
 
       // 1. Find instance and tenant
