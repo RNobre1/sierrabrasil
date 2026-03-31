@@ -268,11 +268,20 @@ O banco possui 6 tenants realistas de setores distintos (saude, imobiliario, foo
 
 Cada modelo tem trade-offs de custo, velocidade e qualidade. A logica de recomendacao deve considerar todos esses fatores.
 
-### Arquitetura de Prompts — EM ABERTO
+### Arquitetura de Prompts — DEFINIDA
 
-**A estrategia de prompt e humanizacao ainda nao esta definida.** Requer pesquisa e benchmarks comparativos antes de implementar. Proposta inicial: sistema de 3 camadas (geral → template do agente → personalizado), mas a decisao final depende de testes.
+**4 camadas logicas compostas em 1 system prompt:**
 
-Ver detalhes da proposta em `docs/plano-arquitetura-v2.md` secao 2.
+1. **Identidade + Seguranca** (fixo) — nome, regras inviolaveis, formatacao WhatsApp, anti-alucinacao
+2. **Template de especialidade** (da tabela `agent_templates`) — tecnicas de vendas/suporte/agendamento
+3. **Personalizacao do negocio** (do onboarding + config) — instrucoes, persona, tom
+4. **Contexto dinamico** (injetado em runtime) — knowledge base RAG + memoria + hora do dia
+
+**Humanizacao PT-BR:** Mensagens curtas (1-3 frases), contracoes ("pra", "ta", "ne"), saudacao por horario, emojis moderados. Delimitador `[BREAK]` para message splitting. Typing delay proporcional. Message debounce de 3s para rajadas.
+
+**Anti-alucinacao:** Instrucao explicita + exemplos negativos + resposta padrao "Vou verificar com a equipe". Temperature 0.3-0.5 (fatico) / 0.6-0.7 (vendas).
+
+Ver pesquisa completa em `docs/pesquisa-prompts.md`.
 
 ### Memoria do Agente (Add-on Premium)
 
