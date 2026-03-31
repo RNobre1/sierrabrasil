@@ -50,7 +50,7 @@ async function sendText(baseUrl: string, apiKey: string, instanceName: string, p
   const resp = await fetch(`${baseUrl}/message/sendText/${instanceName}`, {
     method: "POST",
     headers: { apikey: apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ number: phone, text }),
+    body: JSON.stringify({ number: phone, textMessage: { text } }),
   });
   if (!resp.ok) {
     const err = await resp.text();
