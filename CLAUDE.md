@@ -341,6 +341,7 @@ agent_memories (
 13. **Desenvolvimento com Antigravity** — Gemini 3.1 Pro High como dev junior; Claude Code como dev senior/orquestrador. Ver secao "Workflow de Desenvolvimento com Antigravity" acima.
 14. **Lista aberta de modelos LLM** — Nao restrita a 3 familias; incluir todas as opcoes viaveis do OpenRouter (versoes anteriores, modelos menores, etc.).
 15. **Memoria do agente como add-on premium** — Persistencia de contexto entre conversas. Tabela `agent_memories` com resumo por contato. Monetizado como add-on por plano. Considerar vector database para busca semantica de memorias (pos-MVP).
+16. **Modelo unico por agente no MVP** — Cada agente usa 1 modelo (selecionado automaticamente ou pelo usuario). Sem cascata multi-modelo (latencia inaceitavel para WhatsApp). Roteamento condicional e evolucao pos-MVP (classifier barato → modelo especializado por tipo de mensagem).
 
 ## Backlog (Pos-Sprint de 4 Dias)
 
@@ -356,6 +357,8 @@ agent_memories (
 - [ ] Benchmark de tempo de scraping por plataforma
 - [ ] Agente com audio (transcricao de mensagens de voz recebidas)
 - [ ] Agente com imagem (processamento multimodal)
+- [ ] Roteamento condicional multi-modelo (classifier + modelo especializado por intencao)
+- [ ] Vector database (pgvector) para knowledge base e memoria semantica
 
 ## Recursos Externos
 
