@@ -14,7 +14,8 @@ import ScrapingProgress from "@/components/onboarding/ScrapingProgress";
 import SocialLinksSelector from "@/components/onboarding/SocialLinksSelector";
 import TextPasteModal from "@/components/onboarding/TextPasteModal";
 import BusinessOverview from "@/components/onboarding/BusinessOverview";
-import AgentClassSelector from "@/components/onboarding/AgentClassSelector";
+import AgentTemplateSelector from "@/components/onboarding/AgentTemplateSelector";
+import type { AgentTemplate } from "@/components/onboarding/AgentTemplateSelector";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -55,7 +56,9 @@ export default function Onboarding() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [phase, setPhase] = useState<OnboardingPhase>("chat");
-  const [selectedAgentClass, setSelectedAgentClass] = useState<"support" | "sales" | null>(null);
+  const [selectedAgentClass, setSelectedAgentClass] = useState<string | null>(null);
+  const [agentTemplates, setAgentTemplates] = useState<AgentTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
   const [scrapeUrls, setScrapeUrls] = useState<string[]>([]);
   const [scrapeResults, setScrapeResults] = useState<any[]>([]);
@@ -124,6 +127,13 @@ export default function Onboarding() {
   const companyName = user?.user_metadata?.company_name || "";
 
   const isNewAgent = new URLSearchParams(window.location.search).get("newAgent") === "true";
+
+  // Fetch agent templates from Supabase
+  useEffect(() => {
+    supabase.from("agent_templates").select("id, name, class, description, icon").then(({ data }) => {
+      if (data) setAgentTemplates(data);
+    });
+  }, []);
 
   useEffect(() => {
     if (hasStarted.current) return;
@@ -407,30 +417,31 @@ export default function Onboarding() {
     sendToChat(text);
   };
 
-  const handleAgentClassSelect = (cls: "support" | "sales") => {
-    setSelectedAgentClass(cls);
-    const label = cls === "support" ? "Atendimento / Suporte" : "Vendas / Acompanhamento";
-    setMessages(prev => [...prev, { role: "user", content: `Quero criar um agente de **${label}**.` }]);
+  const handleAgentTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    const template = agentTemplates.find(t => t.id === templateId);
+    if (!template) return;
+
+    setSelectedAgentClass(template.class);
+    setMessages(prev => [...prev, { role: "user", content: `Quero criar um agente de ${template.name}.` }]);
     setPhase("chat");
 
-    // Update the attendant class in the database
+    // Update the attendant with template_id and class
     if (user) {
       (async () => {
         const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user.id).maybeSingle();
         if (tenant) {
           const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).maybeSingle();
           if (att) {
-            await supabase.from("attendants").update({ class: cls }).eq("id", att.id);
+            await supabase.from("attendants").update({ class: template.class, template_id: templateId }).eq("id", att.id);
           }
         }
       })();
     }
 
-    // Send to AI so it continues the conversation knowing the class
+    // Send to AI so it continues the conversation knowing the template
     setTimeout(() => {
-      const classContext = cls === "support"
-        ? "Escolhi um agente de Atendimento/Suporte. Habilidades: FAQ, resolução de problemas, escalonamento, feedback."
-        : "Escolhi um agente de Vendas/Acompanhamento. Habilidades: qualificação de leads, follow-up, propostas, pós-venda.";
+      const classContext = `Escolhi um agente de ${template.name}. Descricao: ${template.description || template.name}`;
       sendToChat(classContext);
     }, 300);
   };
@@ -857,7 +868,21 @@ export default function Onboarding() {
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Tipo de Agente" subtitle="Escolha o perfil ideal para o seu negócio" progress={15} />
         <div className="flex-1 flex items-center justify-center p-6">
-          <AgentClassSelector onSelect={handleAgentClassSelect} />
+          <div className="w-full max-w-2xl space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-display font-semibold text-foreground">
+                Qual tipo de agente voce gostaria de criar?
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Cada tipo vem com habilidades pre-configuradas. Voce pode personalizar depois.
+              </p>
+            </div>
+            <AgentTemplateSelector
+              templates={agentTemplates}
+              selectedId={selectedTemplateId}
+              onSelect={handleAgentTemplateSelect}
+            />
+          </div>
         </div>
       </div>
     );
