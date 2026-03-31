@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // Apify actors — using the fastest/cheapest tiers available
 const APIFY_ACTORS: Record<string, string> = {
-  instagram: "apify~instagram-profile-scraper",
+  instagram: "apify~instagram-scraper",
   facebook: "apify~facebook-pages-scraper",
   tiktok: "clockworks~free-tiktok-scraper",
   youtube: "streamers~youtube-channel-scraper",
@@ -33,10 +33,10 @@ function detectPlatform(url: string): string {
 function buildApifyInput(platform: string, url: string): any {
   switch (platform) {
     case "instagram": {
-      const username = url.replace(/.*instagram\.com\//, "").replace(/[\/?#@].*/, "").replace(/^@/, "");
       return {
-        usernames: [username],
-        resultsLimit: 30,
+        directUrls: [url],
+        resultsType: "posts",
+        resultsLimit: 12,
       };
     }
     case "facebook":
@@ -143,16 +143,19 @@ async function extractSourcePreviews(platform: string, items: any[], url: string
   
   switch (platform) {
     case "instagram": {
-      const p = items[0];
-      if (p) {
-        preview.profilePic = await toDataUri(p.profilePicUrl || p.profilePicUrlHD || "");
-        preview.displayName = p.fullName || p.username || "";
-        preview.bio = p.biography || "";
-        preview.followers = p.followersCount || 0;
-        preview.posts = p.postsCount || 0;
-        // Get thumbnails from recent posts
-        const posts = items.filter(i => i.displayUrl || i.thumbnailUrl);
-        preview.thumbnails = posts.slice(0, 6).map(post => post.displayUrl || post.thumbnailUrl).filter(Boolean);
+      const first = items[0];
+      if (first) {
+        // apify/instagram-scraper returns posts with owner info
+        const ownerPic = first.ownerProfilePicUrl || first.profilePicUrl || first.profilePicUrlHD || "";
+        preview.profilePic = ownerPic ? await toDataUri(ownerPic) : "";
+        preview.displayName = first.ownerFullName || first.ownerUsername || first.fullName || first.username || "";
+        preview.bio = first.biography || first.caption?.slice(0, 200) || "";
+        preview.followers = first.followersCount || first.ownerFollowerCount || 0;
+        // Get thumbnails from posts
+        preview.thumbnails = items
+          .map(post => post.displayUrl || post.thumbnailSrc || post.previewUrl || post.url)
+          .filter(Boolean)
+          .slice(0, 6);
       }
       break;
     }
@@ -217,25 +220,17 @@ function formatApifyResults(platform: string, items: any[], url: string): string
   if (!items || items.length === 0) return "";
   switch (platform) {
     case "instagram": {
-      const profile = items[0];
+      const first = items[0];
       const parts = [
         `INSTAGRAM: ${url}`,
-        profile.fullName ? `Nome: ${profile.fullName}` : "",
-        profile.biography ? `Bio: ${profile.biography}` : "",
-        profile.followersCount ? `Seguidores: ${profile.followersCount}` : "",
-        profile.followsCount ? `Seguindo: ${profile.followsCount}` : "",
-        profile.postsCount ? `Posts: ${profile.postsCount}` : "",
-        profile.isBusinessAccount ? `Conta Business: Sim` : "",
-        profile.businessCategory ? `Categoria: ${profile.businessCategory}` : "",
-        profile.businessEmail ? `Email: ${profile.businessEmail}` : "",
-        profile.businessPhone ? `Telefone: ${profile.businessPhone}` : "",
-        profile.externalUrl ? `Site: ${profile.externalUrl}` : "",
+        first?.ownerFullName ? `Nome: ${first.ownerFullName}` : "",
+        first?.ownerUsername ? `Username: @${first.ownerUsername}` : "",
       ].filter(Boolean);
-      const posts = items.filter(i => i.caption || i.type === "Image" || i.type === "Video");
+      const posts = items.filter(i => i.caption);
       if (posts.length > 0) {
         parts.push("\nPOSTS RECENTES:");
-        posts.slice(0, 15).forEach((p, i) => {
-          parts.push(`${i + 1}. ${(p.caption || p.alt || "").slice(0, 300)}${p.likesCount ? ` (❤️ ${p.likesCount})` : ""}${p.commentsCount ? ` (💬 ${p.commentsCount})` : ""}`);
+        posts.slice(0, 12).forEach((p, i) => {
+          parts.push(`${i + 1}. ${(p.caption || "").slice(0, 300)}${p.likesCount ? ` (${p.likesCount} likes)` : ""}${p.commentsCount ? ` (${p.commentsCount} comments)` : ""}`);
         });
       }
       return parts.join("\n");

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, User, Loader2, ArrowRight, Rocket, FileText, Lock } from "lucide-react";
+import { Send, Sparkles, User, Loader2, ArrowRight, Rocket, FileText, Lock, Wifi } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +31,7 @@ type OnboardingPhase =
   | "post-scrape-chat"
   | "overview"
   | "docs"
+  | "whatsapp-connect"
   | "finalizing"
   | "done";
 
@@ -926,9 +927,8 @@ export default function Onboarding() {
         }).catch(e => console.error("Process knowledge error:", e));
       }
 
-      clearPersisted();
-      toast({ title: "Agente configurado!", description: "Agora conecte seu WhatsApp pra ele comecar a atender!" });
-      navigate("/channels");
+      toast({ title: "Agente configurado!", description: "Agora vamos conectar seu WhatsApp!" });
+      setPhase("whatsapp-connect");
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
     }
@@ -971,6 +971,51 @@ export default function Onboarding() {
               selectedId={selectedTemplateId}
               onSelect={handleAgentTemplateSelect}
             />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ========== WHATSAPP CONNECT PHASE ==========
+  if (phase === "whatsapp-connect") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
+        <OnboardingHeader title="Conectar WhatsApp" subtitle="Ultimo passo! Conecte seu numero" progress={95} />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-md space-y-6 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-cosmos-emerald/10 flex items-center justify-center mx-auto">
+              <Wifi className="h-8 w-8 text-cosmos-emerald" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-display font-semibold text-foreground">
+                Conecte seu WhatsApp
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Seu agente esta pronto! Conecte o WhatsApp pra ele comecar a atender automaticamente.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={() => {
+                  clearPersisted();
+                  navigate("/channels");
+                }}
+                className="w-full h-12 rounded-xl bg-cosmos-emerald hover:bg-cosmos-emerald/90 text-white"
+              >
+                <Wifi className="h-4 w-4 mr-2" /> Conectar agora
+              </Button>
+              <button
+                onClick={() => {
+                  clearPersisted();
+                  toast({ title: "Tudo certo!", description: "Voce pode conectar o WhatsApp depois em Canais." });
+                  navigate("/dashboard");
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Fazer isso depois
+              </button>
+            </div>
           </div>
         </div>
       </div>
