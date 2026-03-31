@@ -139,7 +139,7 @@ serve(async (req) => {
         });
       }
 
-      const contactPhone = remoteJid.replace("@s.whatsapp.net", "");
+      const contactPhone = remoteJid.replace(/@.*$/, "");
       const messageContent = msgData.message?.conversation
         || msgData.message?.extendedTextMessage?.text
         || "";

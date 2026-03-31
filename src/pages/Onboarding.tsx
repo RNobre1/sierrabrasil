@@ -14,7 +14,7 @@ import ScrapingProgress from "@/components/onboarding/ScrapingProgress";
 import SocialLinksSelector from "@/components/onboarding/SocialLinksSelector";
 import TextPasteModal from "@/components/onboarding/TextPasteModal";
 import BusinessOverview from "@/components/onboarding/BusinessOverview";
-import AgentTemplateSelector from "@/components/onboarding/AgentTemplateSelector";
+import AgentClassSelector from "@/components/onboarding/AgentClassSelector";
 import type { AgentTemplate } from "@/components/onboarding/AgentTemplateSelector";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -457,10 +457,11 @@ export default function Onboarding() {
     sendToChat(text);
   };
 
-  const handleAgentTemplateSelect = (templateId: string) => {
-    setSelectedTemplateId(templateId);
-    const template = agentTemplates.find(t => t.id === templateId);
+  const handleAgentTemplateSelect = (cls: string) => {
+    const template = agentTemplates.find(t => t.class === cls);
     if (!template) return;
+    setSelectedTemplateId(template.id);
+    const templateId = template.id;
 
     setSelectedAgentClass(template.class);
     setPhase("chat");
@@ -951,21 +952,7 @@ export default function Onboarding() {
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
         <OnboardingHeader title="Tipo de Agente" subtitle="Escolha o perfil ideal para o seu negócio" progress={15} />
         <div className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-2xl space-y-6">
-            <div className="text-center space-y-2">
-              <h2 className="text-xl font-display font-semibold text-foreground">
-                Qual tipo de agente voce gostaria de criar?
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Cada tipo vem com habilidades pre-configuradas. Voce pode personalizar depois.
-              </p>
-            </div>
-            <AgentTemplateSelector
-              templates={agentTemplates}
-              selectedId={selectedTemplateId}
-              onSelect={handleAgentTemplateSelect}
-            />
-          </div>
+          <AgentClassSelector onSelect={handleAgentTemplateSelect} />
         </div>
       </div>
     );
