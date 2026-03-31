@@ -274,6 +274,27 @@ Cada modelo tem trade-offs de custo, velocidade e qualidade. A logica de recomen
 
 Ver detalhes da proposta em `docs/plano-arquitetura-v2.md` secao 2.
 
+### Memoria do Agente (Add-on Premium)
+
+Os agentes devem manter **persistencia de contexto** entre conversas com o mesmo contato. Mesmo em conversas longas ou retomadas dias depois, o agente deve lembrar do historico e preferencias do cliente.
+
+**Modelo de negocio:** Add-on pago — quem assina pode pagar a mais para habilitar memoria persistente nos agentes.
+
+**Implementacao tecnica (a definir):**
+- Tabela `agent_memories` — key-value por contato (contact_phone + attendant_id)
+- O agente gera um resumo estruturado ao final de cada conversa (nome, preferencias, ultima compra, problemas anteriores)
+- Na proxima conversa, o resumo e injetado no prompt como contexto
+- Limite de tokens de memoria por plano (starter: sem memoria, premium: 2k tokens, enterprise: 8k tokens)
+- Limpeza/expiracao configuravel pelo tenant
+
+**Tabela planejada:**
+```sql
+agent_memories (
+  id, attendant_id, contact_phone, summary TEXT, 
+  key_facts JSONB, last_interaction_at, token_count INT
+)
+```
+
 ### Restricoes MVP
 
 - **Canal:** Apenas WhatsApp (Evolution API, API nao-oficial)
@@ -281,6 +302,7 @@ Ver detalhes da proposta em `docs/plano-arquitetura-v2.md` secao 2.
 - **Capacidade:** Texto apenas (audio/imagem so se sobrar tempo)
 - **Takeover:** Humano pode assumir conversa (funcionalidade a investigar)
 - **Multi-usuario:** Preparar schema, nao implementar no MVP
+- **Memoria do agente:** Preparar schema, implementar como add-on pago pos-MVP
 
 ### Tabelas Novas (Planejadas)
 
@@ -309,6 +331,7 @@ Ver detalhes da proposta em `docs/plano-arquitetura-v2.md` secao 2.
 12. **Agentes texto-only no MVP** — Audio/imagem sao nice-to-have, nao bloqueiam lancamento.
 13. **Desenvolvimento com Antigravity** — Gemini 3.1 Pro High como dev junior; Claude Code como dev senior/orquestrador. Ver secao "Workflow de Desenvolvimento com Antigravity" acima.
 14. **Lista aberta de modelos LLM** — Nao restrita a 3 familias; incluir todas as opcoes viaveis do OpenRouter (versoes anteriores, modelos menores, etc.).
+15. **Memoria do agente como add-on premium** — Persistencia de contexto entre conversas. Tabela `agent_memories` com resumo por contato. Monetizado como add-on por plano. Considerar vector database para busca semantica de memorias (pos-MVP).
 
 ## Backlog (Pos-Sprint de 4 Dias)
 
