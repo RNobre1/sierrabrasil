@@ -1,4 +1,4 @@
-# SierraBrasil — Meteora Digital
+# The Agent — Meteora Digital
 
 Plataforma SaaS de agentes de IA conversacionais para atendimento via WhatsApp.
 

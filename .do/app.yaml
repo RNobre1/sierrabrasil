@@ -1,4 +1,4 @@
-name: sierrabrasil
+name: theagent
 region: nyc
 static_sites:
   - name: frontend

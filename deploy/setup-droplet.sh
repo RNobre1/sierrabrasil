@@ -4,8 +4,8 @@
 
 set -e
 
-APP_DIR="/var/www/sierrabrasil"
-REPO="https://github.com/RNobre1/sierrabrasil.git"
+APP_DIR="/var/www/theagent"
+REPO="https://github.com/RNobre1/theagent.git"
 
 echo "=== Instalando dependencias do sistema ==="
 apt-get update
@@ -37,8 +37,8 @@ npm ci
 npm run build
 
 echo "=== Configurando Nginx ==="
-cp deploy/nginx.conf /etc/nginx/sites-available/sierrabrasil
-ln -sf /etc/nginx/sites-available/sierrabrasil /etc/nginx/sites-enabled/sierrabrasil
+cp deploy/nginx.conf /etc/nginx/sites-available/theagent
+ln -sf /etc/nginx/sites-available/theagent /etc/nginx/sites-enabled/theagent
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
 

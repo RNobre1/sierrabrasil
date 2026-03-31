@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projeto
 
-**Nome:** SierraBrasil (Meteora Digital)
+**Nome:** The Agent (Meteora Digital)
 **Descricao:** Plataforma SaaS de gestao de agentes de IA conversacionais, com suporte multicanal (WhatsApp, Instagram, Web), base de conhecimento (RAG), analytics e administracao multi-tenant.
 **Repositorio:** https://github.com/RNobre1/sierrabrasil
 
