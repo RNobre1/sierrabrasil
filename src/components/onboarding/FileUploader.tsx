@@ -24,18 +24,11 @@ export default function FileUploader({
         const text = await file.text();
         onFileContent(text, file.name);
       } else {
-        // For binary files (PDF, DOC, XLS), read as base64 and send to edge function
-        // For MVP, we'll extract what we can client-side and note the file
-        const text = await file.text().catch(() => "");
-        if (text && text.length > 10) {
-          onFileContent(text, file.name);
-        } else {
-          // Binary file - notify that it was received
-          onFileContent(
-            `[Arquivo "${file.name}" (${(file.size / 1024).toFixed(1)}KB) recebido. Tipo: ${file.type || file.name.split('.').pop()}]`,
-            file.name
-          );
-        }
+        // Binary files (PDF, DOC, XLS) - only show metadata, not raw content
+        onFileContent(
+          `[Documento enviado: "${file.name}" (${(file.size / 1024).toFixed(1)}KB)]`,
+          file.name
+        );
       }
     } catch {
       onFileContent(`[Erro ao processar arquivo "${file.name}"]`, file.name);

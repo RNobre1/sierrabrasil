@@ -54,22 +54,18 @@ export default function Signup() {
   const [companyName, setCompanyName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      toast({ title: "Senha muito curta", description: "Minimo 6 caracteres.", variant: "destructive" });
-      return;
-    }
     setLoading(true);
 
+    const tempPassword = crypto.randomUUID() + "Aa1!";
     const { data, error } = await supabase.auth.signUp({
       email,
-      password,
+      password: tempPassword,
       options: {
         data: {
           full_name: fullName,
@@ -86,7 +82,7 @@ export default function Signup() {
     }
 
     if (!data.session) {
-      const signInResult = await supabase.auth.signInWithPassword({ email, password });
+      const signInResult = await supabase.auth.signInWithPassword({ email, password: tempPassword });
       if (signInResult.error) {
         setLoading(false);
         toast({ title: "Erro ao entrar", description: signInResult.error.message, variant: "destructive" });
@@ -179,10 +175,6 @@ export default function Signup() {
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">E-mail</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="seu@email.com" className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">Senha</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Minimo 6 caracteres" minLength={6} className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm placeholder:text-muted-foreground/50" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="whatsapp" className="text-xs font-medium text-muted-foreground">WhatsApp</Label>

@@ -838,22 +838,42 @@ export default function Onboarding() {
       const { data: att } = await supabase.from("attendants").select("id").eq("tenant_id", tenant.id).limit(1).single();
       if (!att) throw new Error("Attendant not found");
 
-      // Build rich instructions from overview data
-      const instructions = [
-        overviewData.businessName ? `SOBRE O NEGÓCIO: ${overviewData.businessName}` : "",
-        overviewData.description ? `DESCRIÇÃO: ${overviewData.description}` : "",
-        overviewData.sector ? `SETOR: ${overviewData.sector}` : "",
-        overviewData.address ? `ENDEREÇO: ${overviewData.address}` : "",
-        overviewData.hours ? `HORÁRIO DE FUNCIONAMENTO: ${overviewData.hours}` : "",
-        overviewData.contactInfo ? `CONTATO: ${overviewData.contactInfo}` : "",
-        overviewData.products ? `PRODUTOS/SERVIÇOS:\n${overviewData.products}` : "",
-        overviewData.prices ? `PREÇOS:\n${overviewData.prices}` : "",
-        overviewData.highlights ? `DIFERENCIAIS E INFORMAÇÕES IMPORTANTES:\n${overviewData.highlights}` : "",
-      ].filter(Boolean).join("\n\n");
+      // Build actionable instructions (not just raw data)
+      const rules: string[] = [];
+      if (overviewData.businessName) rules.push(`Voce atende pela empresa "${overviewData.businessName}".`);
+      if (overviewData.description) rules.push(`Sobre o negocio: ${overviewData.description}`);
+      if (overviewData.address) rules.push(`Quando perguntarem o endereco, informe: ${overviewData.address}.`);
+      if (overviewData.hours) rules.push(`Horario de funcionamento: ${overviewData.hours}. Se perguntarem, informe exatamente isso.`);
+      if (overviewData.contactInfo) rules.push(`Contato da empresa: ${overviewData.contactInfo}.`);
+      if (overviewData.products) rules.push(`Produtos e servicos oferecidos:\n${overviewData.products}`);
+      if (overviewData.prices) rules.push(`Tabela de precos (use EXATAMENTE estes valores):\n${overviewData.prices}`);
+      if (overviewData.highlights) rules.push(`Diferenciais e pontos fortes do negocio:\n${overviewData.highlights}`);
+      const instructions = rules.join("\n\n");
 
       // Use agent name from chat, fallback to business name
       const finalAttendantName = attendantNameFromChat || overviewData.businessName || "Meu Agente";
-      const finalPersona = personaFromChat || overviewData.tone || "Simpático, profissional e direto";
+      const finalPersona = personaFromChat || overviewData.tone || "Simpatico, profissional e direto";
+
+      // Recommend best model based on sector
+      let recommendedModel = "google/gemini-2.5-flash";
+      let modelReason = "Modelo padrao";
+      try {
+        const recResp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recommend-model`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ sector: overviewData.sector || "", agentClass: selectedAgentClass || "" }),
+        });
+        if (recResp.ok) {
+          const rec = await recResp.json();
+          recommendedModel = rec.model || recommendedModel;
+          modelReason = rec.reason || modelReason;
+        }
+      } catch (e) {
+        console.warn("Model recommendation failed, using default:", e);
+      }
 
       await supabase.from("attendants").update({
         name: finalAttendantName,
@@ -861,6 +881,9 @@ export default function Onboarding() {
         instructions,
         channels: ["whatsapp", "web"],
         status: "online",
+        model: recommendedModel,
+        recommended_model: recommendedModel,
+        model_selection_reason: modelReason,
       }).eq("id", att.id);
 
       if (overviewData.businessName) {
