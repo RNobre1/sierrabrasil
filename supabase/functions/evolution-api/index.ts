@@ -84,12 +84,21 @@ serve(async (req) => {
         // Sanitize: prefix with tenant slug for isolation
         const safeName = `${tenant.id.substring(0, 8)}_${instanceName.replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
+        const webhookUrl = `${SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+
         const evoRes = await fetch(`${baseUrl}/instance/create`, {
           method: "POST",
           headers: evoHeaders,
           body: JSON.stringify({
             instanceName: safeName,
             integration: "WHATSAPP-BAILEYS",
+            webhook: webhookUrl,
+            webhook_by_events: false,
+            webhook_base64: false,
+            events: [
+              "MESSAGES_UPSERT",
+              "CONNECTION_UPDATE",
+            ],
           }),
         });
         const evoData = await evoRes.json();
@@ -220,9 +229,31 @@ serve(async (req) => {
           })
           .eq("id", inst.id);
 
-        // Fetch profile pic when newly connected
+        // When newly connected: fetch profile pic + ensure webhook is configured
         if (newStatus === "connected") {
           await fetchAndSaveProfilePic(instanceName, inst.id);
+
+          // Ensure webhook is set (fallback in case create_instance didn't set it)
+          try {
+            const whUrl = `${SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+            const whRes = await fetch(`${baseUrl}/webhook/set/${instanceName}`, {
+              method: "POST",
+              headers: evoHeaders,
+              body: JSON.stringify({
+                url: whUrl,
+                webhook_by_events: false,
+                webhook_base64: false,
+                events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"],
+              }),
+            });
+            if (whRes.ok) {
+              console.log("Webhook configured for", instanceName);
+            } else {
+              console.warn("Webhook setup returned", whRes.status, await whRes.text());
+            }
+          } catch (e) {
+            console.warn("Webhook setup fallback error (non-fatal):", e);
+          }
         }
 
         return json({ success: true, state: evoData?.instance?.state, status: newStatus });

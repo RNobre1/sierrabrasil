@@ -344,6 +344,7 @@ agent_memories (
 14. **Lista aberta de modelos LLM** — Nao restrita a 3 familias; incluir todas as opcoes viaveis do OpenRouter (versoes anteriores, modelos menores, etc.).
 15. **Memoria do agente como add-on premium** — Persistencia de contexto entre conversas. Tabela `agent_memories` com resumo por contato. Monetizado como add-on por plano. Considerar vector database para busca semantica de memorias (pos-MVP).
 16. **Modelo unico por agente no MVP** — Cada agente usa 1 modelo (selecionado automaticamente ou pelo usuario). Sem cascata multi-modelo (latencia inaceitavel para WhatsApp). Roteamento condicional e evolucao pos-MVP (classifier barato → modelo especializado por tipo de mensagem).
+17. **WhatsApp: dual-provider (Evolution API + Cloud API oficial)** — MVP usa Evolution API (Baileys, nao-oficial, gratis). Pos-MVP, migrar para WhatsApp Business Cloud API (oficial Meta) como opcao premium. Manter ambos como providers selecionaveis por tenant/instancia. Abstracoes: par de edge functions por provider + campo `provider` em `whatsapp_instances`.
 
 ## Backlog (Pos-Sprint de 4 Dias)
 
@@ -363,6 +364,8 @@ agent_memories (
 - [ ] Agente com imagem (processamento multimodal)
 - [ ] Roteamento condicional multi-modelo (classifier + modelo especializado por intencao)
 - [ ] Vector database (pgvector) para knowledge base e memoria semantica
+- [ ] **Escalonamento WhatsApp: migrar para API oficial Meta** — Criar provider WhatsApp Business Cloud API (oficial) como alternativa ao Evolution API. Passos: (1) Abstrair camada de provider com interface comum (send, receive, connect, status). (2) Criar edge functions `whatsapp-cloud-api` e `whatsapp-cloud-webhook`. (3) Adicionar campo `provider` em `whatsapp_instances` ("evolution" | "cloud_api"). (4) Integrar com Meta Business Manager (verificacao de conta, templates de mensagem). (5) Repassar custo por conversa ao cliente no plano premium/enterprise. Beneficios: sem risco de ban, SLA oficial, sem droplet proprio, multi-numero nativo.
+- [ ] **Abstracoes de canal** — Generalizar interface de messaging para suportar multiplos providers (Evolution, Cloud API, Instagram, Web Chat) com contrato unico de send/receive
 
 ## Recursos Externos
 
