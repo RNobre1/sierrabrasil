@@ -267,7 +267,8 @@ function DetailsStep({
 
       <div className="grid gap-2.5 max-h-[50vh] overflow-y-auto pr-1">
         {visibleFields.map((f, i) => {
-          const val = (data as any)[f.key] || "";
+          const rawVal = (data as any)[f.key] || "";
+          const val = typeof rawVal === "object" ? (Array.isArray(rawVal) ? rawVal.join(", ") : JSON.stringify(rawVal)) : String(rawVal);
           const isEditing = editing === f.key;
 
           return (

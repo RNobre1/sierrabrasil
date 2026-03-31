@@ -195,22 +195,16 @@ export default function Onboarding() {
       return;
     }
 
-    // First-time onboarding: start with password
-    setTimeout(() => {
-      const firstName = userName ? userName.split(" ")[0] : "";
-      const introMsg = firstName
-        ? `Olá! Sou ${firstName}${companyName ? ` da ${companyName}` : ""} e quero configurar meu agente.`
-        : "Olá! Acabei de criar minha conta e quero configurar meu agente.";
-      const greeting = firstName
-        ? `Olá, ${firstName}! Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Antes de começarmos a configurar seu agente, vamos criar uma senha para seu acesso, tudo bem?!\n\nDigite sua senha abaixo:`
-        : `Olá! Antes de começarmos a configurar seu agente, vamos criar uma senha para seu acesso, tudo bem?!\n\nDigite sua senha abaixo:`;
-      setMessages([
-        { role: "user", content: introMsg },
-        { role: "assistant", content: greeting },
-      ]);
-      setPasswordPhase("awaiting");
-      setIsPasswordInput(true);
-    }, 500);
+    // First-time onboarding: skip password (auto-generated at signup), go to class select
+    const firstName = userName ? userName.split(" ")[0] : "";
+    setMessages([{
+      role: "assistant",
+      content: firstName
+        ? `Olá, ${firstName}! Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Vamos configurar seu agente de IA!\n\nEscolha o tipo ideal para o seu negócio:`
+        : "Olá! Vamos configurar seu agente de IA!\n\nEscolha o tipo ideal para o seu negócio:",
+    }]);
+    setPasswordPhase("done");
+    setPhase("class-select");
   }, []);
 
   // Streaming helper with timeout protection

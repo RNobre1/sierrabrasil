@@ -151,11 +151,13 @@ async function extractSourcePreviews(platform: string, items: any[], url: string
         preview.displayName = first.ownerFullName || first.ownerUsername || first.fullName || first.username || "";
         preview.bio = first.biography || first.caption?.slice(0, 200) || "";
         preview.followers = first.followersCount || first.ownerFollowerCount || 0;
-        // Get thumbnails from posts
-        preview.thumbnails = items
+        // Get thumbnails from posts — convert to base64 to avoid CORS blocking
+        const thumbUrls = items
           .map(post => post.displayUrl || post.thumbnailSrc || post.previewUrl || post.url)
           .filter(Boolean)
           .slice(0, 6);
+        const thumbPromises = thumbUrls.map(url => toDataUri(url));
+        preview.thumbnails = (await Promise.all(thumbPromises)).filter(Boolean);
       }
       break;
     }
@@ -373,7 +375,16 @@ REGRAS:
     const data = await resp.json();
     const content = data.choices?.[0]?.message?.content || "";
     const jsonStr = content.replace(/```json?\s*/g, "").replace(/```\s*/g, "").trim();
-    return JSON.parse(jsonStr);
+    const parsed = JSON.parse(jsonStr);
+    // Ensure all values are strings (AI sometimes returns objects/arrays)
+    for (const key of Object.keys(parsed)) {
+      if (parsed[key] !== null && typeof parsed[key] === "object") {
+        parsed[key] = Array.isArray(parsed[key])
+          ? parsed[key].join(", ")
+          : Object.entries(parsed[key]).map(([k, v]) => `${k}: ${v}`).join("\n");
+      }
+    }
+    return parsed;
   } catch (e) {
     console.error("AI overview error:", e);
     return null;
