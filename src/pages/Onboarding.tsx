@@ -16,6 +16,7 @@ import TextPasteModal from "@/components/onboarding/TextPasteModal";
 import BusinessOverview from "@/components/onboarding/BusinessOverview";
 import AgentTemplateSelector from "@/components/onboarding/AgentTemplateSelector";
 import type { AgentTemplate } from "@/components/onboarding/AgentTemplateSelector";
+import PhoneCollectStep from "@/components/onboarding/PhoneCollectStep";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -24,6 +25,7 @@ const PROCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-k
 const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
 
 type OnboardingPhase =
+  | "phone-collect"
   | "class-select"
   | "chat"
   | "social-links"
@@ -158,6 +160,31 @@ export default function Onboarding() {
 
     // If we have persisted data with messages, skip initialization
     if (persisted?.messages?.length > 0) return;
+
+    // Check if user logged in via OAuth (has provider in app_metadata)
+    const isOAuth = user?.app_metadata?.provider && user.app_metadata.provider !== "email";
+    const hasPhone = !!user?.user_metadata?.whatsapp || !!user?.user_metadata?.phone;
+
+    // OAuth user without phone: collect phone first
+    if (isOAuth && !hasPhone) {
+      setPasswordPhase("done");
+      setPhase("phone-collect");
+      return;
+    }
+
+    // OAuth user with phone: skip password, go to class select
+    if (isOAuth && hasPhone) {
+      const firstName = userName ? userName.split(" ")[0] : "";
+      setMessages([{
+        role: "assistant",
+        content: firstName
+          ? `Oi, ${firstName}! Vamos configurar seu agente. Escolha o tipo ideal:`
+          : "Vamos configurar seu agente! Escolha o tipo:",
+      }]);
+      setPasswordPhase("done");
+      setPhase("class-select");
+      return;
+    }
 
     // If creating a new agent (returning user), skip password and go to class select
     if (isNewAgent) {
@@ -907,6 +934,35 @@ export default function Onboarding() {
     : phase === "social-links" ? 35
     : phase === "class-select" ? 15
     : `${Math.min(30, userMsgCount * 8)}`;
+
+  // ========== PHONE COLLECT PHASE ==========
+  if (phase === "phone-collect") {
+    const handlePhoneSubmit = async (phone: string) => {
+      // Save phone to user metadata
+      await supabase.auth.updateUser({ data: { whatsapp: phone } });
+      // Also save to profile
+      if (user) {
+        await supabase.from("profiles").update({ phone }).eq("user_id", user.id);
+      }
+      const firstName = userName ? userName.split(" ")[0] : "";
+      setMessages([{
+        role: "assistant",
+        content: firstName
+          ? `Oi, ${firstName}! Vamos configurar seu agente. Escolha o tipo ideal:`
+          : "Vamos configurar seu agente! Escolha o tipo:",
+      }]);
+      setPhase("class-select");
+    };
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
+        <OnboardingHeader title="Seu numero" subtitle="Precisamos do seu WhatsApp pra continuar" progress={5} />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <PhoneCollectStep onSubmit={handlePhoneSubmit} userName={userName ? userName.split(" ")[0] : undefined} />
+        </div>
+      </div>
+    );
+  }
 
   // ========== CLASS SELECT PHASE ==========
   if (phase === "class-select") {
