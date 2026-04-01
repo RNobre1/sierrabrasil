@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone, ShieldCheck, RotateCcw, Zap, Brain, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
+import PhoneCollectStep from "@/components/onboarding/PhoneCollectStep";
 import meteoraLogo from "@/assets/meteora-branca.png";
 import meteoraLogoPreta from "@/assets/meteora-preta.png";
 
@@ -73,12 +74,23 @@ export default function VerifyPhone() {
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [collectingPhone, setCollectingPhone] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  const phone = user?.user_metadata?.whatsapp || "";
+  // Set phone from user metadata, or flag for collection (Google OAuth)
+  useEffect(() => {
+    if (!user) return;
+    const savedPhone = user.user_metadata?.whatsapp || "";
+    if (savedPhone) {
+      setPhone(savedPhone);
+    } else {
+      setCollectingPhone(true);
+    }
+  }, [user]);
 
   // Redirect to login if no session
   useEffect(() => {
@@ -87,12 +99,22 @@ export default function VerifyPhone() {
     }
   }, [authLoading, user]);
 
-  // Send OTP on mount
+  // Send OTP once we have a phone
   useEffect(() => {
-    if (user && phone && !otpSent) {
+    if (user && phone && !otpSent && !collectingPhone) {
       sendOtp();
     }
-  }, [user, phone]);
+  }, [user, phone, collectingPhone]);
+
+  // Handle phone submission from Google OAuth users
+  async function handlePhoneCollected(collectedPhone: string) {
+    setPhone(collectedPhone);
+    setCollectingPhone(false);
+    // Save phone to user metadata
+    await supabase.auth.updateUser({
+      data: { whatsapp: collectedPhone },
+    });
+  }
 
   async function sendOtp() {
     const { error } = await supabase.functions.invoke("send-otp", {
@@ -225,6 +247,13 @@ export default function VerifyPhone() {
             <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-7 dark:hidden block" />
           </div>
 
+          {/* Phase 1: Collect phone (Google OAuth users) */}
+          {collectingPhone ? (
+            <PhoneCollectStep
+              onSubmit={handlePhoneCollected}
+              userName={user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.name?.split(" ")[0]}
+            />
+          ) : (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -296,6 +325,7 @@ export default function VerifyPhone() {
               Ao verificar, você confirma que este número é seu e aceita receber mensagens da plataforma via WhatsApp.
             </p>
           </motion.div>
+          )}
         </div>
       </div>
     </div>
