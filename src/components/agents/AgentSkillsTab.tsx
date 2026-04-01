@@ -18,6 +18,7 @@ interface Skill {
   category: "core" | "advanced" | "premium";
   includedIn: string[]; // plans that include it
   addonPrice?: string;
+  comingSoon?: boolean;
 }
 
 const SKILLS: Skill[] = [
@@ -29,15 +30,15 @@ const SKILLS: Skill[] = [
 
   // Advanced — Professional+
   { id: "lead-capture", name: "Captura de Leads", description: "Coleta dados do cliente automaticamente", detail: "Durante a conversa, o agente identifica oportunidades para coletar nome, email, telefone e interesse do cliente, salvando tudo estruturado no CRM.", icon: <Users className="h-4 w-4" />, category: "advanced", includedIn: ["professional", "business", "enterprise"], addonPrice: "R$47/mês" },
-  { id: "scheduling", name: "Agendamento Inteligente", description: "Agenda reuniões e compromissos pelo chat", detail: "Integra com Google Calendar e permite que o agente sugira horários disponíveis, confirme agendamentos e envie lembretes automáticos.", icon: <Calendar className="h-4 w-4" />, category: "advanced", includedIn: ["professional", "business", "enterprise"], addonPrice: "R$67/mês" },
+  { id: "scheduling", name: "Agendamento Inteligente", description: "Agenda reuniões e compromissos pelo chat", detail: "Integra com Google Calendar e permite que o agente sugira horários disponíveis, confirme agendamentos e envie lembretes automáticos.", icon: <Calendar className="h-4 w-4" />, category: "advanced", includedIn: ["professional", "business", "enterprise"], addonPrice: "R$67/mês", comingSoon: true },
   { id: "sentiment", name: "Análise de Sentimento", description: "Detecta emoções e adapta respostas", detail: "Analisa o tom da mensagem do cliente em tempo real (feliz, frustrado, urgente) e ajusta automaticamente o tom e prioridade da resposta.", icon: <BarChart3 className="h-4 w-4" />, category: "advanced", includedIn: ["professional", "business", "enterprise"], addonPrice: "R$37/mês" },
   { id: "follow-up", name: "Follow-up Automático", description: "Reengaja clientes após inatividade", detail: "Envia mensagens de acompanhamento inteligentes para clientes que não responderam, lembretes de carrinho abandonado e check-ins pós-venda.", icon: <Bell className="h-4 w-4" />, category: "advanced", includedIn: ["professional", "business", "enterprise"], addonPrice: "R$57/mês" },
 
   // Premium — Business/Enterprise
   { id: "multi-language", name: "Multilíngue", description: "Atende em português, inglês, espanhol e mais", detail: "Detecta automaticamente o idioma do cliente e responde no mesmo idioma, com tradução em tempo real de toda a base de conhecimento.", icon: <Globe className="h-4 w-4" />, category: "premium", includedIn: ["business", "enterprise"], addonPrice: "R$97/mês" },
-  { id: "email-integration", name: "Integração com Email", description: "Envia emails transacionais e follow-ups", detail: "O agente pode enviar emails formatados profissionalmente — confirmações, propostas, resumos de conversa — tudo integrado ao fluxo do chat.", icon: <Mail className="h-4 w-4" />, category: "premium", includedIn: ["business", "enterprise"], addonPrice: "R$77/mês" },
-  { id: "advanced-analytics", name: "Analytics Avançado", description: "Relatórios detalhados de performance", detail: "Painel com métricas granulares: tempo de resposta por skill, taxa de resolução por tipo de pergunta, heatmap de horários e funil de conversão completo.", icon: <BarChart3 className="h-4 w-4" />, category: "premium", includedIn: ["business", "enterprise"], addonPrice: "R$87/mês" },
-  { id: "custom-actions", name: "Ações Customizadas", description: "Webhooks e integrações via API", detail: "Crie ações personalizadas que o agente pode executar durante a conversa: consultar estoque, verificar status de pedido, criar ticket no seu sistema.", icon: <Zap className="h-4 w-4" />, category: "premium", includedIn: ["enterprise"], addonPrice: "R$147/mês" },
+  { id: "email-integration", name: "Integração com Email", description: "Envia emails transacionais e follow-ups", detail: "O agente pode enviar emails formatados profissionalmente — confirmações, propostas, resumos de conversa — tudo integrado ao fluxo do chat.", icon: <Mail className="h-4 w-4" />, category: "premium", includedIn: ["business", "enterprise"], addonPrice: "R$77/mês", comingSoon: true },
+  { id: "advanced-analytics", name: "Analytics Avançado", description: "Relatórios detalhados de performance", detail: "Painel com métricas granulares: tempo de resposta por skill, taxa de resolução por tipo de pergunta, heatmap de horários e funil de conversão completo.", icon: <BarChart3 className="h-4 w-4" />, category: "premium", includedIn: ["business", "enterprise"], addonPrice: "R$87/mês", comingSoon: true },
+  { id: "custom-actions", name: "Ações Customizadas", description: "Webhooks e integrações via API", detail: "Crie ações personalizadas que o agente pode executar durante a conversa: consultar estoque, verificar status de pedido, criar ticket no seu sistema.", icon: <Zap className="h-4 w-4" />, category: "premium", includedIn: ["enterprise"], addonPrice: "R$147/mês", comingSoon: true },
 ];
 
 const categoryLabels = {
@@ -182,7 +183,11 @@ export default function AgentSkillsTab({ agentId, agentClass, plan }: Props) {
                         </div>
                       </div>
                       <div className="shrink-0">
-                        {included ? (
+                        {skill.comingSoon ? (
+                          <Badge variant="outline" className="text-[9px] font-mono border-amber-500/30 text-amber-400 bg-amber-500/5">
+                            Em breve
+                          </Badge>
+                        ) : included ? (
                           <Switch
                             checked={enabled}
                             onCheckedChange={() => toggleSkill(skill)}

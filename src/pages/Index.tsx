@@ -17,10 +17,10 @@ const features = [
 ];
 
 const plans = [
-  { name: "Essencial", price: "97", features: ["1 agente inteligente", "100 conversas/mês", "WhatsApp", "Relatório semanal", "Suporte por chat"], popular: false },
-  { name: "Profissional", price: "497", features: ["3 agentes inteligentes", "900 conversas/mês", "WhatsApp + Instagram", "Relatórios diários", "Explorer com insights semanais", "Follow-up automático", "Suporte prioritário"], popular: true },
-  { name: "Empresarial", price: "997", features: ["5 agentes inteligentes", "1.800 conversas/mês", "Todos os canais", "Explorer diário + melhoria automática", "Cobrança e campanhas", "Dashboard em tempo real", "Consultoria mensal inclusa"], popular: false },
-  { name: "Scale", price: null, features: ["Agentes ilimitados", "Volume customizado", "Todos os canais + API", "Manager dedicado Meteora", "Estratégia mensal de vendas", "SLA garantido", "Implementação personalizada"], popular: false, enterprise: true },
+  { name: "Essencial", price: "97", features: ["1 agente inteligente", "100 conversas/mês", "10 documentos na base", "WhatsApp", "Relatório semanal", "Suporte por chat"], popular: false },
+  { name: "Profissional", price: "497", features: ["3 agentes inteligentes", "900 conversas/mês", "50 documentos na base", "WhatsApp + Instagram", "Relatórios diários", "Skills avançados", "Suporte prioritário"], popular: true },
+  { name: "Empresarial", price: "997", features: ["10 agentes inteligentes", "1.800 conversas/mês", "200 documentos na base", "Todos os canais", "Skills premium", "Dashboard em tempo real", "Consultoria mensal inclusa"], popular: false },
+  { name: "Scale", price: null, features: ["Agentes ilimitados", "Volume customizado", "Base de conhecimento ilimitada", "Todos os canais + API", "Manager dedicado Meteora", "SLA garantido", "Implementação personalizada"], popular: false, enterprise: true },
 ];
 
 const testimonials = [

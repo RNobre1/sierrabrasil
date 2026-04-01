@@ -206,7 +206,8 @@ RLS (Row-Level Security) habilitado em todas as tabelas. Usuarios so acessam dad
 - Cada usuario pertence a um tenant (organizacao)
 - Tenant possui attendants, conversations, knowledge_base
 - RLS garante isolamento de dados
-- Planos: "starter", "enterprise" com trial timer
+- Planos: "starter" (R$97), "professional" (R$497), "business" (R$997), "enterprise" (R$997+), "trial"
+- Cobranca por conversa (nao por mensagem): 100/900/1.800/custom (Scale)
 
 ## Origem e Evolucao do Projeto
 
@@ -217,7 +218,8 @@ O MVP foi construido na plataforma Lovable (Lovable Cloud + Lovable AI) em uma s
 ### Jornada do Cliente (Fluxo Completo — Revisado)
 
 1. **Signup** (`/signup`) — Cria conta; trigger auto-cria profile + tenant (trial) + attendant padrao
-2. **Onboarding conversacional** (`/onboarding`) — IA guia o cliente em conversa natural:
+2. **Verificacao WhatsApp** (`/verify-phone`) — OTP 6 digitos enviado via Evolution API. 3 tentativas, 5min expiracao. Obrigatorio antes do onboarding.
+3. **Onboarding conversacional** (`/onboarding`) — IA guia o cliente em conversa natural:
    - Perguntas organicas sobre negocio, servicos, tom de voz
    - Formulario inline de redes sociais (IG, LinkedIn, Facebook, TikTok, YouTube, site)
    - **Web scraping via Apify** dos links fornecidos (timer no front, background no back)
@@ -260,18 +262,18 @@ O banco possui 6 tenants realistas de setores distintos (saude, imobiliario, foo
   - Custo-beneficio por caso de uso
   - Humanizacao, velocidade, multimodalidade, raciocinio numerico
 
-**Modelos candidatos (lista aberta, expandir conforme necessario):**
+**Modelos disponiveis para agentes (apenas Claude e GPT):**
 
-| Familia | Modelos | Forca |
-|---|---|---|
-| Claude (Anthropic) | Opus 4.6, Sonnet 4.6, Haiku 4.5 | Humanizacao, nuance, instrucoes complexas |
-| GPT (OpenAI) | GPT-5, GPT-5 Mini, GPT-4.1, GPT-4.1 Mini, GPT-4.1 Nano | Versatilidade, dados estruturados, raciocinio |
-| Gemini (Google) | 2.5 Pro, 2.5 Flash, 2.0 Flash | Velocidade, custo baixo, multimodal, contexto longo |
-| Llama (Meta) | Llama 4 Scout, Llama 4 Maverick | Open-source, custo muito baixo |
-| DeepSeek | DeepSeek-V3, DeepSeek-R1 | Raciocinio, codigo, custo baixo |
-| Mistral | Mistral Large, Mistral Medium | Multilingual, europeu, bom em PT-BR |
+| Modelo | Custo | Velocidade | Forca |
+|---|---|---|---|
+| `anthropic/claude-sonnet-4-6` | Medio | Media | Humanizacao, empatia, instrucoes complexas |
+| `anthropic/claude-haiku-4-5` | Baixo | Rapida | Humanizacao + velocidade |
+| `openai/gpt-4.1` | Medio | Media | Versatilidade, dados estruturados |
+| `openai/gpt-4.1-mini` | Baixo | Rapida | Custo-beneficio, volume |
 
-Cada modelo tem trade-offs de custo, velocidade e qualidade. A logica de recomendacao deve considerar todos esses fatores.
+**Gemini e usado APENAS internamente** (onboarding-chat, recommend-model decisor). Nunca como modelo do agente do cliente.
+
+Cada modelo tem trade-offs de custo, velocidade e qualidade. A logica de recomendacao considera setor e classe do agente.
 
 ### Arquitetura de Prompts — DEFINIDA
 
@@ -311,23 +313,29 @@ agent_memories (
 
 ### Restricoes MVP
 
-- **Canal:** Apenas WhatsApp (Evolution API, API nao-oficial)
-- **Agentes:** Reativos apenas — nunca iniciam conversa
-- **Capacidade:** Texto apenas (audio/imagem so se sobrar tempo)
-- **Takeover:** Humano pode assumir conversa (funcionalidade a investigar)
+- **Canal:** Apenas WhatsApp (Evolution API, API nao-oficial). Instagram e Webchat no backlog.
+- **Agentes:** Reativos apenas — nunca iniciam conversa (exceto follow-up se implementado)
+- **Capacidade:** Texto apenas
+- **Takeover:** Humano pode assumir conversa (DONE — funcional)
 - **Multi-usuario:** Preparar schema, nao implementar no MVP
-- **Memoria do agente:** Preparar schema, implementar como add-on pago pos-MVP
+- **Memoria do agente:** Ultimo item do MVP, add-on pago (R$67/mes)
+- **Pagamento Stripe:** MUST para MVP — seguranca maxima, zero hardcoded, server-side only
 
-### Tabelas Novas (Planejadas)
+### Tabelas Existentes (Implementadas)
 
-- `agent_templates` — Templates pre-definidos (Vendas, Suporte, Agendamento)
-- `scraping_results` — Resultados do Apify (status, raw_data, confirmed_data, profile_pic_url)
-- `system_config` — Config global (prompt geral, modelo default)
+- `agent_templates` — Templates Vendas e Suporte (DONE)
+- `scraping_results` — Resultados do Apify (DONE)
+- `system_config` — Config global (DONE)
+- `phone_verifications` — OTP WhatsApp (DONE)
+- `profiles.phone_verified` — Flag de verificacao (DONE)
 
-### Alteracoes Planejadas em Tabelas Existentes
+### Tabelas Planejadas (Fase Pagamento)
 
-- `attendants`: + `template_id`, `recommended_model`, `model_selection_reason`
-- `conversations`: + `is_human_takeover`, `takeover_by`, `takeover_at`
+- `subscriptions` — subscription_id, stripe_customer_id, plan, status, period
+- `addon_subscriptions` — tenant_id, skill_id, stripe_subscription_item_id
+- `plans` — Centralizar limites e precos (tirar hardcoded do frontend)
+- `audit_logs` — Registro de mudancas de plano/assinatura
+- `agent_memories` — Memoria persistente por contato (ultimo item MVP)
 
 ## Decisoes Tecnicas (ADRs)
 
@@ -351,34 +359,60 @@ agent_memories (
 18. **Evolution API v2.3.6 com resolucao LID** — Migrada de v1.8.7 (MongoDB, sem LID) para v2.3.6 (PostgreSQL, com LID). Imagem Docker `evoapicloud/evolution-api` (nao `atendai`). Droplet anterior destruido. v2.3.7 evitada por bug em botoes/listas interativas (Issue #2390).
 19. **Status inteligente via tags no prompt** — IA usa `[ESCALATE]` e `[RESOLVED]` no final da resposta. Webhook parseia, remove tags antes de salvar/enviar, e atualiza status da conversa automaticamente. Conversas escaladas nao recebem resposta da IA.
 20. **Templates MVP limitados a Vendas e Suporte** — Templates Agendamento, Educacional e Recepcao removidos do banco. Onboarding usa `AgentClassSelector` com visual de cards com skills.
+21. **Verificacao WhatsApp via OTP** — Edge functions `send-otp` e `verify-otp`. Instancia `otp-verification` na Evolution API. Tabela `phone_verifications` com 3 tentativas e 5min expiracao. Guard no onboarding redireciona se nao verificou.
+22. **Tutorial guiado do dashboard** — 7 steps com spotlight SVG mask, Framer Motion, botoes Anterior/Proximo/Pular. localStorage flag `theagent_guided_tour_completed`. `data-tour` attributes em KPIs, graficos, agentes, conversas.
+23. **Modelos de agente limitados a Claude e GPT** — Gemini removido das recomendacoes de agente. Usado apenas internamente como decisor (onboarding-chat, recommend-model). Default mudou de Gemini Flash para GPT-4.1 Mini.
+24. **Knowledge base limites revisados** — Starter: 10 docs/10MB (era 5/5). Professional: 50/100MB. Business: 200/500MB. Enterprise: ilimitado/2GB.
+25. **Cobranca por conversa, nao por mensagem** — 100 (Essencial), 900 (Profissional), 1.800 (Empresarial), custom (Scale — definido caso a caso). Uma conversa = todo o atendimento com 1 contato.
+26. **Skills backlog marcados "Em breve"** — Agendamento, Analytics, Email, Acoes Custom com badge `comingSoon` no frontend. Ativacao/desativacao funcional no banco para skills implementados.
 
-## Proximos Passos (Prioridade)
+## Proximos Passos (Cronograma MVP)
 
-1. **Verificacao de numero de celular pos-signup** — Implementar OTP via Supabase Auth (phone provider) ou via Evolution API (enviar codigo por WhatsApp). Tela de referencia visual salva em `memory/reference_whatsapp_verification.md`. Fluxo: signup → verificacao de numero → onboarding.
-2. **Tutorial interativo do dashboard** — Guia passo-a-passo que explica cada grafico, cada aba, pede pro usuario clicar nas abas pra continuar. Skip a qualquer momento.
-3. **Testar onboarding completo** — Fluxo end-to-end: signup → classe de agente → chat → scraping → docs → WhatsApp → dashboard.
-4. **Envio de audio no human takeover** — Botao de mic no campo de resposta manual (atualmente desabilitado).
-5. **Commit e redeploy do frontend** — Varias mudancas pendentes no frontend (ConversationDetail, Onboarding, Index).
+Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 
-## Backlog (Pos-Sprint)
+### DONE (Dia 3)
+- [x] Verificacao WhatsApp OTP (send-otp, verify-otp, pagina, guard, instancia)
+- [x] Tutorial guiado dashboard (7 steps, spotlight, navegacao)
+- [x] Modelos de agente: apenas Claude e GPT (Gemini removido de recomendacoes)
+- [x] Knowledge base limites revisados (5→10 Starter, etc.)
+- [x] Landing page atualizada (conversas, docs, agentes por plano)
+- [x] Skills backlog marcados "Em breve" no frontend
+- [x] Analise completa do sistema (`docs/analise-sistema-completa.md`)
 
-- [ ] **Previews de redes sociais no onboarding** — Mostrar prints/screenshots das home pages das redes sociais (ja funciona parcial, melhorar)
-- [ ] **Envio de imagens pelo agente** — Nova funcionalidade pra agentes enviarem fotos/catalogo via WhatsApp
-- [ ] **Audit de seguranca da codebase Lovable** — .env exposto, secrets hardcoded, validacao de inputs, codigo morto
-- [ ] Manter dados mockados/seed por enquanto (uteis para demo)
+### TODO (Ordem de Execucao)
+1. **Skills funcionais** — FAQ, Captura de Leads, Analise Sentimento, Multilingue, Follow-up (tentar)
+2. **Pagamento Stripe (MUST)** — Tabelas, webhooks, checkout, portal, validacao server-side, seguranca
+3. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
+4. **Memoria do agente** — Tabela, sumarizacao, injecao no prompt, TTL, add-on R$67/mes
+
+## Backlog (Pos-MVP — "Coming Soon" no Frontend)
+
+### Skills
+- [ ] Agendamento Inteligente (Google Calendar)
+- [ ] Analytics Avancado (dashboards custom)
+- [ ] Integracao Email (SMTP/SendGrid)
+- [ ] Acoes Customizadas (webhooks user-defined)
+
+### Canais
+- [ ] Instagram DM (chat do agente)
+- [ ] Webchat embeddable
+- [ ] WhatsApp Business Cloud API (oficial Meta)
+- [ ] Abstracoes de canal (interface unica send/receive)
+
+### Funcionalidades
+- [ ] Relatorios com dados reais (8 templates ja definidos)
+- [ ] Todas as integracoes do marketplace
+- [ ] Previews de redes sociais no onboarding
+- [ ] Envio de imagens/audio pelo agente
 - [ ] Schema multi-usuario por tenant (`tenant_members`)
-- [ ] Integracao Stripe/gateway de pagamento
-- [ ] Canal Instagram
-- [ ] Canal Web Chat embeddable
-- [ ] n8n para automacoes (quando houver caso de uso claro)
+
+### Infraestrutura
 - [ ] CI/CD pipeline (GitHub Actions → DigitalOcean)
-- [ ] Monitoramento/observabilidade (Sentry, logs)
-- [ ] Agente com audio (transcricao de mensagens de voz recebidas)
-- [ ] Agente com imagem (processamento multimodal)
-- [ ] Roteamento condicional multi-modelo (classifier + modelo especializado por intencao)
-- [ ] Vector database (pgvector) para knowledge base e memoria semantica
-- [ ] **Escalonamento WhatsApp: migrar para API oficial Meta** — Criar provider WhatsApp Business Cloud API (oficial). Abstracoes de canal com contrato unico send/receive.
-- [ ] **Abstracoes de canal** — Generalizar interface de messaging para suportar multiplos providers
+- [ ] Monitoramento (Sentry, logs)
+- [ ] Supabase Realtime (substituir polling)
+- [ ] pgvector para RAG semantico
+- [ ] Roteamento condicional multi-modelo
+- [ ] n8n para automacoes
 
 ## Recursos Externos
 
@@ -394,6 +428,8 @@ agent_memories (
 | Plano inicial (Sprint 1 Lovable) | `docs/plano-inicial-lovablemd` |
 | Historico completo de decisoes (Lovable) | `docs/historico-lovable.md` |
 | Workspace Slack (Meteora Digital) | `meteoradigital-io.slack.com` |
+| Analise completa do sistema (dia 3) | `docs/analise-sistema-completa.md` |
+| Cronograma MVP detalhado | `docs/cronograma-mvp.md` |
 
 ## Licoes Aprendidas
 

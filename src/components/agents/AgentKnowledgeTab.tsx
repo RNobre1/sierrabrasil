@@ -18,10 +18,10 @@ interface KBItem {
 }
 
 const PLAN_LIMITS: Record<string, { maxDocs: number; maxSizeMB: number; label: string }> = {
-  starter: { maxDocs: 5, maxSizeMB: 5, label: "Starter" },
-  professional: { maxDocs: 25, maxSizeMB: 50, label: "Profissional" },
-  business: { maxDocs: 100, maxSizeMB: 200, label: "Empresarial" },
-  enterprise: { maxDocs: 500, maxSizeMB: 1000, label: "Enterprise" },
+  starter: { maxDocs: 10, maxSizeMB: 10, label: "Starter" },
+  professional: { maxDocs: 50, maxSizeMB: 100, label: "Profissional" },
+  business: { maxDocs: 200, maxSizeMB: 500, label: "Empresarial" },
+  enterprise: { maxDocs: 9999, maxSizeMB: 2000, label: "Enterprise" },
 };
 
 const ACCEPTED_TYPES = ".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.xls";

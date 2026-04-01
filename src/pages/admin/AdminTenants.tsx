@@ -24,7 +24,7 @@ interface TenantDetail extends Tenant {
   owner_email?: string;
 }
 
-const planPrices: Record<string, number> = { starter: 197, professional: 497, enterprise: 997 };
+const planPrices: Record<string, number> = { starter: 97, professional: 497, business: 997, enterprise: 997 };
 
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
   return (
@@ -93,7 +93,7 @@ export default function AdminTenants() {
     total: tenants.length,
     active: tenants.filter(t => t.status === "active").length,
     trial: tenants.filter(t => t.status === "trial").length,
-    mrr: tenants.reduce((s, t) => s + (planPrices[t.plan] || 197), 0),
+    mrr: tenants.reduce((s, t) => s + (planPrices[t.plan] || 97), 0),
   }), [tenants]);
 
   const uniquePlans = [...new Set(tenants.map(t => t.plan))];
@@ -222,7 +222,7 @@ export default function AdminTenants() {
                         <span className="text-[10px] capitalize">{t.status === "active" ? "Ativo" : t.status}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-xs">R$ {(planPrices[t.plan] || 197).toLocaleString("pt-BR")}</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-xs">R$ {(planPrices[t.plan] || 97).toLocaleString("pt-BR")}</td>
                     <td className="px-4 py-2.5 text-right text-[10px] text-muted-foreground font-mono">{timeAgo(t.created_at)}</td>
                     <td className="px-4 py-2.5 text-center">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDetail(t)}>
