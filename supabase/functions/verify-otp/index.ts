@@ -22,11 +22,18 @@ serve(async (req) => {
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-  // Auth
-  const token = (req.headers.get("authorization") ?? "").replace("Bearer ", "");
-  const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
-  if (authError || !user) return json({ error: "Nao autorizado" }, 401);
+  // Auth — create client with the caller's Authorization header
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader) return json({ error: "Nao autorizado" }, 401);
+
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: { user }, error: authError } = await userClient.auth.getUser();
+  if (authError || !user) {
+    console.error("Auth error in verify-otp:", authError?.message);
+    return json({ error: "Nao autorizado" }, 401);
+  }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
