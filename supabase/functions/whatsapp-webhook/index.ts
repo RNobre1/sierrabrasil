@@ -197,10 +197,10 @@ serve(async (req) => {
 
       const { data: conv1 } = await supabase
         .from("conversations")
-        .select("id, human_takeover, contact_phone")
+        .select("id, human_takeover, contact_phone, status")
         .eq("tenant_id", instance.tenant_id)
         .eq("contact_phone", contactPhone)
-        .eq("status", "active")
+        .in("status", ["active", "escalated"])
         .order("started_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -210,10 +210,10 @@ serve(async (req) => {
       if (!existingConv && wasLidResolved) {
         const { data: conv2 } = await supabase
           .from("conversations")
-          .select("id, human_takeover, contact_phone")
+          .select("id, human_takeover, contact_phone, status")
           .eq("tenant_id", instance.tenant_id)
           .eq("contact_phone", lidPhone)
-          .eq("status", "active")
+          .in("status", ["active", "escalated"])
           .order("started_at", { ascending: false })
           .limit(1)
           .maybeSingle();
