@@ -149,6 +149,22 @@ export default function Onboarding() {
 
   const isNewAgent = new URLSearchParams(window.location.search).get("newAgent") === "true";
 
+  // Guard: redirect to verify-phone if phone not verified
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("phone_verified")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data && !data.phone_verified) {
+          toast({ title: "Verificação necessária", description: "Verifique seu número de WhatsApp antes de continuar.", variant: "destructive" });
+          navigate("/verify-phone");
+        }
+      });
+  }, [user]);
+
   // Fetch agent templates from Supabase
   useEffect(() => {
     supabase.from("agent_templates").select("id, name, class, description, icon").then(({ data }) => {

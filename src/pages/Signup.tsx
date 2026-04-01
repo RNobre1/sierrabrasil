@@ -91,8 +91,8 @@ export default function Signup() {
     }
 
     setLoading(false);
-    toast({ title: "Conta criada!", description: "Vamos configurar seu agente!" });
-    navigate("/onboarding");
+    toast({ title: "Conta criada!", description: "Verifique seu WhatsApp para continuar." });
+    navigate("/verify-phone");
   };
 
   const handleGoogleSignup = async () => {

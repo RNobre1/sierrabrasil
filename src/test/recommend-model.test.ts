@@ -1,33 +1,39 @@
 import { describe, it, expect } from "vitest";
 
 // Extraido da edge function recommend-model/index.ts para teste
+// Regra: modelos de agente sao apenas Claude e GPT. Gemini nao e opcao para agentes.
 const SECTOR_RECOMMENDATIONS: Record<string, { primary: string; reason: string; alternatives: string[] }> = {
   "saude":       { primary: "anthropic/claude-sonnet-4-6", reason: "Humanizacao", alternatives: ["openai/gpt-4.1"] },
   "clinica":     { primary: "anthropic/claude-sonnet-4-6", reason: "Empatia", alternatives: ["openai/gpt-4.1"] },
   "juridico":    { primary: "anthropic/claude-sonnet-4-6", reason: "Precisao", alternatives: ["openai/gpt-4.1"] },
-  "alimentacao": { primary: "google/gemini-2.5-flash", reason: "Velocidade", alternatives: ["openai/gpt-4.1-mini"] },
-  "restaurante": { primary: "google/gemini-2.5-flash", reason: "Velocidade", alternatives: ["openai/gpt-4.1-mini"] },
-  "delivery":    { primary: "google/gemini-2.5-flash", reason: "Velocidade", alternatives: ["openai/gpt-4.1-mini"] },
+  "alimentacao": { primary: "openai/gpt-4.1-mini", reason: "Velocidade", alternatives: ["anthropic/claude-haiku-4-5"] },
+  "restaurante": { primary: "openai/gpt-4.1-mini", reason: "Velocidade", alternatives: ["anthropic/claude-haiku-4-5"] },
+  "delivery":    { primary: "openai/gpt-4.1-mini", reason: "Velocidade", alternatives: ["anthropic/claude-haiku-4-5"] },
   "imobiliario": { primary: "openai/gpt-4.1-mini", reason: "Dados", alternatives: ["anthropic/claude-sonnet-4-6"] },
-  "fitness":     { primary: "google/gemini-2.5-flash", reason: "Agendamento", alternatives: ["anthropic/claude-haiku-4-5"] },
-  "varejo":      { primary: "openai/gpt-4.1-mini", reason: "Catalogo", alternatives: ["google/gemini-2.5-flash"] },
+  "fitness":     { primary: "anthropic/claude-haiku-4-5", reason: "Agendamento", alternatives: ["openai/gpt-4.1-mini"] },
+  "academia":    { primary: "anthropic/claude-haiku-4-5", reason: "Agendamento", alternatives: ["openai/gpt-4.1-mini"] },
+  "varejo":      { primary: "openai/gpt-4.1-mini", reason: "Catalogo", alternatives: ["anthropic/claude-haiku-4-5"] },
+  "ecommerce":   { primary: "openai/gpt-4.1-mini", reason: "Catalogo", alternatives: ["anthropic/claude-haiku-4-5"] },
+  "loja":        { primary: "openai/gpt-4.1-mini", reason: "Catalogo", alternatives: ["anthropic/claude-haiku-4-5"] },
   "educacao":    { primary: "anthropic/claude-sonnet-4-6", reason: "Didatica", alternatives: ["openai/gpt-4.1"] },
+  "escola":      { primary: "anthropic/claude-sonnet-4-6", reason: "Didatica", alternatives: ["openai/gpt-4.1"] },
   "tecnologia":  { primary: "openai/gpt-4.1", reason: "Tecnico", alternatives: ["anthropic/claude-sonnet-4-6"] },
-  "servicos":    { primary: "google/gemini-2.5-flash", reason: "Equilibrio", alternatives: ["openai/gpt-4.1-mini"] },
+  "saas":        { primary: "openai/gpt-4.1", reason: "Tecnico", alternatives: ["anthropic/claude-sonnet-4-6"] },
+  "servicos":    { primary: "openai/gpt-4.1-mini", reason: "Equilibrio", alternatives: ["anthropic/claude-haiku-4-5"] },
 };
 
 const DEFAULT_RECOMMENDATION = {
-  primary: "google/gemini-2.5-flash",
+  primary: "openai/gpt-4.1-mini",
   reason: "Modelo padrao.",
-  alternatives: ["openai/gpt-4.1-mini", "anthropic/claude-haiku-4-5"],
+  alternatives: ["anthropic/claude-haiku-4-5"],
 };
 
 const CLASS_ADJUSTMENTS: Record<string, { prefer: string }> = {
   "sales": { prefer: "openai/gpt-4.1-mini" },
   "support": { prefer: "anthropic/claude-sonnet-4-6" },
-  "scheduling": { prefer: "google/gemini-2.5-flash" },
+  "scheduling": { prefer: "anthropic/claude-haiku-4-5" },
   "education": { prefer: "anthropic/claude-sonnet-4-6" },
-  "reception": { prefer: "google/gemini-2.5-flash" },
+  "reception": { prefer: "openai/gpt-4.1-mini" },
 };
 
 function recommendModel(sector: string, agentClass?: string) {
@@ -54,6 +60,11 @@ function recommendModel(sector: string, agentClass?: string) {
   return { model: recommendation.primary, alternatives: recommendation.alternatives };
 }
 
+// Helper: verifica que nenhum modelo Gemini aparece nas recomendacoes
+function isNonGemini(model: string) {
+  return !model.startsWith("google/");
+}
+
 describe("recommendModel", () => {
   it("recomenda Claude para saude", () => {
     expect(recommendModel("saude").model).toBe("anthropic/claude-sonnet-4-6");
@@ -67,12 +78,12 @@ describe("recommendModel", () => {
     expect(recommendModel("juridico").model).toBe("anthropic/claude-sonnet-4-6");
   });
 
-  it("recomenda Gemini Flash para alimentacao", () => {
-    expect(recommendModel("alimentacao").model).toBe("google/gemini-2.5-flash");
+  it("recomenda GPT Mini para alimentacao (substituiu Gemini)", () => {
+    expect(recommendModel("alimentacao").model).toBe("openai/gpt-4.1-mini");
   });
 
-  it("recomenda Gemini Flash para delivery", () => {
-    expect(recommendModel("delivery de comida").model).toBe("google/gemini-2.5-flash");
+  it("recomenda GPT Mini para delivery (substituiu Gemini)", () => {
+    expect(recommendModel("delivery de comida").model).toBe("openai/gpt-4.1-mini");
   });
 
   it("recomenda GPT para imobiliario", () => {
@@ -83,8 +94,8 @@ describe("recommendModel", () => {
     expect(recommendModel("varejo e comercio").model).toBe("openai/gpt-4.1-mini");
   });
 
-  it("recomenda Gemini Flash para fitness", () => {
-    expect(recommendModel("fitness e academia").model).toBe("google/gemini-2.5-flash");
+  it("recomenda Claude Haiku para fitness (substituiu Gemini)", () => {
+    expect(recommendModel("fitness e academia").model).toBe("anthropic/claude-haiku-4-5");
   });
 
   it("recomenda Claude para educacao", () => {
@@ -95,14 +106,14 @@ describe("recommendModel", () => {
     expect(recommendModel("tecnologia e software").model).toBe("openai/gpt-4.1");
   });
 
-  it("retorna default para setor desconhecido", () => {
-    expect(recommendModel("setor inventado xyz").model).toBe("google/gemini-2.5-flash");
+  it("retorna default GPT Mini para setor desconhecido (substituiu Gemini)", () => {
+    expect(recommendModel("setor inventado xyz").model).toBe("openai/gpt-4.1-mini");
   });
 
   it("usa agentClass como fallback quando setor e desconhecido", () => {
     expect(recommendModel("xyz", "support").model).toBe("anthropic/claude-sonnet-4-6");
     expect(recommendModel("xyz", "sales").model).toBe("openai/gpt-4.1-mini");
-    expect(recommendModel("xyz", "scheduling").model).toBe("google/gemini-2.5-flash");
+    expect(recommendModel("xyz", "scheduling").model).toBe("anthropic/claude-haiku-4-5");
   });
 
   it("prioriza setor sobre agentClass", () => {
@@ -119,5 +130,27 @@ describe("recommendModel", () => {
     const result = recommendModel("saude");
     expect(result.alternatives).toBeDefined();
     expect(result.alternatives.length).toBeGreaterThan(0);
+  });
+
+  it("NUNCA recomenda Gemini como modelo de agente", () => {
+    const allSectors = [
+      "saude", "clinica", "juridico", "alimentacao", "restaurante",
+      "delivery", "imobiliario", "fitness", "academia", "varejo",
+      "ecommerce", "loja", "educacao", "escola", "tecnologia",
+      "saas", "servicos", "setor desconhecido xyz",
+    ];
+    for (const sector of allSectors) {
+      const result = recommendModel(sector);
+      expect(isNonGemini(result.model)).toBe(true);
+      result.alternatives.forEach(alt => expect(isNonGemini(alt)).toBe(true));
+    }
+  });
+
+  it("NUNCA recomenda Gemini via class adjustment", () => {
+    const allClasses = ["sales", "support", "scheduling", "education", "reception"];
+    for (const cls of allClasses) {
+      const result = recommendModel("xyz", cls);
+      expect(isNonGemini(result.model)).toBe(true);
+    }
   });
 });
