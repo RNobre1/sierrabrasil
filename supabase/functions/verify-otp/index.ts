@@ -53,12 +53,12 @@ serve(async (req) => {
       .single();
 
     if (fetchError || !verification) {
-      return json({ error: "Codigo expirado ou inexistente. Solicite um novo." }, 400);
+      return json({ error: "Codigo expirado ou inexistente. Solicite um novo." });
     }
 
     // Check max attempts
     if (verification.attempts >= verification.max_attempts) {
-      return json({ error: "Tentativas esgotadas. Solicite um novo codigo." }, 429);
+      return json({ error: "Tentativas esgotadas. Solicite um novo codigo." });
     }
 
     // Increment attempts
@@ -73,7 +73,7 @@ serve(async (req) => {
       return json({
         error: `Codigo incorreto. ${remaining} tentativa${remaining !== 1 ? "s" : ""} restante${remaining !== 1 ? "s" : ""}.`,
         remaining,
-      }, 400);
+      });
     }
 
     // Mark as verified
