@@ -238,12 +238,15 @@ O banco possui 6 tenants realistas de setores distintos (saude, imobiliario, foo
 
 ### Integracao WhatsApp (Evolution API)
 
-- **Evolution API v2.2.3** como bridge para WhatsApp, hospedada em Droplet DigitalOcean (nyc3, 2vCPU/4GB)
-- Stack: Docker Compose (Evolution API + PostgreSQL 16 + Redis 7) em `/opt/evolution-api/`
-- Dados de acesso completos em `docs/srcdoc.pdf` e canvas no Slack (#devs-geral)
-- Edge functions: `evolution-api` (conexao/gerenciamento), `whatsapp-webhook` (mensagens + typing + [BREAK] splitting)
-- Tabela `whatsapp_instances` armazena QR code e profile_pic_url
-- Fluxo: conectar instancia → escanear QR → receber/enviar mensagens
+- **Evolution API v2.3.6** (`evoapicloud/evolution-api:v2.3.6`) hospedada em Droplet DigitalOcean (nyc3, 2vCPU/4GB)
+- **IP:** `165.227.109.64:8080` | Stack: Docker Compose (Evolution API + PostgreSQL 15 + Redis 7)
+- **Historico:** v2.2.3 (QR quebrado) → v1.8.7 (funcional, sem LID) → v2.3.6 (funcional, com LID)
+- Edge functions: `evolution-api` v16 (gateway), `whatsapp-webhook` v18 (mensagens + LID + tags + takeover)
+- **Resolucao LID:** v2.3.6 envia `remoteJidAlt` com numero real; webhook resolve automaticamente e atualiza `contact_phone`
+- **Status inteligente:** IA usa tags `[ESCALATE]` e `[RESOLVED]` no final da resposta; webhook parseia, limpa e atualiza status da conversa
+- **Human takeover:** Quando escalado, agente para de responder; operador pode enviar mensagens pelo dashboard
+- **Payload v2.3.6:** `sendText` usa `{ number, text }` (simples); webhook/set usa `{ webhook: { enabled, url, byEvents, base64, events } }`
+- Canvas no Slack `#the-agent` com dados de acesso completos
 - Plano de escalabilidade em `docs/plano-escalabilidade.md`
 
 ### Modelos de IA e OpenRouter
@@ -335,7 +338,7 @@ agent_memories (
 5. **Edge Functions Deno** — Nativas do Supabase, sem servidor separado.
 6. **AssemblyAI para transcricao** — Audio no onboarding (e futuramente no agente se houver tempo).
 7. **Paleta visual "cosmos"** — Design system com gradientes premium; dark/cockpit (admin), light/clean (cliente).
-8. **Evolution API em Droplet DigitalOcean** — WhatsApp na porta 8080, PostgreSQL + Redis locais.
+8. **Evolution API v2.3.6 em Droplet DigitalOcean** — IP 165.227.109.64, porta 8080, PostgreSQL 15 + Redis 7. Imagem `evoapicloud/evolution-api:v2.3.6`. Migrada de v1.8.7 (MongoDB) em 2026-04-01 para resolver problema de LID.
 9. **OpenRouter como gateway LLM** — Endpoint unico para todos os modelos, billing unificado.
 10. **Apify para web scraping** — Substitui edge function generica `scrape-urls`; Actors especificos por plataforma (IG, FB, LinkedIn, TikTok, YT, Site).
 11. **DigitalOcean App Platform para testes** — Ambiente acessivel por outras pessoas para validacao; producao em Droplet.
@@ -345,8 +348,19 @@ agent_memories (
 15. **Memoria do agente como add-on premium** — Persistencia de contexto entre conversas. Tabela `agent_memories` com resumo por contato. Monetizado como add-on por plano. Considerar vector database para busca semantica de memorias (pos-MVP).
 16. **Modelo unico por agente no MVP** — Cada agente usa 1 modelo (selecionado automaticamente ou pelo usuario). Sem cascata multi-modelo (latencia inaceitavel para WhatsApp). Roteamento condicional e evolucao pos-MVP (classifier barato → modelo especializado por tipo de mensagem).
 17. **WhatsApp: dual-provider (Evolution API + Cloud API oficial)** — MVP usa Evolution API (Baileys, nao-oficial, gratis). Pos-MVP, migrar para WhatsApp Business Cloud API (oficial Meta) como opcao premium. Manter ambos como providers selecionaveis por tenant/instancia. Abstracoes: par de edge functions por provider + campo `provider` em `whatsapp_instances`.
+18. **Evolution API v2.3.6 com resolucao LID** — Migrada de v1.8.7 (MongoDB, sem LID) para v2.3.6 (PostgreSQL, com LID). Imagem Docker `evoapicloud/evolution-api` (nao `atendai`). Droplet anterior destruido. v2.3.7 evitada por bug em botoes/listas interativas (Issue #2390).
+19. **Status inteligente via tags no prompt** — IA usa `[ESCALATE]` e `[RESOLVED]` no final da resposta. Webhook parseia, remove tags antes de salvar/enviar, e atualiza status da conversa automaticamente. Conversas escaladas nao recebem resposta da IA.
+20. **Templates MVP limitados a Vendas e Suporte** — Templates Agendamento, Educacional e Recepcao removidos do banco. Onboarding usa `AgentClassSelector` com visual de cards com skills.
 
-## Backlog (Pos-Sprint de 4 Dias)
+## Proximos Passos (Prioridade)
+
+1. **Verificacao de numero de celular pos-signup** — Implementar OTP via Supabase Auth (phone provider) ou via Evolution API (enviar codigo por WhatsApp). Tela de referencia visual salva em `memory/reference_whatsapp_verification.md`. Fluxo: signup → verificacao de numero → onboarding.
+2. **Tutorial interativo do dashboard** — Guia passo-a-passo que explica cada grafico, cada aba, pede pro usuario clicar nas abas pra continuar. Skip a qualquer momento.
+3. **Testar onboarding completo** — Fluxo end-to-end: signup → classe de agente → chat → scraping → docs → WhatsApp → dashboard.
+4. **Envio de audio no human takeover** — Botao de mic no campo de resposta manual (atualmente desabilitado).
+5. **Commit e redeploy do frontend** — Varias mudancas pendentes no frontend (ConversationDetail, Onboarding, Index).
+
+## Backlog (Pos-Sprint)
 
 - [ ] **Previews de redes sociais no onboarding** — Mostrar prints/screenshots das home pages das redes sociais (ja funciona parcial, melhorar)
 - [ ] **Envio de imagens pelo agente** — Nova funcionalidade pra agentes enviarem fotos/catalogo via WhatsApp
@@ -359,21 +373,21 @@ agent_memories (
 - [ ] n8n para automacoes (quando houver caso de uso claro)
 - [ ] CI/CD pipeline (GitHub Actions → DigitalOcean)
 - [ ] Monitoramento/observabilidade (Sentry, logs)
-- [ ] Benchmark de tempo de scraping por plataforma
 - [ ] Agente com audio (transcricao de mensagens de voz recebidas)
 - [ ] Agente com imagem (processamento multimodal)
 - [ ] Roteamento condicional multi-modelo (classifier + modelo especializado por intencao)
 - [ ] Vector database (pgvector) para knowledge base e memoria semantica
-- [ ] **Escalonamento WhatsApp: migrar para API oficial Meta** — Criar provider WhatsApp Business Cloud API (oficial) como alternativa ao Evolution API. Passos: (1) Abstrair camada de provider com interface comum (send, receive, connect, status). (2) Criar edge functions `whatsapp-cloud-api` e `whatsapp-cloud-webhook`. (3) Adicionar campo `provider` em `whatsapp_instances` ("evolution" | "cloud_api"). (4) Integrar com Meta Business Manager (verificacao de conta, templates de mensagem). (5) Repassar custo por conversa ao cliente no plano premium/enterprise. Beneficios: sem risco de ban, SLA oficial, sem droplet proprio, multi-numero nativo.
-- [ ] **Abstracoes de canal** — Generalizar interface de messaging para suportar multiplos providers (Evolution, Cloud API, Instagram, Web Chat) com contrato unico de send/receive
+- [ ] **Escalonamento WhatsApp: migrar para API oficial Meta** — Criar provider WhatsApp Business Cloud API (oficial). Abstracoes de canal com contrato unico send/receive.
+- [ ] **Abstracoes de canal** — Generalizar interface de messaging para suportar multiplos providers
 
 ## Recursos Externos
 
 | Recurso | Onde encontrar |
 |---|---|
-| Credenciais Evolution API (IP, API Key, PostgreSQL, Redis) | `docs/srcdoc.pdf` + Canvas no Slack `#devs-geral` |
+| Credenciais Evolution API (IP, API Key, PostgreSQL, Redis) | Canvas "Evolution API v2.3.6" no Slack `#the-agent` |
 | Plano de escalabilidade de infraestrutura | `docs/plano-escalabilidade.md` |
-| Referencia pratica da Evolution API | `docs/referencia-evolution-api.md` |
+| Pesquisa problema LID | `docs/problema-lid-whatsapp.md` + `docs/LID (@lid) no Baileys...md` |
+| Pesquisa migracao Evolution v2.3.x | `docs/pesquisa-migracao-evolution-v2.3.md` |
 | Pesquisa de prompt engineering | `docs/pesquisa-prompts.md` |
 | Plano de arquitetura v2 e cronograma | `docs/plano-arquitetura-v2.md` |
 | Anotacoes da reuniao de planejamento | `docs/Projeto novo.txt` |
@@ -384,3 +398,6 @@ agent_memories (
 ## Licoes Aprendidas
 
 1. **TDD nao foi seguido no sprint inicial.** Codigo de producao foi escrito sem testes. A partir de agora, NENHUM codigo de producao deve ser escrito antes dos testes correspondentes. Ao receber uma feature: (1) criar testes primeiro, (2) rodar e ver falhar, (3) so entao implementar. Isso vale para componentes React (Testing Library), edge functions (mocks), e logica de negocio.
+2. **Documentacao de API nao confiavel.** A referencia da Evolution API v1.8.x estava errada em varios pontos (sendText payload, webhook format). Sempre testar endpoints via curl antes de implementar. Validar contra a API real, nao contra docs.
+3. **LID e uma limitacao real do WhatsApp nao-oficial.** ~30-50% dos contatos podem vir como LID. A v2.3.6 resolve via `remoteJidAlt` mas nem sempre. Migrar pra Cloud API oficial e o unico caminho 100% confiavel.
+4. **Deploy via MCP > CLI.** O Supabase CLI falha com paths contendo caracteres especiais ("Area de trabalho"). Usar MCP deploy ou API direta. Verificar conteudo deployado (transcrição manual pode introduzir bugs como `{ number, text }` vs `{ number: phone, text }`).
