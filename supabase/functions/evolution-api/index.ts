@@ -318,7 +318,7 @@ serve(async (req) => {
         const evoRes = await fetch(`${baseUrl}/message/sendText/${instanceName}`, {
           method: "POST",
           headers: evoHeaders,
-          body: JSON.stringify({ number, textMessage: { text } }),
+          body: JSON.stringify({ number, text }),
         });
         const evoData = await evoRes.json();
 

@@ -55,7 +55,7 @@ async function sendText(baseUrl: string, apiKey: string, instanceName: string, p
   const resp = await fetch(`${baseUrl}/message/sendText/${instanceName}`, {
     method: "POST",
     headers: { apikey: apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ number: phone, textMessage: { text } }),
+    body: JSON.stringify({ number: phone, text }),
   });
   if (!resp.ok) {
     const err = await resp.text();
@@ -139,7 +139,11 @@ serve(async (req) => {
         });
       }
 
-      const contactPhone = remoteJid.replace(/@.*$/, "");
+      // v2.3.6+: resolve LID using remoteJidAlt or senderPn when available
+      const resolvedJid = (remoteJid.endsWith("@lid")
+        ? (key.remoteJidAlt || key.senderPn || remoteJid)
+        : remoteJid);
+      const contactPhone = resolvedJid.replace(/@.*$/, "");
       const messageContent = msgData.message?.conversation
         || msgData.message?.extendedTextMessage?.text
         || "";

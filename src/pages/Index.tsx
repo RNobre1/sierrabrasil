@@ -8,25 +8,25 @@ import meteoraLogoPreta from "@/assets/meteora-preta.png";
 import { MeteoraSeal, MeteorTrail } from "@/components/MeteoraBrand";
 
 const features = [
-  { icon: Bot, title: "Agente Autônomo", desc: "Não é chatbot. É um funcionário digital que conversa, vende, agenda e resolve." },
-  { icon: MessageSquare, title: "WhatsApp + Instagram", desc: "Opera nos canais que seus clientes já usam. Sem apps novos, sem fricção." },
-  { icon: Zap, title: "Ações Reais", desc: "Agenda compromissos, envia links de pagamento, faz follow-up automático." },
-  { icon: BarChart3, title: "Insights Inteligentes", desc: "O Explorer analisa conversas e sugere melhorias toda semana." },
-  { icon: Shield, title: "Seguro e Confiável", desc: "Dados criptografados, isolamento por tenant, audit trail completo." },
-  { icon: Clock, title: "24h por dia", desc: "Nunca falta, nunca atrasa, nunca tem dia ruim. Atende sábado, domingo e feriado." },
+  { icon: Bot, title: "Atendente Autônomo", desc: "Não é chatbot. É um funcionário digital que conversa natural, entende contexto, lembra do cliente e resolve sozinho." },
+  { icon: MessageSquare, title: "WhatsApp + Instagram", desc: "Opera nos canais que seus clientes já usam. Conecta em 30 segundos via QR Code. Sem burocracia." },
+  { icon: Zap, title: "Age de Verdade", desc: "Agenda compromissos, envia link de pagamento, faz follow-up automático, cobra inadimplentes e escala para humano." },
+  { icon: BarChart3, title: "Fica Melhor Toda Semana", desc: "O Explorer analisa as conversas reais do seu agente e sugere melhorias. Seu atendente evolui sem você fazer nada." },
+  { icon: Shield, title: "Você Descreve, Ele Cria", desc: "Conte sobre seu negócio como faria com um funcionário novo. Em minutos a plataforma monta o agente pronto pra operar." },
+  { icon: Clock, title: "24h, 365 Dias", desc: "Nunca falta, nunca atrasa, nunca tem dia ruim. Responde em 3 segundos às 3 da manhã de um domingo." },
 ];
 
 const plans = [
-  { name: "Essencial", price: "97", features: ["1 agente IA", "100 conversas/mês", "WhatsApp", "Dashboard básico"], popular: false },
-  { name: "Profissional", price: "497", features: ["3 agentes IA", "900 conversas/mês", "WhatsApp + Instagram", "Relatórios avançados", "Explorer com insights", "Ações automáticas"], popular: true },
-  { name: "Empresarial", price: "997", features: ["5 agentes IA", "1.800 conversas/mês", "Todos os canais", "API dedicada", "Suporte prioritário", "Onboarding assistido"], popular: false },
-  { name: "Scale", price: null, features: ["Agentes ilimitados", "Conversas ilimitadas", "Todos os canais + API", "Relatórios ilimitados + IA", "Manager dedicado", "Estratégias mensais de vendas", "SLA garantido", "Onboarding white-glove"], popular: false, enterprise: true },
+  { name: "Essencial", price: "97", features: ["1 agente inteligente", "100 conversas/mês", "WhatsApp", "Relatório semanal", "Suporte por chat"], popular: false },
+  { name: "Profissional", price: "497", features: ["3 agentes inteligentes", "900 conversas/mês", "WhatsApp + Instagram", "Relatórios diários", "Explorer com insights semanais", "Follow-up automático", "Suporte prioritário"], popular: true },
+  { name: "Empresarial", price: "997", features: ["5 agentes inteligentes", "1.800 conversas/mês", "Todos os canais", "Explorer diário + melhoria automática", "Cobrança e campanhas", "Dashboard em tempo real", "Consultoria mensal inclusa"], popular: false },
+  { name: "Scale", price: null, features: ["Agentes ilimitados", "Volume customizado", "Todos os canais + API", "Manager dedicado Meteora", "Estratégia mensal de vendas", "SLA garantido", "Implementação personalizada"], popular: false, enterprise: true },
 ];
 
 const testimonials = [
-  { name: "Dr. Carlos Mendes", role: "Clínica Sorriso — Manaus", text: "Em 2 semanas, a Luna agendou mais consultas do que minha recepcionista em um mês." },
-  { name: "Fernanda Lima", role: "Studio Beauty — São Paulo", text: "Meus clientes acham que é uma pessoa real atendendo. A taxa de agendamento subiu 40%." },
-  { name: "Roberto Silva", role: "Auto Peças Silva — BH", text: "Antes eu perdia cliente por não responder rápido. Agora o agente responde em 3 segundos." },
+  { name: "James Moreira", role: "Provedor de Internet — 4.000 clientes", text: "Meus clientes acham que é uma pessoa real atendendo. A taxa de agendamento subiu 40% no primeiro mês." },
+  { name: "Dra. Fernanda Costa", role: "Clínica de Estética — Manaus", text: "Antes eu perdia paciente por não responder rápido. Agora o agente responde em 3 segundos, às 11 da noite, no domingo." },
+  { name: "Roberto Nakamura", role: "Auto Peças Express — BH", text: "Configurei em 10 minutos. Só descrevi meu negócio e o agente já sabia responder sobre todas as peças e preços." },
 ];
 
 export default function Index() {
@@ -53,6 +53,8 @@ export default function Index() {
           <div className="flex items-center gap-3">
             <img src={meteoraLogo} alt="Meteora Digital" className="h-7 dark:block hidden" />
             <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-7 dark:hidden block" />
+            <span className="text-muted-foreground/40 text-sm">|</span>
+            <span className="text-sm font-semibold text-foreground">The Agent</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Entrar</Button></Link>
@@ -71,27 +73,27 @@ export default function Index() {
         <div className="mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-card/50 px-4 py-1.5 text-xs text-muted-foreground mb-8 backdrop-blur-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-meteora-lime animate-pulse" />
-            INFRAESTRUTURA DE CRESCIMENTO EMPRESARIAL
+            ATENDENTES INTELIGENTES PARA NEGÓCIOS BRASILEIROS
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-foreground">
-            Entregamos <span className="text-gradient">soluções</span> que fazem sua empresa{" "}
-            <span className="text-gradient">vender mais</span> e escalar{" "}
-            com <span className="text-gradient">inteligência</span>.
+            Seu melhor funcionário.{" "}
+            <span className="text-gradient">Trabalha 24h</span>. Nunca falta.{" "}
+            <span className="text-gradient">Vende, atende e resolve</span>.
           </h1>
           <p className="mt-8 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Implementamos operações completas de marketing, dados e IA que transformam processos lentos em máquinas previsíveis de crescimento.
+            The Agent entrega um atendente autônomo para o seu negócio. Ele não é chatbot — ele conversa com seus clientes no WhatsApp, agenda, cobra, faz follow-up e escala para humano quando precisa. Você descreve seu negócio e em minutos ele está operando.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/signup">
               <Button size="lg" className="text-base px-8 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
-                Começar grátis por 7 dias <ArrowRight className="ml-2 h-4 w-4" />
+                Criar meu agente agora <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Button variant="outline" size="lg" className="text-base px-8 h-12 rounded-xl border-border/50 hover:bg-accent">
-              Ver demonstração
+              Ver como funciona
             </Button>
           </div>
-          <p className="mt-5 text-xs text-muted-foreground/60">Setup em 5 minutos · Cancele quando quiser</p>
+          <p className="mt-5 text-xs text-muted-foreground/60">Pronto em 10 minutos · 30 dias grátis · Cancele quando quiser</p>
         </div>
       </section>
       </MeteorTrail>
@@ -100,10 +102,10 @@ export default function Index() {
       <section className="border-y border-border/30 bg-card/30 backdrop-blur-sm py-10 relative z-10">
         <div className="mx-auto max-w-4xl grid grid-cols-2 gap-6 sm:grid-cols-4 px-6 text-center">
           {[
-            { value: "+R$42M", label: "Gerados para clientes" },
-            { value: "84%", label: "Taxa de conversão" },
-            { value: "12x", label: "ROI médio" },
-            { value: "3s", label: "Tempo de resposta" },
+            { value: "150M+", label: "Usuários de WhatsApp no Brasil" },
+            { value: "3s", label: "Tempo médio de resposta" },
+            { value: "24/7", label: "Atende sábado, domingo e feriado" },
+            { value: "10min", label: "Do checkout ao agente no ar" },
           ].map((s, i) => (
             <div key={i}>
               <p className="text-xl sm:text-3xl font-bold text-foreground">{s.value}</p>
@@ -117,8 +119,8 @@ export default function Index() {
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Tudo que seu negócio precisa</h2>
-            <p className="mt-4 text-muted-foreground">Não é mais um chatbot. É uma revolução no seu negócio.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">O que o The Agent faz pelo seu negócio</h2>
+            <p className="mt-4 text-muted-foreground">Não é chatbot. Não é menu "digite 1, 2, 3". É um atendente completo que opera como uma pessoa treinada.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f, i) => (
@@ -138,8 +140,8 @@ export default function Index() {
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Planos simples, resultado real</h2>
-            <p className="mt-4 text-muted-foreground">Comece com 7 dias grátis. Sem surpresas.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Planos que cabem no seu bolso e escalam com você</h2>
+            <p className="mt-4 text-muted-foreground">30 dias grátis. Sem fidelidade. Cancele quando quiser.</p>
           </div>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan, i) => (
@@ -193,7 +195,7 @@ export default function Index() {
                         ? "bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20"
                         : ""
                   }`} variant={plan.popular || (plan as any).enterprise ? "default" : "outline"}>
-                    {(plan as any).enterprise ? "Fale com especialista" : plan.popular ? "Começar agora" : "Escolher plano"}
+                    {(plan as any).enterprise ? "Falar com especialista" : plan.popular ? "Começar agora" : "Escolher plano"}
                   </Button>
                 </Link>
               </div>
@@ -202,13 +204,13 @@ export default function Index() {
 
           {/* Custom Plan CTA */}
           <div className="mt-12 rounded-2xl border border-border/30 bg-card/30 p-8 text-center backdrop-blur-sm">
-            <h3 className="text-lg font-semibold text-foreground">Precisa de mais escala ou um plano personalizado?</h3>
+            <h3 className="text-lg font-semibold text-foreground">Quer que a Meteora implemente para você?</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-lg mx-auto">
-              Empresas com alto volume de atendimento, múltiplos times ou necessidades específicas de integração podem ter um plano sob medida.
+              Para empresas que precisam de implementação customizada, consultoria estratégica e acompanhamento contínuo. Projetos a partir de R$30.000.
             </p>
             <Link to="/contact">
               <Button variant="outline" className="mt-6 gap-2 rounded-xl border-primary/30 hover:bg-primary/5">
-                <Send className="h-4 w-4" /> Fale com nosso time
+                <Send className="h-4 w-4" /> Agendar diagnóstico estratégico
               </Button>
             </Link>
           </div>
@@ -219,7 +221,7 @@ export default function Index() {
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-5xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">O que nossos clientes dizem</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Negócios reais usando o The Agent</h2>
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             {testimonials.map((t, i) => (
@@ -242,8 +244,8 @@ export default function Index() {
       <MeteorTrail>
         <section className="py-24 px-6 relative z-10">
           <div className="mx-auto max-w-3xl text-center rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-12 surface-glow">
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">Pronto para transformar seu negócio?</h2>
-            <p className="mt-4 text-muted-foreground">Em 5 minutos seu agente está no ar. Teste grátis por 7 dias.</p>
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">Em 10 minutos seu agente está no ar.</h2>
+            <p className="mt-4 text-muted-foreground">Descreva seu negócio. A plataforma cria o agente. Conecte seu WhatsApp. Publique. Pronto — ele já está atendendo.</p>
             <Link to="/signup">
               <Button size="lg" className="mt-8 text-base px-8 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25">
                 Criar meu agente agora <ArrowRight className="ml-2 h-4 w-4" />
@@ -262,7 +264,7 @@ export default function Index() {
           <div className="flex items-center gap-3">
             <img src={meteoraLogo} alt="Meteora Digital" className="h-5 dark:block hidden" />
             <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-5 dark:hidden block" />
-            <span className="text-[10px] sm:text-xs text-muted-foreground">© 2026 Meteora Digital</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">© 2026 The Agent · Powered by Meteora Digital</span>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <MeteoraSeal size="small" />
