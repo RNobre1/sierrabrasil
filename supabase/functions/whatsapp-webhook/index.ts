@@ -140,10 +140,12 @@ serve(async (req) => {
       }
 
       // v2.3.6+: resolve LID using remoteJidAlt or senderPn when available
+      const lidPhone = remoteJid.replace(/@.*$/, "");
       const resolvedJid = (remoteJid.endsWith("@lid")
         ? (key.remoteJidAlt || key.senderPn || remoteJid)
         : remoteJid);
       const contactPhone = resolvedJid.replace(/@.*$/, "");
+      const wasLidResolved = remoteJid.endsWith("@lid") && contactPhone !== lidPhone;
       const messageContent = msgData.message?.conversation
         || msgData.message?.extendedTextMessage?.text
         || "";
@@ -189,17 +191,39 @@ serve(async (req) => {
         });
       }
 
-      // 3. Find or create conversation
+      // 3. Find or create conversation (try resolved phone first, fallback to LID)
       let conversationId: string;
-      const { data: existingConv } = await supabase
+      let existingConv = null as any;
+
+      const { data: conv1 } = await supabase
         .from("conversations")
-        .select("id, human_takeover")
+        .select("id, human_takeover, contact_phone")
         .eq("tenant_id", instance.tenant_id)
         .eq("contact_phone", contactPhone)
         .eq("status", "active")
         .order("started_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+      existingConv = conv1;
+
+      // If LID was resolved, also check for conversation with old LID phone
+      if (!existingConv && wasLidResolved) {
+        const { data: conv2 } = await supabase
+          .from("conversations")
+          .select("id, human_takeover, contact_phone")
+          .eq("tenant_id", instance.tenant_id)
+          .eq("contact_phone", lidPhone)
+          .eq("status", "active")
+          .order("started_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (conv2) {
+          existingConv = conv2;
+          // Update the phone to the real number
+          await supabase.from("conversations").update({ contact_phone: contactPhone }).eq("id", conv2.id);
+          console.log(`Updated conversation ${conv2.id} phone: ${lidPhone} -> ${contactPhone}`);
+        }
+      }
 
       if (existingConv) {
         conversationId = existingConv.id;
