@@ -75,17 +75,24 @@ export default function VerifyPhone() {
   const [otpSent, setOtpSent] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const phone = user?.user_metadata?.whatsapp || "";
 
+  // Redirect to login if no session
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/login");
+    }
+  }, [authLoading, user]);
+
   // Send OTP on mount
   useEffect(() => {
-    if (phone && !otpSent) {
+    if (user && phone && !otpSent) {
       sendOtp();
     }
-  }, [phone]);
+  }, [user, phone]);
 
   async function sendOtp() {
     const { error } = await supabase.functions.invoke("send-otp", {
