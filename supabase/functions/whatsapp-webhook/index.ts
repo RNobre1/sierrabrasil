@@ -400,12 +400,21 @@ Nome do cliente: ${contactName}.`;
 
       // 11. Update conversation status based on AI tags
       if (hasEscalate) {
+        // Increment escalation_count + set escalated status
+        const { data: currentConv } = await supabase
+          .from("conversations")
+          .select("escalation_count")
+          .eq("id", conversationId)
+          .single();
+        const currentCount = (currentConv as any)?.escalation_count ?? 0;
+
         await supabase.from("conversations").update({
           status: "escalated",
           human_takeover: true,
           takeover_at: new Date().toISOString(),
+          escalation_count: currentCount + 1,
         } as any).eq("id", conversationId);
-        console.log(`Conversation ${conversationId} ESCALATED by AI`);
+        console.log(`Conversation ${conversationId} ESCALATED by AI (count: ${currentCount + 1})`);
       } else if (hasResolved) {
         await supabase.from("conversations").update({
           status: "resolved",

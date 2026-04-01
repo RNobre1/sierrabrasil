@@ -70,19 +70,20 @@ export default function ConversationDetail() {
     if (!conversation || !id) return;
     setToggling(true);
     const newVal = !conversation.human_takeover;
-    
-    // Assumir ou devolver
+
+    // Assumir: status → escalated; Devolver: status → active
     const updateData = {
       human_takeover: newVal,
+      status: newVal ? "escalated" : "active",
       takeover_by: newVal ? user?.id : null,
       takeover_at: newVal ? new Date().toISOString() : null,
     };
 
     const { error } = await supabase.from("conversations").update(updateData as any).eq("id", id);
     setToggling(false);
-    
+
     if (!error) {
-      setConversation({ ...conversation, human_takeover: newVal });
+      setConversation({ ...conversation, human_takeover: newVal, status: newVal ? "escalated" : "active" });
       toast.success(newVal ? "Você assumiu a conversa" : "Conversa devolvida para a IA");
     } else {
       toast.error("Erro ao alterar modo");

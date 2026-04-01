@@ -19,7 +19,7 @@ import WhatsAppConnectBanner from "@/components/WhatsAppConnectBanner";
 
 /* ═══ Types ═══ */
 interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class?: string | null; }
-interface Conversation { id: string; contact_name: string; status: string; started_at: string; channel: string; }
+interface Conversation { id: string; contact_name: string; status: string; started_at: string; channel: string; escalation_count?: number; }
 
 /* ═══ Design tokens ═══ */
 const NEON = "#39FF14";
@@ -83,8 +83,8 @@ export default function Dashboard() {
       setTenantPlan(t.plan || "starter");
       const [att, conv, allC, msg] = await Promise.all([
         supabase.from("attendants").select("id, name, status, channels, model, class").eq("tenant_id", t.id),
-        supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", t.id).order("started_at", { ascending: false }).limit(10),
-        supabase.from("conversations").select("id, contact_name, status, started_at, channel").eq("tenant_id", t.id),
+        supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", t.id).order("started_at", { ascending: false }).limit(10),
+        supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", t.id),
         supabase.from("messages").select("id", { count: "exact", head: true }),
       ]);
       setAttendants(att.data ?? []);
@@ -109,7 +109,9 @@ export default function Dashboard() {
   const active = allConvs.filter(c => c.status === "active").length;
   const resolved = allConvs.filter(c => c.status === "resolved").length;
   const escalated = allConvs.filter(c => c.status === "escalated").length;
+  const totalEscalations = allConvs.reduce((sum, c) => sum + ((c as any).escalation_count || 0), 0);
   const resRate = total ? Math.round(resolved / total * 100) : 0;
+  const escRate = total ? Math.round(totalEscalations / total * 100) : 0;
   const onlineAg = attendants.filter(a => a.status === "online").length;
 
   /* chart data */
@@ -181,7 +183,7 @@ export default function Dashboard() {
           { icon: MessageSquare, label: "Conversas", value: String(total), sub: `${totalMsgs} msgs`, accent: "text-indigo-400", bg: "bg-indigo-500/8 border-indigo-500/15", trend: total > 0 ? `+${total}` : null, up: true },
           { icon: CheckCircle2, label: "Resolvidas", value: String(resolved), sub: `${resRate}% resolução`, accent: "text-emerald-400", bg: "bg-emerald-500/8 border-emerald-500/15", trend: resRate > 0 ? `${resRate}%` : null, up: resRate >= 50 },
           { icon: Bot, label: "Agentes", value: `${onlineAg}/${attendants.length}`, sub: `${onlineAg} online`, accent: "text-cyan-400", bg: "bg-cyan-500/8 border-cyan-500/15", trend: null, up: true },
-          { icon: Zap, label: "Mensagens", value: totalMsgs > 999 ? `${(totalMsgs / 1000).toFixed(1)}K` : String(totalMsgs), sub: "processadas", accent: "text-violet-400", bg: "bg-violet-500/8 border-violet-500/15", trend: totalMsgs > 0 ? `+${totalMsgs}` : null, up: true },
+          { icon: Zap, label: "Escalações", value: String(totalEscalations), sub: `${escRate}% das conversas`, accent: "text-rose-400", bg: "bg-rose-500/8 border-rose-500/15", trend: totalEscalations > 0 ? `${escRate}%` : null, up: escRate <= 20 },
         ].map((k, i) => (
           <div key={i} className="cosmos-card px-4 py-3.5 card-stagger group">
             <div className="flex items-center justify-between mb-2">

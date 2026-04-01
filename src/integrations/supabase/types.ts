@@ -126,6 +126,7 @@ export type Database = {
           contact_name: string
           contact_phone: string | null
           ended_at: string | null
+          escalation_count: number
           human_takeover: boolean | null
           id: string
           metadata: Json | null
@@ -141,6 +142,7 @@ export type Database = {
           contact_name: string
           contact_phone?: string | null
           ended_at?: string | null
+          escalation_count?: number
           human_takeover?: boolean | null
           id?: string
           metadata?: Json | null
@@ -156,6 +158,7 @@ export type Database = {
           contact_name?: string
           contact_phone?: string | null
           ended_at?: string | null
+          escalation_count?: number
           human_takeover?: boolean | null
           id?: string
           metadata?: Json | null
