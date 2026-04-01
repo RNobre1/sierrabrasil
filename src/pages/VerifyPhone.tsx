@@ -76,6 +76,7 @@ export default function VerifyPhone() {
   const [otpSent, setOtpSent] = useState(false);
   const [phone, setPhone] = useState("");
   const [collectingPhone, setCollectingPhone] = useState(false);
+  const sendingOtp = useRef(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -99,9 +100,10 @@ export default function VerifyPhone() {
     }
   }, [authLoading, user]);
 
-  // Send OTP once we have a phone
+  // Send OTP once we have a phone (guard against double-fire)
   useEffect(() => {
-    if (user && phone && !otpSent && !collectingPhone) {
+    if (user && phone && !otpSent && !collectingPhone && !sendingOtp.current) {
+      sendingOtp.current = true;
       sendOtp();
     }
   }, [user, phone, collectingPhone]);
