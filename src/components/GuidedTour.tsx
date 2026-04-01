@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { X, ArrowRight, Bot, Play, Wifi, MessageSquare } from "lucide-react";
+import {
+  X, ArrowRight, ArrowLeft, Bot, Play, Wifi, MessageSquare,
+  BarChart3, Percent, CheckCircle2, Radio, Zap
+} from "lucide-react";
 
 interface TourStep {
   title: string;
@@ -12,28 +15,46 @@ interface TourStep {
 
 const TOUR_STEPS: TourStep[] = [
   {
-    title: "Seu Agente esta aqui",
-    description: "Ele foi criado durante o onboarding. Clique pra configurar nome, tom de voz e regras.",
+    title: "Seus indicadores",
+    description: "Aqui voce ve o resumo geral: total de conversas, taxa de resolucao, agentes online e mensagens processadas. Tudo em tempo real.",
+    icon: <Zap className="h-5 w-5" />,
+    selector: "[data-tour='kpis']",
+  },
+  {
+    title: "Conversas por dia",
+    description: "Este grafico mostra o volume de conversas nos ultimos 7 dias. Acompanhe picos e tendencias do seu atendimento.",
+    icon: <BarChart3 className="h-5 w-5" />,
+    selector: "[data-tour='hero-chart']",
+  },
+  {
+    title: "Distribuicao e resolucao",
+    description: "Veja quantas conversas estao ativas, resolvidas ou escaladas. A barra de resolucao mostra a eficiencia do seu agente.",
+    icon: <Percent className="h-5 w-5" />,
+    selector: "[data-tour='status-panel']",
+  },
+  {
+    title: "Conversas por canal",
+    description: "Descubra de onde vem suas conversas: WhatsApp, Instagram ou Web. Ajuda a priorizar canais.",
+    icon: <Radio className="h-5 w-5" />,
+    selector: "[data-tour='channel-chart']",
+  },
+  {
+    title: "Seus agentes",
+    description: "Seus agentes de IA aparecem aqui. Clique em qualquer um pra ver detalhes, configurar ou testar no Playground.",
     icon: <Bot className="h-5 w-5" />,
     selector: "[data-tour='agent-card']",
   },
   {
-    title: "Teste antes de publicar",
-    description: "Use o Playground pra conversar com seu agente como se fosse um cliente.",
-    icon: <Play className="h-5 w-5" />,
-    selector: "[data-tour='test-button']",
+    title: "Ultimas conversas",
+    description: "Acompanhe em tempo real o que seus agentes estao respondendo. Clique em qualquer conversa pra ver os detalhes.",
+    icon: <MessageSquare className="h-5 w-5" />,
+    selector: "[data-tour='recent-convs']",
   },
   {
     title: "Conecte seu WhatsApp",
-    description: "Va em Canais no menu e conecte seu WhatsApp via QR Code.",
+    description: "Va em Canais no menu lateral e conecte seu WhatsApp via QR Code. Seu agente comeca a atender na hora!",
     icon: <Wifi className="h-5 w-5" />,
     selector: "[data-tour='channels-link']",
-  },
-  {
-    title: "Acompanhe as conversas",
-    description: "Todas as conversas aparecem aqui. Veja em tempo real o que seu agente responde.",
-    icon: <MessageSquare className="h-5 w-5" />,
-    selector: "[data-tour='conversations-link']",
   },
 ];
 
@@ -98,12 +119,37 @@ export default function GuidedTour() {
     }
   };
 
+  const prev = () => {
+    if (step > 0) setStep(step - 1);
+  };
+
   if (!visible) return null;
 
   const current = TOUR_STEPS[step];
-  const cardTop = highlight ? highlight.top + highlight.height + 16 : "50%";
-  const cardLeft = highlight ? Math.min(highlight.left, window.innerWidth - 400) : "50%";
+  const isLast = step === TOUR_STEPS.length - 1;
+
+  // Position card below or above the highlighted element
+  let cardStyle: React.CSSProperties = {};
   const useCenter = !highlight;
+
+  if (highlight) {
+    const spaceBelow = window.innerHeight - (highlight.top + highlight.height);
+    const cardHeight = 220;
+
+    if (spaceBelow > cardHeight + 24) {
+      // Below
+      cardStyle = {
+        top: highlight.top + highlight.height + 16,
+        left: Math.max(16, Math.min(highlight.left, window.innerWidth - 400)),
+      };
+    } else {
+      // Above
+      cardStyle = {
+        top: Math.max(16, highlight.top - cardHeight - 16),
+        left: Math.max(16, Math.min(highlight.left, window.innerWidth - 400)),
+      };
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -154,7 +200,7 @@ export default function GuidedTour() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className={`fixed z-[102] w-[90vw] max-w-sm ${useCenter ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" : ""}`}
-            style={!useCenter ? { top: cardTop, left: cardLeft } : undefined}
+            style={!useCenter ? cardStyle : undefined}
           >
             <div className="rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-5 pt-4">
@@ -168,7 +214,7 @@ export default function GuidedTour() {
                     />
                   ))}
                 </div>
-                <button onClick={dismiss} className="text-muted-foreground/40 hover:text-muted-foreground transition-colors">
+                <button onClick={dismiss} aria-label="Fechar tutorial" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -182,14 +228,22 @@ export default function GuidedTour() {
               </div>
 
               <div className="px-5 pb-4 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground/40">{step + 1}/{TOUR_STEPS.length}</span>
-                <Button size="sm" onClick={next} className="gap-1.5 rounded-lg">
-                  {step < TOUR_STEPS.length - 1 ? (
-                    <>Proximo <ArrowRight className="h-3.5 w-3.5" /></>
-                  ) : (
-                    "Comecar!"
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground/40">{step + 1}/{TOUR_STEPS.length}</span>
+                  <button onClick={dismiss} className="text-xs text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors">
+                    Pular
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  {step > 0 && (
+                    <Button size="sm" variant="ghost" onClick={prev} className="gap-1 rounded-lg text-muted-foreground">
+                      <ArrowLeft className="h-3.5 w-3.5" /> Anterior
+                    </Button>
                   )}
-                </Button>
+                  <Button size="sm" onClick={next} className="gap-1.5 rounded-lg">
+                    {isLast ? "Comecar!" : <>Proximo <ArrowRight className="h-3.5 w-3.5" /></>}
+                  </Button>
+                </div>
               </div>
             </div>
           </motion.div>

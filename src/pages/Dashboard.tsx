@@ -176,7 +176,7 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ ROW 1: KPIs — compact, dense ═══ */}
-      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <div data-tour="kpis" className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {[
           { icon: MessageSquare, label: "Conversas", value: String(total), sub: `${totalMsgs} msgs`, accent: "text-indigo-400", bg: "bg-indigo-500/8 border-indigo-500/15", trend: total > 0 ? `+${total}` : null, up: true },
           { icon: CheckCircle2, label: "Resolvidas", value: String(resolved), sub: `${resRate}% resolução`, accent: "text-emerald-400", bg: "bg-emerald-500/8 border-emerald-500/15", trend: resRate > 0 ? `${resRate}%` : null, up: resRate >= 50 },
@@ -207,7 +207,7 @@ export default function Dashboard() {
       {/* ═══ ROW 2: Hero Chart + Status Donut ═══ */}
       <div className="grid gap-2.5 lg:grid-cols-5">
         {/* Hero chart — 3 cols */}
-        <div className="cosmos-card p-4 lg:col-span-3">
+        <div data-tour="hero-chart" className="cosmos-card p-4 lg:col-span-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-3.5 w-3.5 text-indigo-400" />
@@ -243,7 +243,7 @@ export default function Dashboard() {
         </div>
 
         {/* Status donut + Resolution — 2 cols */}
-        <div className="lg:col-span-2 grid gap-2.5">
+        <div data-tour="status-panel" className="lg:col-span-2 grid gap-2.5">
           {/* Status donut */}
           <div className="cosmos-card p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -298,7 +298,7 @@ export default function Dashboard() {
       {/* ═══ ROW 3: Channel Bars + Agents Grid ═══ */}
       <div className="grid gap-2.5 lg:grid-cols-5">
         {/* Channel bars */}
-        <div className="cosmos-card p-4 lg:col-span-2">
+        <div data-tour="channel-chart" className="cosmos-card p-4 lg:col-span-2">
           <div className="flex items-center gap-2 mb-3">
             <Radio className="h-3 w-3 text-cyan-400" />
             <span className="text-[11px] font-display font-semibold text-white/60">Por canal</span>
@@ -355,7 +355,7 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ ROW 4: Recent Conversations — full width ═══ */}
-      <div className="cosmos-card p-0">
+      <div data-tour="recent-convs" className="cosmos-card p-0">
         <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-3 w-3 text-cyan-400" />
