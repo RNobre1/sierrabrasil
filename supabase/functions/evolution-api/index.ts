@@ -92,13 +92,15 @@ serve(async (req) => {
           body: JSON.stringify({
             instanceName: safeName,
             integration: "WHATSAPP-BAILEYS",
-            webhook: webhookUrl,
-            webhook_by_events: false,
-            webhook_base64: false,
-            events: [
-              "MESSAGES_UPSERT",
-              "CONNECTION_UPDATE",
-            ],
+            webhook: {
+              url: webhookUrl,
+              byEvents: false,
+              base64: false,
+              events: [
+                "MESSAGES_UPSERT",
+                "CONNECTION_UPDATE",
+              ],
+            },
           }),
         });
         const evoData = await evoRes.json();
@@ -240,10 +242,13 @@ serve(async (req) => {
               method: "POST",
               headers: evoHeaders,
               body: JSON.stringify({
-                url: whUrl,
-                webhook_by_events: false,
-                webhook_base64: false,
-                events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"],
+                webhook: {
+                  enabled: true,
+                  url: whUrl,
+                  byEvents: false,
+                  base64: false,
+                  events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"],
+                },
               }),
             });
             if (whRes.ok) {
@@ -374,13 +379,16 @@ serve(async (req) => {
           method: "POST",
           headers: evoHeaders,
           body: JSON.stringify({
-            url: webhookUrl,
-            webhook_by_events: false,
-            webhook_base64: false,
-            events: [
-              "MESSAGES_UPSERT",
-              "CONNECTION_UPDATE",
-            ],
+            webhook: {
+              enabled: true,
+              url: webhookUrl,
+              byEvents: false,
+              base64: false,
+              events: [
+                "MESSAGES_UPSERT",
+                "CONNECTION_UPDATE",
+              ],
+            },
           }),
         });
         const evoData = await evoRes.json();
