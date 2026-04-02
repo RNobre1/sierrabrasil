@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Building2, Clock, MapPin, ShoppingBag, DollarSign, Globe, Pencil, Check,
   ArrowRight, Sparkles, Phone, MessageCircle, Star, Instagram, Youtube,
-  Linkedin, Globe2, ExternalLink, ChevronLeft, X,
+  Linkedin, Facebook, Globe2, ExternalLink, ChevronLeft, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ const platformIcons: Record<string, React.ReactNode> = {
   youtube: <Youtube className="h-5 w-5" />,
   linkedin: <Linkedin className="h-5 w-5" />,
   tiktok: <Globe2 className="h-5 w-5" />,
-  facebook: <Globe2 className="h-5 w-5" />,
+  facebook: <Facebook className="h-5 w-5" />,
   twitter: <Globe2 className="h-5 w-5" />,
   website: <Globe className="h-5 w-5" />,
 };

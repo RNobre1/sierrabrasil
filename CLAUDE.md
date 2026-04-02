@@ -424,6 +424,8 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [ ] Previews de redes sociais no onboarding
 - [ ] Envio de imagens/audio pelo agente
 - [ ] Schema multi-usuario por tenant (`tenant_members`)
+- [ ] **Modo Assistente Pessoal** — Permitir que o usuario use o agente como assistente pessoal, enviando mensagens para si mesmo (self-chat). O agente responde no proprio numero do usuario.
+- [ ] **Whitelist/Blacklist de contatos** — Para pessoas fisicas que usam o numero pessoal, permitir configurar com quem o agente deve (whitelist) ou nao deve (blacklist) interagir. Contatos fora do escopo sao ignorados pelo agente e nao aparecem nas conversas do sistema. Essencial para evitar que o agente responda familiares, amigos, etc.
 
 ### Infraestrutura
 - [ ] CI/CD pipeline (GitHub Actions → DigitalOcean)

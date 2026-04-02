@@ -245,9 +245,11 @@ async function extractSourcePreviews(platform: string, items: any[], url: string
     case "facebook": {
       const page = items[0];
       if (page) {
-        preview.profilePic = page.profilePic || page.imageUrl || "";
+        const fbPic = page.profilePic || page.imageUrl || "";
+        preview.profilePic = fbPic ? await toDataUri(fbPic) : "";
         preview.displayName = page.title || page.name || "";
         preview.bio = page.description || "";
+        preview.followers = page.likes || page.followersCount || 0;
       }
       break;
     }

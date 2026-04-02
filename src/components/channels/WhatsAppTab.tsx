@@ -65,7 +65,6 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [connectingId, setConnectingId] = useState<string | null>(null);
@@ -139,20 +138,27 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
   }, [instances, fetchInstances]);
 
   const handleCreate = async () => {
-    if (!newName.trim()) return;
+    if (!newDisplayName.trim()) return;
     setCreating(true);
     try {
+      // Auto-generate instance identifier from display name
+      const instanceName = newDisplayName
+        .trim()
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40);
       await callEvolutionApi("create_instance", {
-        instanceName: newName.trim(),
-        displayName: newDisplayName.trim() || newName.trim(),
+        instanceName,
+        displayName: newDisplayName.trim(),
       });
-      toast.success("Instância criada com sucesso!");
+      toast.success("Número adicionado com sucesso!");
       setShowCreate(false);
-      setNewName("");
       setNewDisplayName("");
       fetchInstances();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao criar instância");
+      toast.error(e.message || "Erro ao adicionar número");
     } finally {
       setCreating(false);
     }
@@ -205,10 +211,10 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
   };
 
   const handleDelete = async (inst: WhatsAppInstance) => {
-    if (!confirm(`Excluir instância "${inst.display_name || inst.instance_name}"? Esta ação não pode ser desfeita.`)) return;
+    if (!confirm(`Remover "${inst.display_name || inst.instance_name}"? Esta ação não pode ser desfeita.`)) return;
     try {
       await callEvolutionApi("delete", { instanceName: inst.instance_name });
-      toast.success("Instância removida");
+      toast.success("Número removido");
       fetchInstances();
     } catch (e: any) {
       toast.error(e.message);
@@ -222,9 +228,9 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base font-display">Instâncias WhatsApp</CardTitle>
+              <CardTitle className="text-base font-display">Números WhatsApp</CardTitle>
               <CardDescription>
-                Gerencie suas conexões WhatsApp via Evolution API
+                Gerencie os números conectados ao seu agente
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -235,36 +241,27 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
               <Dialog open={showCreate} onOpenChange={setShowCreate}>
                 <DialogTrigger asChild>
                   <Button size="sm" className="gap-1.5">
-                    <Plus className="h-3.5 w-3.5" /> Nova Instância
+                    <Plus className="h-3.5 w-3.5" /> Adicionar número
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Criar Instância WhatsApp</DialogTitle>
+                    <DialogTitle>Adicionar número WhatsApp</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pt-2">
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Nome da Instância (identificador)</Label>
-                      <Input
-                        value={newName}
-                        onChange={e => setNewName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ""))}
-                        placeholder="ex: loja-principal"
-                        className="font-mono text-sm"
-                      />
-                      <p className="text-[10px] text-muted-foreground">Apenas letras, números, - e _</p>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Nome de Exibição</Label>
+                      <Label className="text-xs">Nome do número</Label>
                       <Input
                         value={newDisplayName}
                         onChange={e => setNewDisplayName(e.target.value)}
                         placeholder="ex: Loja Principal"
                         className="text-sm"
                       />
+                      <p className="text-[10px] text-muted-foreground">Um nome para identificar este WhatsApp</p>
                     </div>
-                    <Button onClick={handleCreate} disabled={creating || !newName.trim()} className="w-full">
+                    <Button onClick={handleCreate} disabled={creating || !newDisplayName.trim()} className="w-full">
                       {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                      Criar Instância
+                      Adicionar
                     </Button>
                   </div>
                 </DialogContent>
@@ -363,8 +360,8 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
         <Card>
           <CardContent className="py-16 flex flex-col items-center text-center">
             <WifiOff className="h-10 w-10 text-muted-foreground/20 mb-3" />
-            <p className="text-sm text-muted-foreground">Nenhuma instância criada</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Clique em "Nova Instância" para começar</p>
+            <p className="text-sm text-muted-foreground">Nenhum número conectado</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Clique em "Adicionar número" para começar</p>
           </CardContent>
         </Card>
       ) : (
@@ -392,9 +389,11 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
                         <h3 className="text-sm font-semibold text-foreground truncate">
                           {inst.display_name || inst.instance_name}
                         </h3>
-                        <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">
-                          {inst.instance_name}
-                        </p>
+                        {inst.phone_number && (
+                          <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                            {inst.phone_number}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -402,11 +401,6 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
                       <span className="text-[10px] font-medium text-muted-foreground">{sc.text}</span>
                     </div>
                   </div>
-
-                  {/* Phone */}
-                  {inst.phone_number && (
-                    <p className="text-xs text-muted-foreground font-mono">📱 {inst.phone_number}</p>
-                  )}
 
                   {/* Connected at */}
                   {inst.connected_at && (

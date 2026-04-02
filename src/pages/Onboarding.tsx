@@ -1096,11 +1096,20 @@ export default function Onboarding() {
             <div className="flex justify-between items-center">
               <p className="text-[10px] text-muted-foreground">PDF, DOC, DOCX, XLS, CSV, MD, TXT aceitos</p>
               <div className="flex gap-2">
-                <Button size="sm" variant="ghost" onClick={skipDocs} className="text-xs text-muted-foreground h-8">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={skipDocs}
+                  className="text-xs h-9 px-5 rounded-xl border-border/60 text-muted-foreground hover:text-foreground hover:border-border active:scale-[0.94] active:shadow-none transition-all duration-150"
+                >
                   Pular
                 </Button>
-                <Button size="sm" onClick={finishDocsAndContinue} className="text-xs bg-gradient-to-r from-primary to-primary/80 h-8">
-                  <ArrowRight className="h-3 w-3 mr-1" /> Finalizar
+                <Button
+                  size="sm"
+                  onClick={finishDocsAndContinue}
+                  className="text-xs h-9 px-6 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.94] active:shadow-md active:shadow-primary/20 transition-all duration-150 font-medium"
+                >
+                  <Rocket className="h-3.5 w-3.5 mr-1.5" /> Finalizar setup
                 </Button>
               </div>
             </div>
