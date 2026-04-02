@@ -238,7 +238,7 @@ export default function VerifyPhone() {
             </span>.
           </h1>
           <p className="mt-6 text-white/60 leading-relaxed">
-            Precisamos confirmar que o WhatsApp é seu para conectar seu agente de IA.
+            Precisamos confirmar que o WhatsApp é seu para conectar seu Agente de Inteligência Artificial.
           </p>
           <div className="mt-12 grid grid-cols-3 gap-4">
             {[

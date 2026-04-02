@@ -365,6 +365,8 @@ agent_memories (
 24. **Knowledge base limites revisados** — Starter: 10 docs/10MB (era 5/5). Professional: 50/100MB. Business: 200/500MB. Enterprise: ilimitado/2GB.
 25. **Cobranca por conversa, nao por mensagem** — 100 (Essencial), 900 (Profissional), 1.800 (Empresarial), custom (Scale — definido caso a caso). Uma conversa = todo o atendimento com 1 contato.
 26. **Skills backlog marcados "Em breve"** — Agendamento, Analytics, Email, Acoes Custom com badge `comingSoon` no frontend. Ativacao/desativacao funcional no banco para skills implementados.
+27. **Filtro de Contatos (Whitelist/Blacklist) no MVP** — Tabela relacional `contact_rules` (nao JSONB, 3x mais rapido para exact match). Funcao SQL `should_respond_to_contact` STABLE para cache. Tres modos: `open` (blacklist), `closed` (whitelist), `whitelist_only` (lead capture). Numeros normalizados para E.164. Pesquisa completa em `docs/Implementacao de Modo Assistente Pessoal...md`. Plano detalhado em `docs/plano-filtro-contatos.md`.
+28. **Assistente Pessoal (Self-Chat) pos-MVP** — Viavel via Baileys (`fromMe` + deduplicacao por message ID), mas complexo: exige tabela `processed_messages`, cleanup cron, e UX dedicada. Risco de loop infinito mitigavel mas nao trivial. Reservado para pos-MVP.
 
 ## Proximos Passos (Cronograma MVP)
 
@@ -401,8 +403,9 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 
 ### TODO (Ordem de Execucao)
 1. **Pagamento Stripe (MUST)** — Tabelas, webhooks, checkout, portal, validacao server-side, seguranca
-2. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
-3. **Memoria do agente** — Tabela, sumarizacao, injecao no prompt, TTL, add-on R$67/mes
+2. **Filtro de Contatos (Whitelist/Blacklist)** — Tabela `contact_rules`, funcao SQL `should_respond_to_contact`, integracao webhook, UI de configuracao. Detalhes em `docs/plano-filtro-contatos.md`
+3. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
+4. **Memoria do agente** — Tabela, sumarizacao, injecao no prompt, TTL, add-on R$67/mes
 
 ## Backlog (Pos-MVP — "Coming Soon" no Frontend)
 
@@ -424,8 +427,9 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [ ] Previews de redes sociais no onboarding
 - [ ] Envio de imagens/audio pelo agente
 - [ ] Schema multi-usuario por tenant (`tenant_members`)
-- [ ] **Modo Assistente Pessoal** — Permitir que o usuario use o agente como assistente pessoal, enviando mensagens para si mesmo (self-chat). O agente responde no proprio numero do usuario.
-- [ ] **Whitelist/Blacklist de contatos** — Para pessoas fisicas que usam o numero pessoal, permitir configurar com quem o agente deve (whitelist) ou nao deve (blacklist) interagir. Contatos fora do escopo sao ignorados pelo agente e nao aparecem nas conversas do sistema. Essencial para evitar que o agente responda familiares, amigos, etc.
+- [ ] **Modo Assistente Pessoal (Self-Chat)** — Agente responde no proprio numero do usuario. Requer: tabela `processed_messages` para deduplicacao, logica especial no webhook para nao skipar `fromMe` em self-chat, cleanup cron diario, toggle no dashboard. Prevencao de loop via message ID + fromMe + rate limiting. Pesquisa: `docs/Implementacao de Modo Assistente Pessoal...md` secao 1.
+- [ ] **Filtro de Contatos avancado** — Suporte a LID (`lid` column em `contact_rules`), modo "Aprendizado" (agente pergunta se e cliente ou pessoal), import CSV, cache Redis para regras frequentes, quick actions (bloquear/permitir) na lista de conversas, export de lista, metricas de filtragem.
+- [ ] **Sync Google Contacts** — Importar contatos do Google para popular whitelist/blacklist automaticamente.
 
 ### Infraestrutura
 - [ ] CI/CD pipeline (GitHub Actions → DigitalOcean)

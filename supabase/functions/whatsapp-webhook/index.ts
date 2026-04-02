@@ -324,8 +324,23 @@ Nome do cliente: ${contactName}.`;
         layer4 += `\n\n## BASE DE CONHECIMENTO\nUse SOMENTE estas informacoes para responder. Se nao estiver aqui, diga que vai verificar.\n\n${kbSections.join("\n\n---\n\n")}`;
       }
 
-      // Skills — maps skill IDs to prompt instructions
+      // --- FAQ Data ---
       const activeSkills: string[] = (attendant as any).active_skills ?? [];
+      if (activeSkills.includes("faq")) {
+        const { data: faqs } = await supabase
+          .from("agent_faqs")
+          .select("question, answer")
+          .eq("attendant_id", attendant.id)
+          .eq("is_active", true)
+          .limit(50);
+
+        if (faqs && faqs.length > 0) {
+          const faqLines = faqs.map((f: any) => `P: ${f.question}\nR: ${f.answer}`).join("\n\n");
+          layer4 += `\n\n## PERGUNTAS FREQUENTES (FAQ)\nSe o cliente perguntar algo parecido com as perguntas abaixo, use EXATAMENTE a resposta correspondente (adaptando apenas o tom):\n\n${faqLines}`;
+        }
+      }
+
+      // Skills — maps skill IDs to prompt instructions
       const skillMap: Record<string, string> = {
         "greeting": `Use "${greeting}" personalizado com o nome do cliente (${contactName}) na primeira interacao.`,
         "escalation": "Se o cliente pedir humano ou demonstrar frustracao extrema, diga que vai transferir e encerre com a tag [ESCALATE]. Nao explique a tag pro cliente.",

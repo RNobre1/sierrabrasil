@@ -43,13 +43,13 @@ export default function AgentClassSelector({ onSelect }: AgentClassSelectorProps
           Falta pouco
         </p>
         <h2 className="text-2xl font-display font-bold text-foreground leading-tight max-w-md mx-auto">
-          Seu negocio esta prestes a ganhar um{" "}
+          Seu negócio está prestes a ganhar um{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">
-            funcionario incansavel
+            funcionário incansável
           </span>
         </h2>
         <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-          Em poucos minutos voce vai ter um agente de IA que atende seus clientes automaticamente — sem ferias, sem atraso, sem erro.
+          Em poucos minutos você vai ter um Agente de Inteligência Artificial que atende seus clientes no automático. Funciona 24h, não tira férias e não deixa ninguém esperando.
         </p>
 
         <div className="flex items-center justify-center gap-4 pt-2">
@@ -75,7 +75,7 @@ export default function AgentClassSelector({ onSelect }: AgentClassSelectorProps
         className="space-y-2"
       >
         <p className="text-sm font-medium text-foreground">Escolha o perfil do seu agente:</p>
-        <p className="text-xs text-muted-foreground">Voce pode personalizar tudo depois.</p>
+        <p className="text-xs text-muted-foreground">Você pode personalizar tudo depois.</p>
       </motion.div>
 
       <div className="grid gap-4 w-full max-w-lg sm:grid-cols-2">

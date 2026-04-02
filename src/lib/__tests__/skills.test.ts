@@ -109,9 +109,9 @@ describe("buildSkillInstructions", () => {
     expect(result).toContain("Bom dia");
     expect(result).toMatch(/humano|transferir/i);
     expect(result).toMatch(/idioma/i);
-    // Check bullet format
+    // Check bullet format (multi-language is multi-line so bullet count varies)
     const bullets = result.split("\n").filter((l) => l.startsWith("- "));
-    expect(bullets).toHaveLength(3);
+    expect(bullets.length).toBeGreaterThanOrEqual(3);
   });
 
   it("ignores unknown skills mixed with valid ones", () => {

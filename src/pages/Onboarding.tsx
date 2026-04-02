@@ -225,8 +225,8 @@ export default function Onboarding() {
     setMessages([{
       role: "assistant",
       content: firstName
-        ? `Olá, ${firstName}! Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Vamos configurar seu agente de IA!\n\nEscolha o tipo ideal para o seu negócio:`
-        : "Olá! Vamos configurar seu agente de IA!\n\nEscolha o tipo ideal para o seu negócio:",
+        ? `Olá, ${firstName}! Que bom ter você aqui${companyName ? ` com a **${companyName}**` : ""}. Vamos configurar seu Agente de Inteligência Artificial!\n\nEscolha o tipo ideal para o seu negócio:`
+        : "Olá! Vamos configurar seu Agente de Inteligência Artificial!\n\nEscolha o tipo ideal para o seu negócio:",
     }]);
     setPasswordPhase("done");
     setPhase("class-select");
@@ -983,15 +983,15 @@ export default function Onboarding() {
     const agentType = selectedAgentClass === "sales" ? "vendas" : "atendimento";
 
     const achievements = [
-      { icon: <CheckCircle2 className="h-4 w-4" />, text: `Agente de ${agentType} configurado` },
-      { icon: <Sparkles className="h-4 w-4" />, text: "Inteligencia artificial treinada com seus dados" },
-      { icon: <MessageSquare className="h-4 w-4" />, text: "Pronto para atender clientes 24h por dia" },
-      ...(overviewData.products ? [{ icon: <Zap className="h-4 w-4" />, text: `Conhece seus produtos e servicos` }] : []),
+      { icon: <CheckCircle2 className="h-4 w-4" />, text: `Agente de Inteligência Artificial de ${agentType} configurado` },
+      { icon: <Sparkles className="h-4 w-4" />, text: "Inteligência Artificial treinada com seus dados" },
+      { icon: <MessageSquare className="h-4 w-4" />, text: "Pronto pra atender clientes 24h por dia" },
+      ...(overviewData.products ? [{ icon: <Zap className="h-4 w-4" />, text: "Já conhece seus produtos e serviços" }] : []),
     ];
 
     return (
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
-        <OnboardingHeader title="Agente criado!" subtitle="Veja o que voce acabou de construir" progress={95} />
+        <OnboardingHeader title="Agente criado!" subtitle="Veja o que você acabou de construir" progress={95} />
         <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
           <div className="w-full max-w-md space-y-8 text-center py-4">
 
@@ -1010,10 +1010,10 @@ export default function Onboarding() {
               </div>
               <div className="space-y-2">
                 <h2 className="text-2xl font-display font-bold text-foreground">
-                  {agentName} esta pronto!
+                  {agentName} está pronto!
                 </h2>
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                  Em poucos minutos voce criou um agente de IA que vai trabalhar pelo seu negocio 24 horas por dia, 7 dias por semana — sem custo de equipe extra.
+                  Você acabou de criar um Agente de Inteligência Artificial que vai trabalhar pelo seu negócio 24h por dia, 7 dias por semana. Sem precisar contratar mais ninguém.
                 </p>
               </div>
             </motion.div>
@@ -1048,7 +1048,7 @@ export default function Onboarding() {
             >
               <div className="relative">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/40" /></div>
-                <div className="relative flex justify-center text-xs"><span className="bg-background px-4 text-muted-foreground/70">ultimo passo</span></div>
+                <div className="relative flex justify-center text-xs"><span className="bg-background px-4 text-muted-foreground/70">último passo</span></div>
               </div>
 
               <p className="text-sm font-medium text-foreground">
@@ -1102,7 +1102,7 @@ export default function Onboarding() {
               <button
                 onClick={() => {
                   clearPersisted();
-                  toast({ title: "Tudo certo!", description: "Voce pode conectar o WhatsApp depois em Canais." });
+                  toast({ title: "Tudo certo!", description: "Você pode conectar o WhatsApp depois em Canais." });
                   navigate("/dashboard");
                 }}
                 className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors pt-1"

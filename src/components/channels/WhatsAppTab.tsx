@@ -20,10 +20,16 @@ interface WhatsAppInstance {
   status: string;
   qr_code: string | null;
   profile_pic_url: string | null;
+  attendant_id: string | null;
   connected_at: string | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
+}
+
+interface Attendant {
+  id: string;
+  name: string;
 }
 
 async function callEvolutionApi(action: string, body?: Record<string, unknown>, params?: Record<string, string>) {
@@ -71,6 +77,7 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
   const [qrData, setQrData] = useState<{ instanceName: string; qr: string } | null>(null);
   const [qrSecondsLeft, setQrSecondsLeft] = useState(0);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [attendants, setAttendants] = useState<Attendant[]>([]);
 
   const fetchInstances = useCallback(async () => {
     if (!user) return;
@@ -82,6 +89,15 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
     } finally {
       setLoading(false);
     }
+  }, [user]);
+
+  // Fetch attendants for agent binding
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("attendants")
+      .select("id, name")
+      .then(({ data }) => { if (data) setAttendants(data); });
   }, [user]);
 
   useEffect(() => { fetchInstances(); }, [fetchInstances]);
@@ -137,8 +153,17 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
     return () => clearInterval(interval);
   }, [instances, fetchInstances]);
 
+  // Check if there's an available agent (no number assigned yet)
+  const availableAgents = attendants.filter(
+    a => !instances.some(i => i.attendant_id === a.id)
+  );
+
   const handleCreate = async () => {
     if (!newDisplayName.trim()) return;
+    if (availableAgents.length === 0) {
+      toast.error("Todos os seus agentes já possuem um número vinculado. Crie um novo agente primeiro.");
+      return;
+    }
     setCreating(true);
     try {
       // Auto-generate instance identifier from display name
@@ -153,6 +178,13 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
         instanceName,
         displayName: newDisplayName.trim(),
       });
+      // Auto-assign to first available agent
+      if (availableAgents.length > 0) {
+        await supabase
+          .from("whatsapp_instances")
+          .update({ attendant_id: availableAgents[0].id })
+          .eq("instance_name", instanceName);
+      }
       toast.success("Número adicionado com sucesso!");
       setShowCreate(false);
       setNewDisplayName("");
@@ -200,6 +232,20 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
     }
   };
 
+  const handleChangeAgent = async (inst: WhatsAppInstance, attendantId: string) => {
+    const { error } = await supabase
+      .from("whatsapp_instances")
+      .update({ attendant_id: attendantId })
+      .eq("id", inst.id);
+    if (error) {
+      toast.error("Erro ao vincular agente");
+    } else {
+      const agentName = attendants.find(a => a.id === attendantId)?.name || "Agente";
+      toast.success(`Número vinculado a ${agentName}`);
+      fetchInstances();
+    }
+  };
+
   const handleLogout = async (inst: WhatsAppInstance) => {
     try {
       await callEvolutionApi("logout", { instanceName: inst.instance_name });
@@ -240,7 +286,7 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
               </Button>
               <Dialog open={showCreate} onOpenChange={setShowCreate}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="gap-1.5">
+                  <Button size="sm" className="gap-1.5" disabled={availableAgents.length === 0} title={availableAgents.length === 0 ? "Todos os agentes já possuem um número. Crie um novo agente primeiro." : undefined}>
                     <Plus className="h-3.5 w-3.5" /> Adicionar número
                   </Button>
                 </DialogTrigger>
@@ -259,6 +305,13 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
                       />
                       <p className="text-[10px] text-muted-foreground">Um nome para identificar este WhatsApp</p>
                     </div>
+                    {availableAgents.length > 0 && (
+                      <div className="rounded-lg bg-primary/5 border border-primary/10 px-3 py-2">
+                        <p className="text-xs text-muted-foreground">
+                          Este número será usado pelo agente <span className="font-medium text-foreground">{availableAgents[0].name}</span>
+                        </p>
+                      </div>
+                    )}
                     <Button onClick={handleCreate} disabled={creating || !newDisplayName.trim()} className="w-full">
                       {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
                       Adicionar
@@ -401,6 +454,26 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
                       <div className={cn("h-2 w-2 rounded-full", sc.color, inst.status === "connected" && "animate-pulse")} />
                       <span className="text-[10px] font-medium text-muted-foreground">{sc.text}</span>
                     </div>
+                  </div>
+
+                  {/* Agent binding */}
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="text-muted-foreground">Agente:</span>
+                    {attendants.length <= 1 ? (
+                      <span className="font-medium text-foreground">
+                        {attendants.find(a => a.id === inst.attendant_id)?.name || attendants[0]?.name || "Nenhum"}
+                      </span>
+                    ) : (
+                      <select
+                        value={inst.attendant_id || ""}
+                        onChange={e => handleChangeAgent(inst, e.target.value)}
+                        className="bg-muted border-none rounded-md text-[11px] font-medium text-foreground h-6 px-1.5 cursor-pointer"
+                      >
+                        {attendants.map(a => (
+                          <option key={a.id} value={a.id}>{a.name}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   {/* Connected at */}
