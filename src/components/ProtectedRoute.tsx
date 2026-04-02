@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, profile, isAdmin, loading } = useAuth();
 
   if (loading) {
     return (
@@ -18,6 +18,12 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   }
 
   if (!user) return <Navigate to="/login" replace />;
+
+  // Phone verification required for all users (admins bypass)
+  if (profile && !profile.phone_verified && !isAdmin) {
+    return <Navigate to="/verify-phone" replace />;
+  }
+
   if (requireAdmin && !isAdmin) return <Navigate to="/dashboard" replace />;
 
   return <>{children}</>;

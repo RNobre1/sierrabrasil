@@ -20,40 +20,92 @@ const APIFY_ACTORS: Record<string, string> = {
 };
 
 function detectPlatform(url: string): string {
-  if (url.includes("instagram.com")) return "instagram";
-  if (url.includes("facebook.com") || url.includes("fb.com")) return "facebook";
-  if (url.includes("tiktok.com")) return "tiktok";
-  if (url.includes("youtube.com") || url.includes("youtu.be")) return "youtube";
-  if (url.includes("linkedin.com")) return "linkedin";
-  if (url.includes("twitter.com") || url.includes("x.com")) return "twitter";
-  if (url.includes("google.com/maps") || url.includes("goo.gl/maps")) return "google_maps";
+  const lower = url.toLowerCase();
+  if (lower.includes("instagram.com")) return "instagram";
+  if (lower.includes("facebook.com") || lower.includes("fb.com")) return "facebook";
+  if (lower.includes("tiktok.com")) return "tiktok";
+  if (lower.includes("youtube.com") || lower.includes("youtu.be")) return "youtube";
+  if (lower.includes("linkedin.com")) return "linkedin";
+  if (lower.includes("twitter.com") || lower.includes("x.com")) return "twitter";
+  if (lower.includes("google.com/maps") || lower.includes("goo.gl/maps")) return "google_maps";
   return "website";
 }
 
-function buildApifyInput(platform: string, url: string): any {
+/** Normalize URL — strip trailing sub-pages, ensure consistent format */
+function normalizeUrlForPlatform(platform: string, url: string): string {
+  try {
+    const parsed = new URL(url);
+    const segments = parsed.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+
+    switch (platform) {
+      case "linkedin": {
+        // /company/slug/about → /company/slug/
+        // /in/slug/detail → /in/slug/
+        if ((segments[0] === "company" || segments[0] === "in") && segments[1]) {
+          return `https://www.linkedin.com/${segments[0]}/${segments[1]}/`;
+        }
+        return url;
+      }
+      case "facebook": {
+        if (parsed.pathname.includes("profile.php")) return url;
+        if (segments[0]) {
+          return `https://www.facebook.com/${segments[0]}/`;
+        }
+        return url;
+      }
+      case "instagram": {
+        if (segments[0]) {
+          return `https://www.instagram.com/${segments[0]}/`;
+        }
+        return url;
+      }
+      default:
+        return url;
+    }
+  } catch {
+    return url;
+  }
+}
+
+/** Detect if a LinkedIn URL is a personal profile (/in/) vs company (/company/) */
+function isLinkedInPersonalProfile(url: string): boolean {
+  return /linkedin\.com\/in\//i.test(url);
+}
+
+function buildApifyInput(platform: string, url: string): { actorOverride?: string; input: any } {
   switch (platform) {
     case "instagram": {
       return {
-        directUrls: [url],
-        resultsType: "posts",
-        resultsLimit: 12,
+        input: {
+          directUrls: [url],
+          resultsType: "posts",
+          resultsLimit: 12,
+        },
       };
     }
     case "facebook":
-      return { startUrls: [{ url }], maxPagesPerQuery: 1 };
+      return { input: { startUrls: [{ url }], maxPagesPerQuery: 1 } };
     case "tiktok":
-      return { profiles: [url], resultsPerPage: 20 };
+      return { input: { profiles: [url], resultsPerPage: 20 } };
     case "youtube":
-      return { startUrls: [{ url }], maxResults: 20 };
-    case "linkedin":
-      return { startUrls: [{ url }] };
+      return { input: { startUrls: [{ url }], maxResults: 20 } };
+    case "linkedin": {
+      if (isLinkedInPersonalProfile(url)) {
+        // Personal profiles need the profile scraper, not the company scraper
+        return {
+          actorOverride: "anchor~linkedin-profile-scraper",
+          input: { startUrls: [{ url }] },
+        };
+      }
+      return { input: { startUrls: [{ url }] } };
+    }
     case "twitter":
-      return { startUrls: [url], maxTweets: 20, addUserInfo: true };
+      return { input: { startUrls: [url], maxTweets: 20, addUserInfo: true } };
     case "google_maps":
-      return { startUrls: [{ url }], maxCrawledPlacesPerSearch: 1 };
+      return { input: { startUrls: [{ url }], maxCrawledPlacesPerSearch: 1 } };
     case "website":
     default:
-      return { startUrls: [{ url }], maxCrawlPages: 10, crawlerType: "cheerio", maxCrawlDepth: 2 };
+      return { input: { startUrls: [{ url }], maxCrawlPages: 10, crawlerType: "cheerio", maxCrawlDepth: 2 } };
   }
 }
 
@@ -73,17 +125,46 @@ function chunkContent(text: string, maxChunk = 600): string[] {
   return chunks;
 }
 
+/** Detect if scraped HTML is a login/auth wall instead of real content */
+function isLoginPage(html: string): boolean {
+  const lower = html.toLowerCase();
+  const loginIndicators = [
+    "login_form", "signup-form", "signin-form",
+    "authwall", "auth_wall", "auth-wall",
+    "login-form", "log_in", "sign_in",
+    'action="/login"', 'action="/signin"',
+    "challenge/recaptcha",
+    "captcha-container",
+    // LinkedIn specific
+    "linkedin.com/login", "linkedin.com/checkpoint",
+    "join now", "sign in to linkedin", "sign in to continue",
+    // Facebook specific
+    "facebook.com/login", "login_form_container",
+    "You must log in to continue", "log in to facebook",
+    "Você precisa fazer login",
+  ];
+  const matchCount = loginIndicators.filter(ind => lower.includes(ind.toLowerCase())).length;
+  return matchCount >= 2;
+}
+
 async function simpleScrape(url: string): Promise<string> {
   const resp = await fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; MeteoraBot/1.0)",
-      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
     },
+    redirect: "follow",
     signal: AbortSignal.timeout(12000),
   });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   const html = await resp.text();
+
+  // Detect login walls — don't store garbage
+  if (isLoginPage(html)) {
+    throw new Error(`Login wall detected — ${url} requires authentication and cannot be scraped directly`);
+  }
+
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() || url;
   const metaDesc = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([\s\S]*?)["']/i)?.[1]?.trim() || "";
   const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([\s\S]*?)["']/i)?.[1]?.trim() || "";
@@ -410,15 +491,17 @@ serve(async (req) => {
     const sourcePreviews: any[] = [];
 
     // Process all URLs in parallel with individual timeouts
-    const urlPromises = urls.map(async (url: string) => {
-      const platform = detectPlatform(url);
+    const urlPromises = urls.map(async (rawUrl: string) => {
+      const platform = detectPlatform(rawUrl);
+      const url = normalizeUrlForPlatform(platform, rawUrl);
       try {
         let rawContent = "";
         let apifyItems: any[] | null = null;
 
         if (APIFY_API_KEY) {
-          const actorId = APIFY_ACTORS[platform] || APIFY_ACTORS.website;
-          const input = buildApifyInput(platform, url);
+          const defaultActorId = APIFY_ACTORS[platform] || APIFY_ACTORS.website;
+          const { actorOverride, input } = buildApifyInput(platform, url);
+          const actorId = actorOverride || defaultActorId;
           console.log(`[${platform}] Running Apify actor ${actorId} for ${url}`);
           try {
             apifyItems = await runApifyActor(actorId, input, APIFY_API_KEY);
@@ -426,10 +509,20 @@ serve(async (req) => {
             console.log(`[${platform}] Apify returned ${apifyItems.length} items, ${rawContent.length} chars`);
           } catch (apifyErr) {
             console.warn(`[${platform}] Apify failed, falling back to simple scrape:`, apifyErr);
-            rawContent = await simpleScrape(url);
+            try {
+              rawContent = await simpleScrape(url);
+            } catch (scrapeErr) {
+              console.warn(`[${platform}] Simple scrape also failed:`, scrapeErr);
+              rawContent = "";
+            }
           }
         } else {
-          rawContent = await simpleScrape(url);
+          try {
+            rawContent = await simpleScrape(url);
+          } catch (scrapeErr) {
+            console.warn(`[${platform}] Simple scrape failed:`, scrapeErr);
+            rawContent = "";
+          }
         }
 
         // Extract preview data for frontend display

@@ -5,12 +5,12 @@ import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 
 const platforms = [
-  { id: "instagram", label: "Instagram", icon: <Instagram className="h-4 w-4" />, placeholder: "@seuuser" },
-  { id: "facebook", label: "Facebook", icon: <Facebook className="h-4 w-4" />, placeholder: "facebook.com/suapagina" },
-  { id: "linkedin", label: "LinkedIn", icon: <Linkedin className="h-4 w-4" />, placeholder: "linkedin.com/company/sua-empresa" },
-  { id: "tiktok", label: "TikTok", icon: <span className="text-[10px] font-bold leading-none tracking-tight">TT</span>, placeholder: "@seuuser" },
-  { id: "youtube", label: "YouTube", icon: <Youtube className="h-4 w-4" />, placeholder: "youtube.com/@seucanal" },
-  { id: "website", label: "Site próprio", icon: <Globe className="h-4 w-4" />, placeholder: "https://seusite.com.br" },
+  { id: "instagram", label: "Instagram", icon: <Instagram className="h-4 w-4" />, placeholder: "@usuario ou link completo" },
+  { id: "facebook", label: "Facebook", icon: <Facebook className="h-4 w-4" />, placeholder: "nome da página ou link completo" },
+  { id: "linkedin", label: "LinkedIn", icon: <Linkedin className="h-4 w-4" />, placeholder: "nome da empresa ou link completo" },
+  { id: "tiktok", label: "TikTok", icon: <span className="text-[10px] font-bold leading-none tracking-tight">TT</span>, placeholder: "@usuario ou link completo" },
+  { id: "youtube", label: "YouTube", icon: <Youtube className="h-4 w-4" />, placeholder: "@canal ou link completo" },
+  { id: "website", label: "Site próprio", icon: <Globe className="h-4 w-4" />, placeholder: "seusite.com.br ou link completo" },
 ];
 
 export default function SocialLinksSelector({

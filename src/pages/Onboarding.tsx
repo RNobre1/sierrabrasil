@@ -16,6 +16,7 @@ import TextPasteModal from "@/components/onboarding/TextPasteModal";
 import BusinessOverview from "@/components/onboarding/BusinessOverview";
 import AgentClassSelector from "@/components/onboarding/AgentClassSelector";
 import type { AgentTemplate } from "@/components/onboarding/AgentTemplateSelector";
+import { normalizeSocialUrl } from "@/lib/url-normalizer";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -561,14 +562,8 @@ export default function Onboarding() {
     const urls: string[] = [];
     Object.entries(links).forEach(([platform, val]) => {
       if (!val) return;
-      let url = val;
-      if (platform === "instagram" && !url.startsWith("http")) url = `https://instagram.com/${url.replace(/^@+/, "")}`;
-      if (platform === "facebook" && !url.startsWith("http")) url = `https://facebook.com/${url}`;
-      if (platform === "tiktok" && !url.startsWith("http")) url = `https://tiktok.com/${url.replace("@", "@")}`;
-      if (platform === "youtube" && !url.startsWith("http")) url = `https://youtube.com/${url}`;
-      if (platform === "linkedin" && !url.startsWith("http")) url = `https://linkedin.com/company/${url}`;
-      if (platform === "website" && !url.startsWith("http")) url = `https://${url}`;
-      urls.push(url);
+      const url = normalizeSocialUrl(platform, val);
+      if (url) urls.push(url);
     });
 
     setScrapeUrls(urls);
