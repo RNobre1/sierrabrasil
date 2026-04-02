@@ -14,6 +14,8 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import GuidedTour from "@/components/GuidedTour";
+import { AGENT_DETAIL_STEPS, AGENT_DETAIL_TOUR_KEY } from "@/lib/tour-steps";
 
 const classLabels: Record<string, { label: string; color: string }> = {
   support: { label: "Atendimento / Suporte", color: "text-blue-400" },
@@ -129,6 +131,7 @@ export default function AgentDetail() {
             <Play className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Testar
           </Button>
           <Button
+            data-tour="agent-detail-status"
             variant={agent.status === "online" ? "destructive" : "default"}
             size="sm"
             className="gap-1.5 text-[10px] sm:text-xs h-8"
@@ -148,7 +151,7 @@ export default function AgentDetail() {
         <div className="min-w-0">
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-muted/50 border border-border/30 h-9 sm:h-10 w-full sm:w-auto flex-nowrap overflow-x-auto">
+            <TabsList className="bg-muted/50 border border-border/30 h-9 sm:h-10 w-full sm:w-auto flex-nowrap overflow-x-auto" data-tour="agent-detail-tabs">
           <TabsTrigger value="config" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 data-[state=active]:bg-background px-2 sm:px-3">
             <Settings className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Configuração</span><span className="xs:hidden">Config</span>
           </TabsTrigger>
@@ -167,7 +170,7 @@ export default function AgentDetail() {
           <AgentConfigTab agent={agent} onUpdate={(updated) => setAgent({ ...agent, ...updated })} />
         </TabsContent>
         <TabsContent value="skills">
-          <AgentSkillsTab agentId={agent.id} agentClass={agent.class || "support"} plan={tenantPlan} />
+          <AgentSkillsTab agentId={agent.id} agentClass={agent.class || "support"} plan={tenantPlan} tenantId={tenantId} />
         </TabsContent>
         <TabsContent value="knowledge">
           <AgentKnowledgeTab agentId={agent.id} tenantId={tenantId} plan={tenantPlan} />
@@ -180,7 +183,7 @@ export default function AgentDetail() {
 
         {/* Direita: Painel Base de Conhecimento */}
         <div className="hidden lg:block">
-          <Card className="border-border/50 shadow-sm bg-card/50 backdrop-blur-sm relative overflow-hidden flex flex-col max-h-[calc(100vh-200px)] h-full">
+          <Card className="border-border/50 shadow-sm bg-card/50 backdrop-blur-sm relative overflow-hidden flex flex-col max-h-[calc(100vh-200px)] h-full" data-tour="agent-detail-kb">
             <CardHeader className="border-b border-border/10 pb-4 shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -244,6 +247,8 @@ export default function AgentDetail() {
           </Card>
         </div>
       </div>
+
+      <GuidedTour steps={AGENT_DETAIL_STEPS} tourKey={AGENT_DETAIL_TOUR_KEY} />
     </div>
   );
 }

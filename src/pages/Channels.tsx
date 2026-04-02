@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import WhatsAppTab from "@/components/channels/WhatsAppTab";
 import InstagramTab from "@/components/channels/InstagramTab";
+import GuidedTour from "@/components/GuidedTour";
+import { CHANNELS_STEPS, CHANNELS_TOUR_KEY } from "@/lib/tour-steps";
 
 export default function Channels() {
   const { user } = useAuth();
@@ -24,7 +26,7 @@ export default function Channels() {
         <p className="text-sm text-muted-foreground mt-0.5">Gerencie suas integrações com WhatsApp e Instagram</p>
       </div>
 
-      <Tabs defaultValue="whatsapp" className="w-full">
+      <Tabs defaultValue="whatsapp" className="w-full" data-tour="channels-tabs">
         <TabsList className="bg-card border border-border/40 rounded-xl p-1 h-auto">
           <TabsTrigger value="whatsapp" className="gap-2 rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-4 py-2.5 text-sm">
             <MessageSquare className="h-4 w-4" />
@@ -36,7 +38,7 @@ export default function Channels() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="whatsapp" className="mt-6">
+        <TabsContent value="whatsapp" className="mt-6" data-tour="channels-whatsapp">
           <WhatsAppTab plan={plan} />
         </TabsContent>
 
@@ -44,6 +46,8 @@ export default function Channels() {
           <InstagramTab />
         </TabsContent>
       </Tabs>
+
+      <GuidedTour steps={CHANNELS_STEPS} tourKey={CHANNELS_TOUR_KEY} />
     </div>
   );
 }

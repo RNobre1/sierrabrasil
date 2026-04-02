@@ -18,6 +18,8 @@ import {
   Presentation, Lock, ArrowRight, Zap, Star, ChevronRight,
   CheckCircle2, Download
 } from "lucide-react";
+import GuidedTour from "@/components/GuidedTour";
+import { REPORTS_STEPS, REPORTS_TOUR_KEY } from "@/lib/tour-steps";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--meteora-cyan))", "hsl(var(--meteora-green))", "hsl(var(--meteora-warning))"];
 
@@ -226,7 +228,7 @@ export default function Reports() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-tour="reports-metrics">
         <Card><CardContent className="p-4"><p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">Conversas</p><p className="mt-1.5 font-display text-2xl font-light">{totalConvs}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">Mensagens</p><p className="mt-1.5 font-display text-2xl font-light">{totalMsgs}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">Resolução</p><p className="mt-1.5 font-display text-2xl font-light">{totalConvs ? Math.round((statusData.find(s => s.name === "Resolvidas")?.value || 0) / totalConvs * 100) : 0}%</p></CardContent></Card>
@@ -234,7 +236,7 @@ export default function Reports() {
       </div>
 
       {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2" data-tour="reports-charts">
         <Card>
           <CardHeader><CardTitle className="text-base font-display">Conversas por dia</CardTitle></CardHeader>
           <CardContent>
@@ -270,7 +272,7 @@ export default function Reports() {
       </div>
 
       {/* Report Templates */}
-      <div>
+      <div data-tour="reports-templates">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-display font-semibold">Modelos de Relatório</h2>
@@ -565,6 +567,8 @@ export default function Reports() {
           </div>
         </CardContent>
       </Card>
+
+      <GuidedTour steps={REPORTS_STEPS} tourKey={REPORTS_TOUR_KEY} />
     </div>
   );
 }

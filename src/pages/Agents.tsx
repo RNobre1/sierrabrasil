@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import GuidedTour from "@/components/GuidedTour";
+import { AGENTS_STEPS, AGENTS_TOUR_KEY } from "@/lib/tour-steps";
 
 interface Attendant {
   id: string;
@@ -141,7 +143,7 @@ export default function Agents() {
 
 
       {/* ── Filter bar ── */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2" data-tour="agents-filters">
         {/* Search */}
         <div className="relative flex-1 min-w-[180px] max-w-[280px]">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20" />
@@ -207,7 +209,7 @@ export default function Agents() {
       </div>
 
       {/* ── Agent Grid ── */}
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" data-tour="agents-grid">
         {filtered.map((a, i) => {
           const cls = CLASS_CFG[a.class || "support"] || CLASS_CFG.support;
           const model = a.model ? a.model.split("/").pop()?.replace("-preview", "") : "default";
@@ -255,7 +257,7 @@ export default function Agents() {
                 </div>
 
                 {/* Row 3: Actions */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]">
+                <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]" {...(i === 0 ? { "data-tour": "agents-card-actions" } : {})}>
                   <div className="flex gap-1">
                     <button
                       className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-white/30 hover:text-white/60 hover:bg-white/[0.03] transition-all"
@@ -288,6 +290,8 @@ export default function Agents() {
           </div>
         )}
       </div>
+
+      <GuidedTour steps={AGENTS_STEPS} tourKey={AGENTS_TOUR_KEY} />
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import AgentFaqManager from "./AgentFaqManager";
+import AgentLeadsPanel from "./AgentLeadsPanel";
 
 interface Skill {
   id: string;
@@ -51,9 +53,10 @@ interface Props {
   agentId: string;
   agentClass: string;
   plan: string;
+  tenantId?: string;
 }
 
-export default function AgentSkillsTab({ agentId, agentClass, plan }: Props) {
+export default function AgentSkillsTab({ agentId, agentClass, plan, tenantId }: Props) {
   const [enabledSkills, setEnabledSkills] = useState<Set<string>>(new Set());
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -127,6 +130,16 @@ export default function AgentSkillsTab({ agentId, agentClass, plan }: Props) {
           </Button>
         </div>
       </div>
+
+      {/* FAQ Manager — visible when FAQ skill is enabled */}
+      {isEnabled("faq") && tenantId && (
+        <AgentFaqManager agentId={agentId} tenantId={tenantId} />
+      )}
+
+      {/* Leads Panel — visible when lead-capture skill is enabled */}
+      {isEnabled("lead-capture") && (
+        <AgentLeadsPanel agentId={agentId} />
+      )}
 
       {(["core", "advanced", "premium"] as const).map(cat => {
         const catInfo = categoryLabels[cat];

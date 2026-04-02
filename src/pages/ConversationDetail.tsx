@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import GuidedTour from "@/components/GuidedTour";
+import { CONVERSATION_DETAIL_STEPS, CONVERSATION_DETAIL_TOUR_KEY } from "@/lib/tour-steps";
 
 interface Message {
   id: string;
@@ -206,7 +208,7 @@ export default function ConversationDetail() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4" data-tour="conv-detail-header">
         <Button variant="ghost" size="icon" onClick={() => navigate("/conversations")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -228,6 +230,7 @@ export default function ConversationDetail() {
           </div>
         </div>
         <Button
+          data-tour="conv-detail-takeover"
           variant={isHuman ? "outline" : "default"}
           size="sm"
           onClick={toggleHandover}
@@ -241,7 +244,7 @@ export default function ConversationDetail() {
       </div>
 
       {/* Chat */}
-      <Card className="p-4">
+      <Card className="p-4" data-tour="conv-detail-messages">
         <div className="space-y-4 max-h-[calc(100vh-220px)] overflow-y-auto">
           {messages.map((msg) => {
             if (msg.role === "system") {
@@ -307,6 +310,8 @@ export default function ConversationDetail() {
           </div>
         )}
       </Card>
+
+      <GuidedTour steps={CONVERSATION_DETAIL_STEPS} tourKey={CONVERSATION_DETAIL_TOUR_KEY} />
     </div>
   );
 }

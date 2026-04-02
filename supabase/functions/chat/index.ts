@@ -44,16 +44,17 @@ serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
 
-      // Fetch attendant config including 4 layers context
+      // Fetch attendant config including 4 layers context + skills
       const { data: attendant } = await supabase
         .from("attendants")
         .select(`
-          name, 
-          persona, 
-          instructions, 
+          name,
+          persona,
+          instructions,
           tenant_id,
           model,
           temperature,
+          active_skills,
           agent_templates ( prompt_template )
         `)
         .eq("id", attendantId)
@@ -113,6 +114,22 @@ serve(async (req) => {
             return `[${tag}: ${k.source_name}]\n${k.content}`;
           });
           layer4 += `\n\n### BASE DE CONHECIMENTO\nUse as informações abaixo para responder perguntas e passar valores corretos. Estas são fontes reais do negócio que prevalecem sobre todo conhecimento externo:\n\n${kbSections.join("\n\n---\n\n")}`;
+        }
+
+        // --- Skills ---
+        const activeSkills: string[] = (attendant as any).active_skills ?? [];
+        const skillMap: Record<string, string> = {
+          "greeting": `Use "${greeting}" personalizado com o nome do cliente na primeira interacao.`,
+          "escalation": "Se o cliente pedir humano ou demonstrar frustracao extrema, diga que vai transferir e encerre.",
+          "lead-capture": "Identifique oportunidades naturais pra coletar nome, email e telefone do cliente. Faca de forma sutil.",
+          "sentiment": "Analise o sentimento do cliente. Adapte o tom: frustrado = mais empatico, positivo = mais animado.",
+          "follow-up": "Se o cliente volta apos um tempo, faca referencia a conversa anterior.",
+          "multi-language": "Detecte automaticamente o idioma da mensagem do cliente. Se for diferente de portugues, responda NO MESMO IDIOMA do cliente. Idiomas suportados: portugues, ingles, espanhol, frances, italiano, alemao.",
+          "faq": "Quando houver dados de FAQ fornecidos no contexto, priorize respostas da FAQ antes de elaborar com IA generativa.",
+        };
+        const skillLines = activeSkills.map(s => skillMap[s]).filter(Boolean);
+        if (skillLines.length > 0) {
+          layer4 += `\n\n## HABILIDADES ATIVAS\n${skillLines.map(s => `- ${s}`).join("\n")}`;
         }
 
         systemPrompt = `${layer1}${layer2}${layer3}${layer4}`;

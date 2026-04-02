@@ -379,11 +379,30 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [x] Skills backlog marcados "Em breve" no frontend
 - [x] Analise completa do sistema (`docs/analise-sistema-completa.md`)
 
+### DONE (Dia 4 — Skills)
+- [x] Utility `buildSkillInstructions` com testes (src/lib/skills.ts)
+- [x] Utility `parseAiTags` / `cleanAiResponse` com testes (src/lib/tag-parser.ts)
+- [x] Utility `findFaqMatch` com testes (src/lib/faq-matcher.ts)
+- [x] Skill Multilingue — prompt injection em whatsapp-webhook e chat
+- [x] Skill FAQ — tabela `agent_faqs`, CRUD component, matcher keyword-based
+- [x] Skill Analise de Sentimento — tag [SENTIMENT:], parsing, metadata em messages
+- [x] Skill Captura de Leads — tag [LEAD:], tabela `agent_leads`, panel UI, upsert no webhook
+- [x] Skill Follow-up — passivo via prompt (ativo/cron → backlog)
+- [x] Skills adicionadas a edge function chat (Playground)
+- [x] 7 skills com instrucoes no skillMap (greeting, escalation, lead-capture, sentiment, follow-up, multi-language, faq)
+- [x] 152 testes passando
+
+### DONE (Dia 4 — Tutorial por Aba)
+- [x] Refatorar GuidedTour para aceitar steps/tourKey como props
+- [x] Criar tour-steps.tsx com definicoes para 9 paginas (26 steps total)
+- [x] Adicionar data-tour attributes e montar tours em todas as paginas
+- [x] Tours: Dashboard(7), Conversas(4), ConvDetail(3), Agentes(3), AgentDetail(3), Playground(2), Canais(2), Relatorios(3), Integracoes(3), Conta(3)
+- [x] 158 testes passando
+
 ### TODO (Ordem de Execucao)
-1. **Skills funcionais** — FAQ, Captura de Leads, Analise Sentimento, Multilingue, Follow-up (tentar)
-2. **Pagamento Stripe (MUST)** — Tabelas, webhooks, checkout, portal, validacao server-side, seguranca
-3. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
-4. **Memoria do agente** — Tabela, sumarizacao, injecao no prompt, TTL, add-on R$67/mes
+1. **Pagamento Stripe (MUST)** — Tabelas, webhooks, checkout, portal, validacao server-side, seguranca
+2. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
+3. **Memoria do agente** — Tabela, sumarizacao, injecao no prompt, TTL, add-on R$67/mes
 
 ## Backlog (Pos-MVP — "Coming Soon" no Frontend)
 
@@ -437,3 +456,6 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 2. **Documentacao de API nao confiavel.** A referencia da Evolution API v1.8.x estava errada em varios pontos (sendText payload, webhook format). Sempre testar endpoints via curl antes de implementar. Validar contra a API real, nao contra docs.
 3. **LID e uma limitacao real do WhatsApp nao-oficial.** ~30-50% dos contatos podem vir como LID. A v2.3.6 resolve via `remoteJidAlt` mas nem sempre. Migrar pra Cloud API oficial e o unico caminho 100% confiavel.
 4. **Deploy via MCP > CLI.** O Supabase CLI falha com paths contendo caracteres especiais ("Area de trabalho"). Usar MCP deploy ou API direta. Verificar conteudo deployado (transcrição manual pode introduzir bugs como `{ number, text }` vs `{ number: phone, text }`).
+5. **QR Code WhatsApp expira silenciosamente.** O QR code da Evolution API expira em ~30-45 segundos. Sem timer visual e feedback de expiracao, o usuario nao sabe que precisa gerar outro. Sempre exibir countdown e botao de refresh. Alem disso, status "connecting" pode ficar travado indefinidamente se o usuario sair da pagina — implementar auto-expiracao (2min) no polling do frontend e sincronizar com o status real da Evolution API.
+6. **Race condition no redirect entre paginas com guards assincronos.** O guard do Onboarding fazia `SELECT phone_verified` e redirecionava para `/verify-phone` antes do UPDATE do `verify-otp` propagar. O componente VerifyPhone remontava com refs resetadas e reenviava OTP. Solucao: (1) VerifyPhone checa `phone_verified` antes de enviar OTP — se ja verificado, redireciona sem reenviar; (2) Onboarding guard faz retry com delay (2x, 1s cada) antes de redirecionar. Regra geral: quando um guard async em pagina B depende de um UPDATE feito em pagina A, adicionar retry com delay ou otimistic state para evitar redirect loop.
+7. **useRef nao sobrevive a remontagem de componente.** `sendingOtp.current = true` evita double-fire dentro da mesma montagem, mas quando o componente desmonta (navigate) e remonta (redirect de volta), o ref reseta para `false`. Guards baseados em ref NAO protegem contra redirect loops. Usar verificacao server-side (query ao banco) como guard definitivo.

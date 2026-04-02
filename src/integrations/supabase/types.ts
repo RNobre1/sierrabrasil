@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_faqs: {
+        Row: {
+          answer: string
+          attendant_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          match_count: number
+          question: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          attendant_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          match_count?: number
+          question: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          attendant_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          match_count?: number
+          question?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_faqs_attendant_id_fkey"
+            columns: ["attendant_id"]
+            isOneToOne: false
+            referencedRelation: "attendants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_faqs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_leads: {
+        Row: {
+          attendant_id: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          conversation_id: string | null
+          created_at: string
+          id: string
+          source: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          attendant_id: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          source?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          attendant_id?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          source?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_leads_attendant_id_fkey"
+            columns: ["attendant_id"]
+            isOneToOne: false
+            referencedRelation: "attendants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_leads_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_leads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_templates: {
         Row: {
           class: string

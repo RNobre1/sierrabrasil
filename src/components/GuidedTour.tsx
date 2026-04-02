@@ -6,14 +6,15 @@ import {
   BarChart3, Percent, CheckCircle2, Radio, Zap
 } from "lucide-react";
 
-interface TourStep {
+export interface TourStep {
   title: string;
   description: string;
   icon: React.ReactNode;
   selector: string;
 }
 
-const TOUR_STEPS: TourStep[] = [
+// Default Dashboard steps (backward-compatible)
+const DASHBOARD_STEPS: TourStep[] = [
   {
     title: "Seus indicadores",
     description: "Aqui voce ve o resumo geral: total de conversas, taxa de resolucao, agentes online e mensagens processadas. Tudo em tempo real.",
@@ -58,7 +59,7 @@ const TOUR_STEPS: TourStep[] = [
   },
 ];
 
-const TOUR_KEY = "theagent_guided_tour_completed";
+const DEFAULT_TOUR_KEY = "theagent_guided_tour_completed";
 
 interface HighlightRect {
   top: number;
@@ -67,13 +68,23 @@ interface HighlightRect {
   height: number;
 }
 
-export default function GuidedTour() {
+interface GuidedTourProps {
+  steps?: TourStep[];
+  tourKey?: string;
+  delay?: number;
+}
+
+export default function GuidedTour({
+  steps = DASHBOARD_STEPS,
+  tourKey = DEFAULT_TOUR_KEY,
+  delay = 1500,
+}: GuidedTourProps) {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const [highlight, setHighlight] = useState<HighlightRect | null>(null);
 
   const updateHighlight = useCallback(() => {
-    const current = TOUR_STEPS[step];
+    const current = steps[step];
     if (!current?.selector) return;
     const el = document.querySelector(current.selector);
     if (el) {
@@ -89,15 +100,15 @@ export default function GuidedTour() {
     } else {
       setHighlight(null);
     }
-  }, [step]);
+  }, [step, steps]);
 
   useEffect(() => {
-    const done = localStorage.getItem(TOUR_KEY);
+    const done = localStorage.getItem(tourKey);
     if (!done) {
-      const t = setTimeout(() => setVisible(true), 1500);
+      const t = setTimeout(() => setVisible(true), delay);
       return () => clearTimeout(t);
     }
-  }, []);
+  }, [tourKey, delay]);
 
   useEffect(() => {
     if (!visible) return;
@@ -108,11 +119,11 @@ export default function GuidedTour() {
 
   const dismiss = () => {
     setVisible(false);
-    localStorage.setItem(TOUR_KEY, "true");
+    localStorage.setItem(tourKey, "true");
   };
 
   const next = () => {
-    if (step < TOUR_STEPS.length - 1) {
+    if (step < steps.length - 1) {
       setStep(step + 1);
     } else {
       dismiss();
@@ -125,10 +136,9 @@ export default function GuidedTour() {
 
   if (!visible) return null;
 
-  const current = TOUR_STEPS[step];
-  const isLast = step === TOUR_STEPS.length - 1;
+  const current = steps[step];
+  const isLast = step === steps.length - 1;
 
-  // Position card below or above the highlighted element
   let cardStyle: React.CSSProperties = {};
   const useCenter = !highlight;
 
@@ -137,13 +147,11 @@ export default function GuidedTour() {
     const cardHeight = 220;
 
     if (spaceBelow > cardHeight + 24) {
-      // Below
       cardStyle = {
         top: highlight.top + highlight.height + 16,
         left: Math.max(16, Math.min(highlight.left, window.innerWidth - 400)),
       };
     } else {
-      // Above
       cardStyle = {
         top: Math.max(16, highlight.top - cardHeight - 16),
         left: Math.max(16, Math.min(highlight.left, window.innerWidth - 400)),
@@ -205,7 +213,7 @@ export default function GuidedTour() {
             <div className="rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-5 pt-4">
                 <div className="flex gap-1.5">
-                  {TOUR_STEPS.map((_, i) => (
+                  {steps.map((_, i) => (
                     <div
                       key={i}
                       className={`h-1.5 rounded-full transition-all duration-300 ${
@@ -229,7 +237,7 @@ export default function GuidedTour() {
 
               <div className="px-5 pb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground/40">{step + 1}/{TOUR_STEPS.length}</span>
+                  <span className="text-xs text-muted-foreground/40">{step + 1}/{steps.length}</span>
                   <button onClick={dismiss} className="text-xs text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors">
                     Pular
                   </button>

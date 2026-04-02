@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import GuidedTour from "@/components/GuidedTour";
+import { PLAYGROUND_STEPS, PLAYGROUND_TOUR_KEY } from "@/lib/tour-steps";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -141,7 +143,7 @@ export default function AttendantPlayground() {
       </div>
 
       {/* Chat Area */}
-      <Card className="flex-1 flex flex-col overflow-hidden">
+      <Card className="flex-1 flex flex-col overflow-hidden" data-tour="playground-chat">
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -195,7 +197,7 @@ export default function AttendantPlayground() {
         </div>
 
         {/* Input */}
-        <div className="border-t border-border p-3">
+        <div className="border-t border-border p-3" data-tour="playground-input">
           <form onSubmit={e => { e.preventDefault(); sendMessage(); }} className="flex gap-2">
             <Input
               value={input}
@@ -210,6 +212,8 @@ export default function AttendantPlayground() {
           </form>
         </div>
       </Card>
+
+      <GuidedTour steps={PLAYGROUND_STEPS} tourKey={PLAYGROUND_TOUR_KEY} />
     </div>
   );
 }

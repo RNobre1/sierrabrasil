@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import GuidedTour from "@/components/GuidedTour";
+import { CONVERSATIONS_STEPS, CONVERSATIONS_TOUR_KEY } from "@/lib/tour-steps";
 
 type FilterKey = "all" | "active" | "resolved" | "escalated";
 
@@ -122,14 +124,14 @@ export default function Conversations() {
         <p className="text-[13px] text-white/35 mt-0.5">Todas as interações do seu agente — em tempo real.</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div data-tour="conversations-stats" className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <Pill icon={MessageSquare} label="Total" value={cnt.all} cls="text-indigo-400" />
         <Pill icon={Zap} label="Ativas" value={cnt.active} cls="text-emerald-400" />
         <Pill icon={CheckCircle2} label="Resolvidas" value={cnt.resolved} cls="text-white/40" />
         <Pill icon={AlertTriangle} label="Escaladas" value={cnt.escalated} cls="text-red-400" />
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div data-tour="conversations-filters" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-1 p-1 rounded-xl bg-white/[0.025] border border-white/[0.06]">
           {(["all", "active", "resolved", "escalated"] as FilterKey[]).map(k => {
             const on = filter === k;
@@ -142,13 +144,13 @@ export default function Conversations() {
             );
           })}
         </div>
-        <div className="relative w-full sm:w-64">
+        <div data-tour="conversations-search" className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/20" />
           <Input placeholder="Buscar por nome ou telefone…" className="pl-9 h-[34px] text-[12px] bg-white/[0.015] border-white/[0.05] placeholder:text-white/20" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
 
-      <div className="cosmos-card p-0 overflow-hidden">
+      <div data-tour="conversations-list" className="cosmos-card p-0 overflow-hidden">
         <div className="hidden sm:grid grid-cols-[40px_1fr_82px_auto_48px_20px] items-center gap-4 px-4 py-2 border-b border-white/[0.04] text-[9px] font-mono uppercase tracking-[.1em] text-white/20 select-none">
           <span /><span>Contato</span><span className="text-center">Canal</span><span className="text-center w-24">Status</span><span className="text-right">Tempo</span><span />
         </div>
@@ -181,6 +183,7 @@ export default function Conversations() {
           </div>
         )}
       </div>
+      <GuidedTour steps={CONVERSATIONS_STEPS} tourKey={CONVERSATIONS_TOUR_KEY} />
     </div>
   );
 }

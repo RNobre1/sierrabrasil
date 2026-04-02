@@ -18,6 +18,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import GuidedTour from "@/components/GuidedTour";
+import { ACCOUNT_STEPS, ACCOUNT_TOUR_KEY } from "@/lib/tour-steps";
 
 const MAX_SIZE = 500 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -277,7 +279,7 @@ export default function Account() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Avatar */}
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-5" data-tour="account-profile">
             <div className="relative group">
               <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-2 border-primary/10 overflow-hidden">
                 {avatarUrl ? (
@@ -352,7 +354,7 @@ export default function Account() {
           </div>
 
           {/* Email - with verification */}
-          <div className="space-y-2">
+          <div className="space-y-2" data-tour="account-contact">
             <Label className="flex items-center gap-2">
               <Mail className="h-3.5 w-3.5 text-muted-foreground" />
               E-mail
@@ -493,7 +495,7 @@ export default function Account() {
         </Card>
       )}
 
-      <Card>
+      <Card data-tour="account-plan">
         <CardHeader>
           <CardTitle className="text-base font-display">Plano atual</CardTitle>
         </CardHeader>
@@ -525,6 +527,8 @@ export default function Account() {
 
       <EmailOTPDialog open={showEmailOTP} onClose={() => setShowEmailOTP(false)} email={newEmail} onVerified={handleEmailVerified} />
       <CreatePasswordDialog open={showCreatePassword} onClose={() => setShowCreatePassword(false)} />
+
+      <GuidedTour steps={ACCOUNT_STEPS} tourKey={ACCOUNT_TOUR_KEY} />
     </div>
   );
 }

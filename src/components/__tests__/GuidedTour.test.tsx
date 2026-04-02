@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import GuidedTour from "../GuidedTour";
+import { Zap, BarChart3 } from "lucide-react";
+import { createElement } from "react";
 
 beforeEach(() => {
   localStorage.clear();
@@ -11,16 +13,18 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+// --- Default (Dashboard) mode ---
+
 function renderAndShow() {
-  const result = render(<GuidedTour />);
+  const result = render(createElement(GuidedTour));
   act(() => { vi.advanceTimersByTime(2000); });
   return result;
 }
 
-describe("GuidedTour", () => {
+describe("GuidedTour (default Dashboard)", () => {
   it("nao renderiza se tour ja foi completado", () => {
     localStorage.setItem("theagent_guided_tour_completed", "true");
-    const { container } = render(<GuidedTour />);
+    const { container } = render(createElement(GuidedTour));
     act(() => { vi.advanceTimersByTime(2000); });
     expect(container.innerHTML).toBe("");
   });
@@ -66,10 +70,70 @@ describe("GuidedTour", () => {
 
   it("mostra Comecar no ultimo step", () => {
     renderAndShow();
-    // Avanca ate o ultimo step
     for (let i = 0; i < 6; i++) {
       fireEvent.click(screen.getByRole("button", { name: /proximo/i }));
     }
     expect(screen.getByRole("button", { name: /comecar/i })).toBeInTheDocument();
+  });
+});
+
+// --- Custom steps mode (reusable per-page) ---
+
+const customSteps = [
+  {
+    title: "Step A",
+    description: "Descricao A",
+    icon: createElement(Zap, { className: "h-5 w-5" }),
+    selector: "[data-tour='a']",
+  },
+  {
+    title: "Step B",
+    description: "Descricao B",
+    icon: createElement(BarChart3, { className: "h-5 w-5" }),
+    selector: "[data-tour='b']",
+  },
+];
+
+describe("GuidedTour (custom steps)", () => {
+  it("uses custom tourKey for localStorage", () => {
+    localStorage.setItem("tour_custom_page", "true");
+    const { container } = render(
+      createElement(GuidedTour, { steps: customSteps, tourKey: "tour_custom_page" }),
+    );
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(container.innerHTML).toBe("");
+  });
+
+  it("renders custom steps", () => {
+    render(createElement(GuidedTour, { steps: customSteps, tourKey: "tour_custom" }));
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(screen.getByText("Step A")).toBeInTheDocument();
+  });
+
+  it("navigates through custom steps", () => {
+    render(createElement(GuidedTour, { steps: customSteps, tourKey: "tour_custom" }));
+    act(() => { vi.advanceTimersByTime(2000); });
+    fireEvent.click(screen.getByRole("button", { name: /proximo/i }));
+    expect(screen.getByText("Step B")).toBeInTheDocument();
+  });
+
+  it("shows Comecar on last custom step", () => {
+    render(createElement(GuidedTour, { steps: customSteps, tourKey: "tour_custom" }));
+    act(() => { vi.advanceTimersByTime(2000); });
+    fireEvent.click(screen.getByRole("button", { name: /proximo/i }));
+    expect(screen.getByRole("button", { name: /comecar/i })).toBeInTheDocument();
+  });
+
+  it("saves custom tourKey on dismiss", () => {
+    render(createElement(GuidedTour, { steps: customSteps, tourKey: "tour_custom" }));
+    act(() => { vi.advanceTimersByTime(2000); });
+    fireEvent.click(screen.getByLabelText(/fechar/i));
+    expect(localStorage.getItem("tour_custom")).toBe("true");
+  });
+
+  it("shows correct step count for custom steps", () => {
+    render(createElement(GuidedTour, { steps: customSteps, tourKey: "tour_custom" }));
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(screen.getByText("1/2")).toBeInTheDocument();
   });
 });

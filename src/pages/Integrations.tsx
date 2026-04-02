@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import GuidedTour from "@/components/GuidedTour";
+import { INTEGRATIONS_STEPS, INTEGRATIONS_TOUR_KEY } from "@/lib/tour-steps";
 
 type Priority = "p0" | "p1" | "p2" | "p3";
 
@@ -177,7 +179,7 @@ export default function Integrations() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/30 bg-gradient-to-br from-primary/5 via-card to-card p-6 md:p-8">
+      <div className="relative overflow-hidden rounded-2xl border border-border/30 bg-gradient-to-br from-primary/5 via-card to-card p-6 md:p-8" data-tour="integrations-header">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="relative">
           <div className="flex items-center gap-3 mb-2">
@@ -198,7 +200,7 @@ export default function Integrations() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md">
+      <div className="relative max-w-md" data-tour="integrations-search">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
         <Input
           placeholder="Buscar integração..."
@@ -209,7 +211,7 @@ export default function Integrations() {
       </div>
 
       {/* Categories */}
-      <div className="space-y-10">
+      <div className="space-y-10" data-tour="integrations-categories">
         {filteredCategories.map((category) => (
           <section key={category.title}>
             <div className="flex items-center gap-2.5 mb-4">
@@ -236,6 +238,8 @@ export default function Integrations() {
           <p className="text-sm text-muted-foreground">Nenhuma integração encontrada para "{search}"</p>
         </div>
       )}
+
+      <GuidedTour steps={INTEGRATIONS_STEPS} tourKey={INTEGRATIONS_TOUR_KEY} />
     </div>
   );
 }

@@ -324,14 +324,16 @@ Nome do cliente: ${contactName}.`;
         layer4 += `\n\n## BASE DE CONHECIMENTO\nUse SOMENTE estas informacoes para responder. Se nao estiver aqui, diga que vai verificar.\n\n${kbSections.join("\n\n---\n\n")}`;
       }
 
-      // Skills
+      // Skills — maps skill IDs to prompt instructions
       const activeSkills: string[] = (attendant as any).active_skills ?? [];
       const skillMap: Record<string, string> = {
-        "greeting": `Use "${greeting}" personalizado com o nome do cliente na primeira interacao.`,
-        "escalation": "Se o cliente pedir humano ou demonstrar frustracao extrema, diga que vai transferir e encerre.",
-        "lead-capture": "Identifique oportunidades naturais pra coletar nome, email e telefone. Faca de forma sutil.",
-        "sentiment": "Adapte o tom conforme o sentimento. Frustrado = mais empatico. Positivo = mais animado.",
-        "follow-up": "Se o cliente volta apos um tempo, faca referencia a conversa anterior.",
+        "greeting": `Use "${greeting}" personalizado com o nome do cliente (${contactName}) na primeira interacao.`,
+        "escalation": "Se o cliente pedir humano ou demonstrar frustracao extrema, diga que vai transferir e encerre com a tag [ESCALATE]. Nao explique a tag pro cliente.",
+        "lead-capture": "Identifique oportunidades naturais pra coletar nome, email e telefone do cliente. Faca de forma sutil e conversacional. Quando coletar qualquer dado, adicione no FINAL da resposta (invisivel pro cliente): [LEAD: nome=X | email=Y | telefone=Z]. Preencha apenas os campos que conseguiu.",
+        "sentiment": "Analise o sentimento do cliente em cada mensagem. Adapte o tom: frustrado = mais empatico e cuidadoso, positivo = mais animado e casual, neutro = equilibrado. No FINAL da resposta, adicione (invisivel pro cliente): [SENTIMENT: positivo|neutro|negativo|frustrado].",
+        "follow-up": "Se o cliente volta apos um tempo, faca referencia a conversa anterior de forma natural (ex: 'E ai, resolveu aquela questao?'). Mostre que lembra do contexto.",
+        "multi-language": "Detecte automaticamente o idioma da mensagem do cliente. Se for diferente de portugues, responda NO MESMO IDIOMA do cliente. Idiomas suportados: portugues, ingles, espanhol, frances, italiano, alemao. Mantenha o tom natural e humanizado no idioma detectado.",
+        "faq": "Quando houver dados de FAQ fornecidos no contexto, priorize respostas da FAQ antes de elaborar com IA generativa. Respostas de FAQ devem ser usadas diretamente, adaptando apenas o tom conversacional.",
       };
       const skillLines = activeSkills.map(s => skillMap[s]).filter(Boolean);
       if (skillLines.length > 0) {
@@ -388,15 +390,61 @@ Nome do cliente: ${contactName}.`;
       // 9. Parse control tags and clean reply
       const hasEscalate = aiReply.includes("[ESCALATE]");
       const hasResolved = aiReply.includes("[RESOLVED]");
+
+      // Parse [LEAD: nome=X | email=Y | telefone=Z]
+      const leadMatch = aiReply.match(/\[LEAD:\s*([^\]]+)\]/);
+      let leadData: Record<string, string> | null = null;
+      if (leadMatch) {
+        leadData = {};
+        for (const part of leadMatch[1].split("|")) {
+          const [key, ...val] = part.split("=");
+          if (key && val.length > 0) {
+            leadData[key.trim().toLowerCase()] = val.join("=").trim();
+          }
+        }
+      }
+
+      // Parse [SENTIMENT: positivo|neutro|negativo|frustrado]
+      const sentimentMatch = aiReply.match(/\[SENTIMENT:\s*(positivo|neutro|negativo|frustrado)\s*\]/i);
+      const sentiment = sentimentMatch ? sentimentMatch[1].toLowerCase() : null;
+
       const cleanReply = aiReply
         .replace(/\s*\[ESCALATE\]\s*/g, "")
         .replace(/\s*\[RESOLVED\]\s*/g, "")
+        .replace(/\s*\[LEAD:\s*[^\]]*\]\s*/g, "")
+        .replace(/\s*\[SENTIMENT:\s*[^\]]*\]\s*/g, "")
         .trim();
 
-      // 10. Save cleaned AI response
+      // 10. Save cleaned AI response (with sentiment metadata if detected)
       await supabase.from("messages").insert({
-        conversation_id: conversationId, role: "attendant", content: cleanReply,
-      });
+        conversation_id: conversationId,
+        role: "attendant",
+        content: cleanReply,
+        ...(sentiment ? { metadata: { sentiment } } : {}),
+      } as any);
+
+      // 10b. Save lead data if captured
+      if (leadData && Object.keys(leadData).length > 0) {
+        const { error: leadErr } = await supabase.from("agent_leads").upsert({
+          tenant_id: instance.tenant_id,
+          attendant_id: attendant.id,
+          conversation_id: conversationId,
+          contact_phone: contactPhone,
+          contact_name: leadData.nome || contactName,
+          contact_email: leadData.email || null,
+          source: "whatsapp",
+        } as any, { onConflict: "tenant_id,contact_phone" });
+        if (leadErr) {
+          console.warn("Lead save error (non-fatal):", leadErr.message);
+        } else {
+          console.log(`Lead captured: ${JSON.stringify(leadData)}`);
+        }
+      }
+
+      // 10c. Log negative sentiment for operator alerts
+      if (sentiment === "negativo" || sentiment === "frustrado") {
+        console.log(`⚠️ Negative sentiment (${sentiment}) in conversation ${conversationId}`);
+      }
 
       // 11. Update conversation status based on AI tags
       if (hasEscalate) {
