@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Search, ArrowRight, Inbox, MessageSquare, Zap, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +33,55 @@ const AVATAR = [
 function pick(name: string) { let h = 0; for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h); return AVATAR[Math.abs(h) % AVATAR.length]; }
 function ini(n: string) { return n.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(); }
 function ago(d: string) { const s = (Date.now() - new Date(d).getTime()) / 1000; if (s < 60) return "agora"; if (s < 3600) return `${Math.floor(s / 60)}min`; if (s < 86400) return `${Math.floor(s / 3600)}h`; return `${Math.floor(s / 86400)}d`; }
+
+const SENTIMENT_SCORES: Record<string, number> = {
+  positivo: 1.0,
+  neutro: 0.5,
+  negativo: 0.25,
+  frustrado: 0.0,
+};
+
+function computeSentimentScore(sentiments: string[]): number | null {
+  if (sentiments.length === 0) return null;
+  const total = sentiments.reduce((sum, s) => sum + (SENTIMENT_SCORES[s] ?? 0.5), 0);
+  return total / sentiments.length;
+}
+
+function sentimentLabel(score: number): string {
+  if (score >= 0.75) return "Positivo";
+  if (score >= 0.4) return "Neutro";
+  if (score >= 0.15) return "Negativo";
+  return "Frustrado";
+}
+
+function sentimentBarColor(score: number): string {
+  if (score >= 0.75) return "bg-emerald-500";
+  if (score >= 0.4) return "bg-amber-500";
+  return "bg-rose-500";
+}
+
+function SentimentBar({ score }: { score: number | null }) {
+  if (score === null) return null;
+  const label = sentimentLabel(score);
+  const color = sentimentBarColor(score);
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="w-12 h-1.5 rounded-full bg-white/[0.06] overflow-hidden shrink-0">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${color}`}
+              style={{ width: `${Math.max(score * 100, 6)}%` }}
+            />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-[11px]">
+          Sentimento medio: {label}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 function Pill({ icon: I, label, value, cls }: { icon: any; label: string; value: number; cls: string }) {
   return (
@@ -76,6 +126,7 @@ export default function Conversations() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<ConversationRow[]>([]);
+  const [sentimentMap, setSentimentMap] = useState<Map<string, number | null>>(new Map());
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const nav = useNavigate();
@@ -88,11 +139,42 @@ export default function Conversations() {
       if (!t) { setLoading(false); return; }
       const { data } = await supabase.from("conversations").select("id, contact_name, contact_phone, channel, status, started_at").eq("tenant_id", t.id).order("started_at", { ascending: false });
       if (data) {
-        const enriched = await Promise.all(data.map(async c => {
-          const { data: m } = await supabase.from("messages").select("content").eq("conversation_id", c.id).order("created_at", { ascending: false }).limit(1);
-          return { ...c, last_message: m?.[0]?.content ?? "" };
-        }));
+        const conversationIds = data.map(c => c.id);
+
+        // Fetch last messages + sentiment data in parallel
+        const [enriched, sentimentResult] = await Promise.all([
+          Promise.all(data.map(async c => {
+            const { data: m } = await supabase.from("messages").select("content").eq("conversation_id", c.id).order("created_at", { ascending: false }).limit(1);
+            return { ...c, last_message: m?.[0]?.content ?? "" };
+          })),
+          // Single query: all attendant messages with sentiment metadata for visible conversations
+          supabase
+            .from("messages")
+            .select("conversation_id, metadata")
+            .in("conversation_id", conversationIds)
+            .eq("role", "attendant")
+            .not("metadata", "is", null),
+        ]);
+
         setRows(enriched);
+
+        // Build sentiment score map per conversation
+        const sentimentsByConv = new Map<string, string[]>();
+        if (sentimentResult.data) {
+          for (const msg of sentimentResult.data) {
+            const s = (msg.metadata as any)?.sentiment;
+            if (s && typeof s === "string") {
+              const arr = sentimentsByConv.get(msg.conversation_id) ?? [];
+              arr.push(s.toLowerCase());
+              sentimentsByConv.set(msg.conversation_id, arr);
+            }
+          }
+        }
+        const scoreMap = new Map<string, number | null>();
+        for (const id of conversationIds) {
+          scoreMap.set(id, computeSentimentScore(sentimentsByConv.get(id) ?? []));
+        }
+        setSentimentMap(scoreMap);
       }
       setLoading(false);
     })();
@@ -145,26 +227,39 @@ export default function Conversations() {
     return groups;
   }, [rows, filter]);
 
+  /** Aggregate sentiment score per contact key (across all their conversations) */
+  const contactSentimentMap = useMemo(() => {
+    const result = new Map<string, number | null>();
+    const byContact = new Map<string, (number | null)[]>();
+    for (const c of rows) {
+      const key = contactKey(c);
+      const arr = byContact.get(key) ?? [];
+      arr.push(sentimentMap.get(c.id) ?? null);
+      byContact.set(key, arr);
+    }
+    for (const [key, scores] of byContact) {
+      const valid = scores.filter((s): s is number => s !== null);
+      result.set(key, valid.length > 0 ? valid.reduce((a, b) => a + b, 0) / valid.length : null);
+    }
+    return result;
+  }, [rows, sentimentMap]);
+
   /** Whether we should use grouped/expandable view */
   const isGroupedView = filter === "resolved" || filter === "escalated";
 
-  /** Count unique contacts per status for badges */
-  const uniqueContacts = useMemo(() => {
-    const count = (status: string) => {
-      const seen = new Set<string>();
-      for (const c of rows) {
-        if (c.status === status) seen.add(contactKey(c));
-      }
-      return seen.size;
+  /** Count raw conversations per status for resolved/escalated badges */
+  const rawCounts = useMemo(() => {
+    return {
+      resolved: rows.filter(c => c.status === "resolved").length,
+      escalated: rows.filter(c => c.status === "escalated").length,
     };
-    return { resolved: count("resolved"), escalated: count("escalated") };
   }, [rows]);
 
   const cnt: Record<FilterKey, number> = {
     all: deduplicatedRows.length,
     active: deduplicatedRows.filter(c => c.status === "active").length,
-    resolved: uniqueContacts.resolved,
-    escalated: uniqueContacts.escalated,
+    resolved: rawCounts.resolved,
+    escalated: rawCounts.escalated,
   };
 
   /** Apply search filter to the deduplicated list */
@@ -277,7 +372,10 @@ export default function Conversations() {
                     </div>
                     <div className={`h-10 w-10 rounded-[10px] flex items-center justify-center text-white font-display font-semibold text-[11px] shadow-lg shrink-0 ${pick(rep.contact_name)}`}>{ini(rep.contact_name)}</div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-white/90 truncate leading-snug">{rep.contact_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-semibold text-white/90 truncate leading-snug">{rep.contact_name}</p>
+                        <SentimentBar score={contactSentimentMap.get(key) ?? null} />
+                      </div>
                       <p className="text-[10px] text-white/25 mt-[1px]">
                         {convs.length} conversa{convs.length > 1 ? "s" : ""}
                       </p>
@@ -333,7 +431,10 @@ export default function Conversations() {
               >
                 <div className={`h-10 w-10 rounded-[10px] flex items-center justify-center text-white font-display font-semibold text-[11px] shadow-lg shrink-0 ${pick(c.contact_name)}`}>{ini(c.contact_name)}</div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-white/90 truncate leading-snug">{c.contact_name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[13px] font-semibold text-white/90 truncate leading-snug">{c.contact_name}</p>
+                    <SentimentBar score={contactSentimentMap.get(contactKey(c)) ?? null} />
+                  </div>
                   {c.last_message ? <p className="text-[11px] text-white/25 truncate mt-[1px] max-w-md leading-snug">{c.last_message}</p> : <p className="text-[10px] text-white/15 italic mt-[1px]">Sem mensagens</p>}
                 </div>
                 <ChBadge ch={c.channel} />

@@ -293,7 +293,7 @@ export default function ConversationDetail() {
             }
 
             const isContact = msg.role === "contact";
-            const sentiment = !isContact && msg.metadata?.sentiment ? sentimentConfig[msg.metadata.sentiment] : null;
+            const sentiment = isContact && msg.metadata?.sentiment ? sentimentConfig[msg.metadata.sentiment] : null;
             return (
               <div key={msg.id} className={`flex ${isContact ? "justify-start" : "justify-end"}`}>
                 <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${

@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import {
-  MessageSquare, CheckCircle2, Play, Settings, Sparkles, ArrowRight,
-  Zap, BarChart3, Crown, Activity, TrendingUp, TrendingDown, Bot,
-  ChevronRight, ArrowUpRight, ArrowDownRight, Percent, Radio,
+  MessageSquare, CheckCircle2, ArrowRight,
+  Zap, BarChart3, Crown, Bot,
+  ArrowUpRight, ArrowDownRight, Percent,
   Users, Phone, Mail
 } from "lucide-react";
 import TrialTimer from "@/components/TrialTimer";
@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
-  BarChart, Bar, PieChart, Pie, Cell, LineChart, Line
+  PieChart, Pie, Cell
 } from "recharts";
 import { MeteoraWatermark } from "@/components/MeteoraBrand";
 import GuidedTour from "@/components/GuidedTour";
@@ -172,12 +172,6 @@ export default function Dashboard() {
     { name: "Escaladas", value: escalated },
   ].filter(i => i.value > 0), [active, resolved, escalated]);
 
-  const channelBars = useMemo(() => {
-    const ch: Record<string, number> = {};
-    allConvs.forEach(c => { ch[c.channel] = (ch[c.channel] || 0) + 1; });
-    return Object.entries(ch).map(([k, v]) => ({ channel: k.charAt(0).toUpperCase() + k.slice(1), count: v }));
-  }, [allConvs]);
-  const CH_COLORS: Record<string, string> = { Whatsapp: "#25D366", Instagram: "#E1306C", Web: "#6366F1" };
 
   /* skeleton */
   if (loading) return (
@@ -342,32 +336,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ═══ ROW 3: Channel Bars + Agents Grid ═══ */}
+      {/* ═══ ROW 3: Agents + Recent Conversations ═══ */}
       <div className="grid gap-2.5 lg:grid-cols-5">
-        {/* Channel bars */}
-        <div data-tour="channel-chart" className="cosmos-card p-4 lg:col-span-2">
-          <div className="flex items-center gap-2 mb-3">
-            <Radio className="h-3 w-3 text-cyan-400" />
-            <span className="text-[11px] font-display font-semibold text-white/60">Por canal</span>
-          </div>
-          {channelBars.length > 0 ? (
-            <div className="h-[110px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={channelBars} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.025)" vertical={false} />
-                  <XAxis dataKey="channel" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.2)", fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-                  <YAxis hide />
-                  <Tooltip content={<CT />} />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {channelBars.map(e => <Cell key={e.channel} fill={CH_COLORS[e.channel] ?? "#6366F1"} fillOpacity={0.8} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : <p className="text-[9px] text-white/10 py-6 text-center">Sem dados</p>}
-        </div>
-
-        {/* Agents compact grid */}
+        {/* Agents compact grid — 3 cols */}
         <div className="cosmos-card p-0 lg:col-span-3" data-tour="agent-card">
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <div className="flex items-center gap-2">
@@ -399,41 +370,41 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ═══ ROW 4: Recent Conversations — full width ═══ */}
-      <div data-tour="recent-convs" className="cosmos-card p-0">
-        <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-3 w-3 text-cyan-400" />
-            <span className="text-[12px] font-display font-semibold text-white/70">Últimas Conversas</span>
-            <span className="text-[9px] font-mono text-white/15">{total} total</span>
+        {/* Recent Conversations — 2 cols */}
+        <div data-tour="recent-convs" className="cosmos-card p-0 lg:col-span-2">
+          <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-3 w-3 text-cyan-400" />
+              <span className="text-[12px] font-display font-semibold text-white/70">Últimas Conversas</span>
+              <span className="text-[9px] font-mono text-white/15">{total} total</span>
+            </div>
+            <button onClick={() => nav("/conversations")} className="text-[9px] font-medium text-white/15 hover:text-white/30 transition-colors flex items-center gap-0.5">
+              Ver todas <ArrowRight className="h-2.5 w-2.5" />
+            </button>
           </div>
-          <button onClick={() => nav("/conversations")} className="text-[9px] font-medium text-white/15 hover:text-white/30 transition-colors flex items-center gap-0.5">
-            Ver todas <ArrowRight className="h-2.5 w-2.5" />
-          </button>
-        </div>
-        <div className="hidden sm:grid grid-cols-[32px_1fr_80px_auto_40px_16px] items-center gap-3 px-4 py-1 border-b border-white/[0.025] text-[8px] font-mono uppercase tracking-[.1em] text-white/12 select-none">
-          <span /><span>Contato</span><span className="text-center">Canal</span><span className="text-center w-20">Status</span><span className="text-right">Tempo</span><span />
-        </div>
-        <div className="divide-y divide-white/[0.02]">
-          {dedupedRecent.map(c => {
-            const chColor: Record<string, string> = { whatsapp: "text-green-400/60 border-green-500/15", instagram: "text-pink-400/60 border-pink-500/15", web: "text-indigo-400/60 border-indigo-500/15" };
-            return (
-              <div key={c.id} className="group grid grid-cols-[32px_1fr_80px_auto_40px_16px] items-center gap-3 px-4 py-2 cursor-pointer hover:bg-white/[0.01] transition-all" onClick={() => nav(`/conversations/${c.id}`)}>
-                <div className={`h-7 w-7 rounded-lg flex items-center justify-center text-white font-display font-bold text-[8px] ${pick(c.contact_name)}`}>{ini(c.contact_name)}</div>
-                <p className="text-[11px] font-medium text-white/75 truncate">{c.contact_name}</p>
-                <span className={`inline-flex items-center justify-center px-1.5 py-[1px] rounded text-[8px] font-bold uppercase tracking-[.04em] border bg-white/[0.015] ${chColor[c.channel] ?? chColor.web}`}>{c.channel}</span>
-                <StBadge st={c.status} />
-                <span className="text-[8px] text-white/12 font-mono tabular-nums text-right">{ago(c.started_at)}</span>
-                <ChevronRight className="h-3 w-3 text-white/[0.03] group-hover:text-white/[0.1] transition-colors" />
-              </div>
-            );
-          })}
+          <div className="divide-y divide-white/[0.02]">
+            {dedupedRecent.map(c => {
+              const chColor: Record<string, string> = { whatsapp: "text-green-400/60 border-green-500/15", instagram: "text-pink-400/60 border-pink-500/15", web: "text-indigo-400/60 border-indigo-500/15" };
+              return (
+                <div key={c.id} className="group flex items-center gap-2.5 px-4 py-2 cursor-pointer hover:bg-white/[0.01] transition-all" onClick={() => nav(`/conversations/${c.id}`)}>
+                  <div className={`h-7 w-7 shrink-0 rounded-lg flex items-center justify-center text-white font-display font-bold text-[8px] ${pick(c.contact_name)}`}>{ini(c.contact_name)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-white/75 truncate">{c.contact_name}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className={`inline-flex items-center px-1 py-[0.5px] rounded text-[7px] font-bold uppercase tracking-[.04em] border bg-white/[0.015] ${chColor[c.channel] ?? chColor.web}`}>{c.channel}</span>
+                      <StBadge st={c.status} />
+                    </div>
+                  </div>
+                  <span className="text-[8px] text-white/12 font-mono tabular-nums shrink-0">{ago(c.started_at)}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* ═══ ROW 5: Leads (only if lead-capture skill active) ═══ */}
+      {/* ═══ ROW 4: Leads (only if lead-capture skill active) ═══ */}
       {hasLeadCapture && (
         <div data-tour="dashboard-leads" className="cosmos-card p-0">
           <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
@@ -464,10 +435,10 @@ export default function Dashboard() {
                       <span className="text-[11px] font-medium text-white/70 truncate">{l.contact_name || "Sem nome"}</span>
                     </div>
                     <span className="text-[10px] text-white/30 font-mono flex items-center gap-1 truncate">
-                      {l.contact_phone ? <><Phone className="h-2.5 w-2.5 shrink-0 text-white/15" />{l.contact_phone}</> : <span className="text-white/10">—</span>}
+                      {l.contact_phone ? <><Phone className="h-2.5 w-2.5 shrink-0 text-white/15" /><a href={`https://wa.me/${l.contact_phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary hover:underline transition-colors">{l.contact_phone}</a></> : <span className="text-white/10">—</span>}
                     </span>
                     <span className="text-[10px] text-white/30 font-mono flex items-center gap-1 truncate">
-                      {l.contact_email ? <><Mail className="h-2.5 w-2.5 shrink-0 text-white/15" />{l.contact_email}</> : <span className="text-white/10">—</span>}
+                      {l.contact_email ? <><Mail className="h-2.5 w-2.5 shrink-0 text-white/15" /><a href={`mailto:${l.contact_email}`} className="hover:text-primary hover:underline transition-colors">{l.contact_email}</a></> : <span className="text-white/10">—</span>}
                     </span>
                     <span className="text-[8px] text-white/15 font-mono uppercase">{l.source}</span>
                     <span className="text-[8px] text-white/12 font-mono tabular-nums text-right">{ago(l.created_at)}</span>

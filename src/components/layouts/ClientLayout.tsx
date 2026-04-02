@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
-import { Home, MessageSquare, Bot, BarChart3, Radio, Puzzle, Zap, Crown, ChevronRight } from "lucide-react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Home, MessageSquare, Bot, BarChart3, Radio, Puzzle, Zap, Crown, ChevronDown } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,27 @@ import meteoraLogoBranca from "@/assets/meteora-branca.png";
 import meteoraLogoPreta from "@/assets/meteora-preta.png";
 import { MeteoraSeal } from "@/components/MeteoraBrand";
 
-const navSections = [
+interface SubItem {
+  to: string;
+  label: string;
+  comingSoon?: boolean;
+  disabled?: boolean;
+}
+
+interface NavItem {
+  to: string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  label: string;
+  expandKey?: string;
+  subItems?: SubItem[];
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
   {
     label: "Principal",
     items: [
@@ -27,13 +47,32 @@ const navSections = [
   {
     label: "Canais",
     items: [
-      { to: "/channels", icon: Radio, label: "Canais de Conexão" },
+      {
+        to: "/channels",
+        icon: Radio,
+        label: "Canais",
+        expandKey: "channels",
+        subItems: [
+          { to: "/channels", label: "WhatsApp" },
+          { to: "/channels?tab=instagram", label: "Instagram", comingSoon: true },
+        ],
+      },
     ],
   },
   {
     label: "Análise",
     items: [
-      { to: "/reports", icon: BarChart3, label: "Relatórios" },
+      {
+        to: "/reports",
+        icon: BarChart3,
+        label: "Relatórios",
+        expandKey: "reports",
+        subItems: [
+          { to: "/reports", label: "Vendas", comingSoon: true, disabled: true },
+          { to: "/reports", label: "Atendimento", comingSoon: true, disabled: true },
+          { to: "/reports", label: "Visão Geral", comingSoon: true, disabled: true },
+        ],
+      },
     ],
   },
   {
@@ -54,7 +93,10 @@ const mobileNavItems = [
 export default function ClientLayout() {
   const { profile, user } = useAuth();
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [tenantPlan, setTenantPlan] = useState("starter");
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -89,18 +131,106 @@ export default function ClientLayout() {
                   {section.label}
                 </p>
                 <div className="space-y-0.5">
-                  {section.items.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      data-tour={item.to === "/conversations" ? "conversations-link" : item.to === "/channels" ? "channels-link" : undefined}
-                      className="group relative flex items-center gap-2.5 rounded-lg px-3 py-[9px] text-[13.5px] font-medium text-white/50 transition-all duration-200 hover:bg-white/[0.04] hover:text-white/80"
-                      activeClassName="bg-cosmos-indigo/[0.15] text-cosmos-indigo"
-                    >
-                      <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.7} />
-                      <span className="truncate">{item.label}</span>
-                    </NavLink>
-                  ))}
+                  {section.items.map((item) => {
+                    const isExpandable = !!item.expandKey;
+                    const isExpanded = isExpandable && !!expandedSections[item.expandKey!];
+                    const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
+
+                    if (!isExpandable) {
+                      return (
+                        <NavLink
+                          key={item.to}
+                          to={item.to}
+                          data-tour={item.to === "/conversations" ? "conversations-link" : item.to === "/channels" ? "channels-link" : undefined}
+                          className="group relative flex items-center gap-2.5 rounded-lg px-3 py-[9px] text-[13.5px] font-medium text-white/50 transition-all duration-200 hover:bg-white/[0.04] hover:text-white/80"
+                          activeClassName="bg-cosmos-indigo/[0.15] text-cosmos-indigo"
+                        >
+                          <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.7} />
+                          <span className="truncate">{item.label}</span>
+                        </NavLink>
+                      );
+                    }
+
+                    return (
+                      <div key={item.to}>
+                        {/* Expandable parent item */}
+                        <div
+                          className={`group relative flex items-center gap-2.5 rounded-lg px-3 py-[9px] text-[13.5px] font-medium transition-all duration-200 hover:bg-white/[0.04] hover:text-white/80 cursor-pointer ${
+                            isActive ? "bg-cosmos-indigo/[0.15] text-cosmos-indigo" : "text-white/50"
+                          }`}
+                          data-tour={item.to === "/channels" ? "channels-link" : undefined}
+                        >
+                          <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.7} />
+                          <span
+                            className="truncate flex-1"
+                            onClick={() => navigate(item.to)}
+                          >
+                            {item.label}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedSections((prev) => ({
+                                ...prev,
+                                [item.expandKey!]: !prev[item.expandKey!],
+                              }));
+                            }}
+                            className="ml-auto p-0.5 rounded hover:bg-white/[0.06] transition-colors"
+                          >
+                            <ChevronDown
+                              className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                                isExpanded ? "rotate-0" : "-rotate-90"
+                              }`}
+                              strokeWidth={2}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Sub-items with collapse animation */}
+                        <div
+                          className={`overflow-hidden transition-all duration-200 ${
+                            isExpanded ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+                          }`}
+                        >
+                          <div className="space-y-0.5 pt-0.5">
+                            {item.subItems?.map((sub) => {
+                              if (sub.disabled) {
+                                return (
+                                  <div
+                                    key={sub.label}
+                                    className="flex items-center gap-2.5 rounded-lg pl-[38px] pr-3 py-[7px] text-[12.5px] font-medium text-white/30 cursor-default"
+                                  >
+                                    <span className="truncate">{sub.label}</span>
+                                    {sub.comingSoon && (
+                                      <span className="text-[8px] font-medium bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full ml-auto whitespace-nowrap">
+                                        Em breve
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <NavLink
+                                  key={sub.label}
+                                  to={sub.to}
+                                  className="group flex items-center gap-2.5 rounded-lg pl-[38px] pr-3 py-[7px] text-[12.5px] font-medium text-white/40 transition-all duration-200 hover:bg-white/[0.04] hover:text-white/70"
+                                  activeClassName="text-cosmos-indigo/80"
+                                >
+                                  <span className="truncate">{sub.label}</span>
+                                  {sub.comingSoon && (
+                                    <span className="text-[8px] font-medium bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full ml-auto whitespace-nowrap">
+                                      Em breve
+                                    </span>
+                                  )}
+                                </NavLink>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}

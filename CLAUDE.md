@@ -402,9 +402,10 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [x] 158 testes passando
 
 ### TODO (Ordem de Execucao)
-1. **Memoria do agente** — Tabela `agent_memories`, sumarizacao automatica ao final de conversas, injecao no prompt, TTL configuravel. Aba "Memoria" no AgentDetail ja existe (placeholder). Monetizacao como add-on pos-MVP.
-2. **Filtro de Contatos (Whitelist/Blacklist)** — Tabela `contact_rules`, funcao SQL `should_respond_to_contact`, integracao webhook, UI de configuracao. Detalhes em `docs/plano-filtro-contatos.md`
-3. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
+1. **Pipeline RAG (Excelencia em Respostas)** — Extracao real de PDFs, retrieval com tsvector (substituir brute-force), prioridade de fontes, curadoria do scraper, prompt anti-alucinacao, chunking semantico. Plano detalhado em `docs/plano-rag-mvp.md`.
+2. **Memoria do agente** — Tabela `agent_memories`, sumarizacao automatica ao final de conversas, injecao no prompt, TTL configuravel. Aba "Memoria" no AgentDetail ja existe (placeholder). Monetizacao como add-on pos-MVP.
+3. **Filtro de Contatos (Whitelist/Blacklist)** — Tabela `contact_rules`, funcao SQL `should_respond_to_contact`, integracao webhook, UI de configuracao. Detalhes em `docs/plano-filtro-contatos.md`
+4. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
 
 ## Backlog (Pos-MVP — "Coming Soon" no Frontend)
 
@@ -432,6 +433,8 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [ ] **Modo Assistente Pessoal (Self-Chat)** — Agente responde no proprio numero do usuario. Requer: tabela `processed_messages` para deduplicacao, logica especial no webhook para nao skipar `fromMe` em self-chat, cleanup cron diario, toggle no dashboard. Prevencao de loop via message ID + fromMe + rate limiting. Pesquisa: `docs/Implementacao de Modo Assistente Pessoal...md` secao 1.
 - [ ] **Filtro de Contatos avancado** — Suporte a LID (`lid` column em `contact_rules`), modo "Aprendizado" (agente pergunta se e cliente ou pessoal), import CSV, cache Redis para regras frequentes, quick actions (bloquear/permitir) na lista de conversas, export de lista, metricas de filtragem.
 - [ ] **Sync Google Contacts** — Importar contatos do Google para popular whitelist/blacklist automaticamente.
+- [ ] **Versionamento de configuracao dos agentes** — Historico de alteracoes em instrucoes, persona, skills, modelo. Rollback para versao anterior. Diff visual entre versoes.
+- [ ] **Acesso admin ao tenant do cliente** — No painel admin, clicar no nome do cliente para acessar o dashboard/agentes dele. Envia notificacao ao cliente pedindo permissao. So permite acesso e edicao se o cliente aprovar. Sessao de acesso temporaria com log de auditoria (quem acessou, quando, o que alterou).
 
 ### Infraestrutura
 - [ ] CI/CD pipeline (GitHub Actions → DigitalOcean)
