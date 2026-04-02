@@ -455,7 +455,11 @@ serve(async (req) => {
             const verdict = verifyData.choices?.[0]?.message?.content || "";
             if (verdict.toUpperCase().includes("FALHA")) {
               console.warn(`Grounding check FAILED for conversation ${conversationId}: ${verdict}`);
-              finalReply = "Vou confirmar os detalhes exatos com a equipe e ja te retorno! Um momento.";
+              if (activeSkills.includes("escalation")) {
+                finalReply = "Vou te transferir pra um atendente que consegue te passar os detalhes certinhos. Aguarda um momento! [ESCALATE]";
+              } else {
+                finalReply = "Vou confirmar os detalhes exatos com a equipe e ja te retorno! Um momento.";
+              }
             } else {
               console.log(`Grounding check OK for conversation ${conversationId}`);
             }
