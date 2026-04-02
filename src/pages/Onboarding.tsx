@@ -536,8 +536,14 @@ export default function Onboarding() {
     sendToChat(`🎤 ${text}`);
   };
 
-  const handleFileContent = (content: string, fileName: string) => {
-    sendToChat(`📎 Arquivo: ${fileName}\n\n${content.slice(0, 3000)}`);
+  const handleFileContent = (content: string, fileName: string, extracted: boolean) => {
+    if (extracted) {
+      // Real text content extracted — send it as document content
+      sendToChat(`📎 Arquivo: ${fileName}\n\n${content.slice(0, 5000)}`);
+    } else {
+      // Extraction failed (scanned PDF, unsupported format) — notify user
+      sendToChat(`📎 Arquivo: ${fileName}\n\n${content}`);
+    }
   };
 
   const handleTextPaste = (text: string) => {

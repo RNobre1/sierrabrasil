@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { BookOpen, Upload, FileText, Trash2, AlertCircle, CheckCircle2, Loader2, HardDrive, Info, Lock, Zap, File, FileSpreadsheet, FileType } from "lucide-react";
+import { extractFileText } from "@/lib/file-extractor";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -94,16 +95,27 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
     setUploadProgress(30);
 
     try {
-      // Read file as text (simplified — in production, use edge function for PDF/DOCX parsing)
-      const text = await file.text();
+      // Extract text using browser-side extraction (PDF.js for PDFs, direct read for text files)
+      const result = await extractFileText(file);
+      if (!result.extracted) {
+        toast({ title: "Extração falhou", description: result.text, variant: "destructive" });
+        setUploadStatus("error");
+        return;
+      }
+      const text = result.text;
       setUploadProgress(60);
       setUploadStatus("processing");
 
-      // Split into chunks of ~1500 chars
+      // Split into chunks of ~1000 chars with 150 char overlap
       const chunks: string[] = [];
-      const CHUNK_SIZE = 1500;
-      for (let i = 0; i < text.length; i += CHUNK_SIZE) {
-        chunks.push(text.slice(i, i + CHUNK_SIZE));
+      const CHUNK_SIZE = 1000;
+      const OVERLAP = 150;
+      let start = 0;
+      while (start < text.length) {
+        const end = Math.min(start + CHUNK_SIZE, text.length);
+        chunks.push(text.slice(start, end));
+        if (end >= text.length) break;
+        start = end - OVERLAP;
       }
 
       const rows = chunks.map((chunk, idx) => ({

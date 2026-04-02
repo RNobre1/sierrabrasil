@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Paperclip, Loader2, FileText } from "lucide-react";
+import { Paperclip, Loader2 } from "lucide-react";
+import { extractFileText } from "@/lib/file-extractor";
 
 const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.md,.txt";
 
@@ -7,7 +8,7 @@ export default function FileUploader({
   onFileContent,
   disabled,
 }: {
-  onFileContent: (content: string, fileName: string) => void;
+  onFileContent: (content: string, fileName: string, extracted: boolean) => void;
   disabled?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -16,22 +17,10 @@ export default function FileUploader({
   const handleFile = async (file: File) => {
     setProcessing(true);
     try {
-      // For text-based files, read directly
-      const textTypes = [".txt", ".md", ".csv"];
-      const isText = textTypes.some((t) => file.name.toLowerCase().endsWith(t));
-
-      if (isText) {
-        const text = await file.text();
-        onFileContent(text, file.name);
-      } else {
-        // Binary files (PDF, DOC, XLS) - only show metadata, not raw content
-        onFileContent(
-          `[Documento enviado: "${file.name}" (${(file.size / 1024).toFixed(1)}KB)]`,
-          file.name
-        );
-      }
+      const result = await extractFileText(file);
+      onFileContent(result.text, file.name, result.extracted);
     } catch {
-      onFileContent(`[Erro ao processar arquivo "${file.name}"]`, file.name);
+      onFileContent(`[Erro ao processar arquivo "${file.name}"]`, file.name, false);
     }
     setProcessing(false);
   };

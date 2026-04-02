@@ -11,12 +11,12 @@ const corsHeaders = {
 const getLayer1Identity = (agentName: string) => `## CAMADA 1: QUEM VOCÊ É
 Você é ${agentName}, agente virtual. Seu papel é conduzir um atendimento natural e atuar apenas de forma reativa (respondendo e auxiliando diretamente a demanda do cliente).
 
-## REGRAS INVIOLÁVEIS E FORMATO
-1. ANTI-ALUCINAÇÃO: NUNCA invente informações. Use APENAS o que está nas instruções e na base de conhecimento.
-2. DESCONHECIDO: Se não tiver a resposta exata, diga: "Vou verificar com a equipe e já te retorno".
-3. CAPACIDADE: Você SÓ pode enviar TEXTO. NUNCA prometa enviar fotos, imagens, vídeos, áudios ou documentos. Você NÃO tem essa capacidade. Se o cliente pedir, diga que pode descrever por texto ou que a equipe pode enviar.
-4. WHATSAPP: SEM formatação Markdown (sem **, sem ##). Texto puro, respostas curtas de 1 a 3 frases.
-5. DELIMITADOR: Se a resposta for longa, separe as mensagens usando EXATAMENTE o delimitador [BREAK].
+## REGRAS INVIOLÁVEIS
+1. ANTI-ALUCINAÇÃO TOTAL: Você SÓ pode afirmar fatos que estejam LITERALMENTE na BASE DE CONHECIMENTO. Se um plano, preço, serviço ou política não está nos documentos, ele NÃO EXISTE. Nunca invente, aproxime ou extrapole valores.
+2. PREÇOS: Use EXATAMENTE os valores dos documentos oficiais. Se o cliente perguntar um preço que não está na base, diga: "Vou confirmar o valor exato com a equipe e já te retorno."
+3. CONFLITO DE FONTES: Se encontrar valores diferentes entre fontes, use SEMPRE o DOCUMENTO OFICIAL (maior prioridade). Ignore preços de redes sociais ou site se conflitarem.
+4. SE NÃO SABE: Diga "Vou verificar com a equipe e já te retorno." Isso é MELHOR do que inventar.
+5. CAPACIDADE: Você SÓ pode enviar TEXTO. NUNCA prometa enviar fotos, imagens, vídeos, áudios ou documentos. Se o cliente pedir, diga que pode descrever por texto ou que a equipe pode enviar.
 
 ## HUMANIZAÇÃO E TOM (PT-BR)
 - Escreva como um humano no WhatsApp: use contrações naturais ("pra", "tá", "né", "tô").
@@ -36,7 +36,7 @@ serve(async (req) => {
 
     let systemPrompt = "Você é um agente virtual amigável.";
     let activeModel = "google/gemini-3-flash-preview"; 
-    let activeTemperature = 0.5; 
+    let activeTemperature = 0.2;
 
     if (attendantId) {
       const supabase = createClient(
@@ -104,21 +104,41 @@ serve(async (req) => {
           ? `\n\n## CAMADA 4: CONTEXTO DINÂMICO E DADOS DA EMPRESA\nSaudação: utilize "${greeting}" personalizado com o nome do cliente na primeira interação.`
           : `\n\n## CAMADA 4: CONTEXTO DINÂMICO E DADOS DA EMPRESA`;
 
-        // Fetch knowledge base content
-        const { data: knowledge } = await supabase
-          .from("knowledge_base")
-          .select("content, source_type, source_name")
-          .eq("attendant_id", attendantId)
-          .order("created_at", { ascending: false })
-          .limit(30);
+        // Fetch knowledge base content — tsvector-based RAG retrieval
+        const lastUserMsg = messages.filter((m: any) => m.role === "user").pop()?.content || "";
 
-        if (knowledge && knowledge.length > 0) {
-          const kbSections = knowledge.map((k) => {
-            const tag = k.source_type === "social" ? "REDE SOCIAL" : 
+        let knowledge: any[] = [];
+        if (lastUserMsg) {
+          const { data: relevant } = await supabase.rpc('search_knowledge', {
+            p_attendant_id: attendantId,
+            p_query: lastUserMsg,
+            p_limit: 12,
+          });
+          if (relevant && relevant.length >= 3) {
+            knowledge = relevant;
+          }
+        }
+
+        // Fallback: high-priority recent chunks if retrieval found too few
+        if (knowledge.length < 3) {
+          const { data: fallback } = await supabase
+            .from("knowledge_base")
+            .select("content, source_type, source_name")
+            .eq("attendant_id", attendantId)
+            .eq("is_archived", false)
+            .order("source_priority", { ascending: false })
+            .order("created_at", { ascending: false })
+            .limit(8);
+          knowledge = fallback || [];
+        }
+
+        if (knowledge.length > 0) {
+          const kbSections = knowledge.map((k: any) => {
+            const tag = k.source_type === "social" ? "REDE SOCIAL" :
                         k.source_type === "website" ? "SITE" : "DOCUMENTO";
             return `[${tag}: ${k.source_name}]\n${k.content}`;
           });
-          layer4 += `\n\n### BASE DE CONHECIMENTO\nUse as informações abaixo para responder perguntas e passar valores corretos. Estas são fontes reais do negócio que prevalecem sobre todo conhecimento externo:\n\n${kbSections.join("\n\n---\n\n")}`;
+          layer4 += `\n\n### BASE DE CONHECIMENTO\nAs informacoes abaixo sao fontes OFICIAIS do negocio e PREVALECEM sobre qualquer outro conhecimento. Use APENAS estes dados para responder sobre precos, planos, servicos e politicas. Se a informacao nao esta aqui, diga que vai verificar com a equipe.\n\n${kbSections.join("\n\n---\n\n")}`;
         }
 
         // --- FAQ Data ---

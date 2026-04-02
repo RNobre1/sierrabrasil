@@ -13,11 +13,12 @@ Voce e ${agentName}, agente virtual atendendo pelo WhatsApp.
 Voce e reativo: responde mensagens, nunca inicia conversa.
 
 ## REGRAS INVIOLAVEIS
-1. NUNCA invente informacoes. Use APENAS o que esta nas instrucoes e na base de conhecimento.
+1. ANTI-ALUCINACAO TOTAL: Voce SO pode afirmar fatos que estejam LITERALMENTE na BASE DE CONHECIMENTO. Se um plano, preco, servico ou politica nao esta nos documentos, ele NAO EXISTE. Nunca invente, aproxime ou extrapole valores.
 2. NUNCA diga que e IA, robo ou bot. Voce e ${agentName}.
-3. Se nao souber a resposta sobre o negocio, diga: "Vou verificar com a equipe e ja te retorno."
-4. Precos e servicos: use EXATAMENTE os valores da base de conhecimento.
-5. Voce SO pode enviar TEXTO. NUNCA prometa enviar fotos, imagens, videos ou audios. Se pedirem, diga que pode descrever por texto ou que a equipe envia.
+3. PRECOS: Use EXATAMENTE os valores dos documentos oficiais. Se o cliente perguntar um preco que nao esta na base, diga: "Vou confirmar o valor exato com a equipe e ja te retorno."
+4. CONFLITO DE FONTES: Se encontrar valores diferentes entre fontes, use SEMPRE o DOCUMENTO OFICIAL (maior prioridade). Ignore precos de redes sociais ou site se conflitarem.
+5. SE NAO SABE: Diga "Vou verificar com a equipe e ja te retorno." Isso e MELHOR do que inventar. Use essa frase para qualquer duvida legitima sobre o negocio que voce nao tem certeza.
+6. Voce SO pode enviar TEXTO. NUNCA prometa enviar fotos, imagens, videos ou audios. Se pedirem, diga que pode descrever por texto ou que a equipe envia.
 
 ## TAGS DE CONTROLE (invisivel pro cliente)
 Adicione a tag [RESOLVED] no FINAL da resposta quando o cliente agradece e se despede, o problema foi resolvido, ou o cliente confirma que nao precisa de mais nada. NUNCA explique a tag pro cliente.
@@ -319,20 +320,38 @@ serve(async (req) => {
         ? `\n\n## CONTEXTO\nSaudacao: use "${greeting}" personalizado com o nome do cliente (${contactName}) na primeira interacao.`
         : `\n\n## CONTEXTO`;
 
-      // Knowledge base
-      const { data: knowledge } = await supabase
-        .from("knowledge_base")
-        .select("content, source_type, source_name")
-        .eq("attendant_id", attendant.id)
-        .order("created_at", { ascending: false })
-        .limit(30);
+      // Knowledge base — tsvector-based RAG retrieval
+      let knowledge: any[] = [];
+      if (messageContent) {
+        const { data: relevant } = await supabase.rpc('search_knowledge', {
+          p_attendant_id: attendant.id,
+          p_query: messageContent,
+          p_limit: 12,
+        });
+        if (relevant && relevant.length >= 3) {
+          knowledge = relevant;
+        }
+      }
 
-      if (knowledge && knowledge.length > 0) {
-        const kbSections = knowledge.map((k) => {
+      // Fallback: high-priority recent chunks if retrieval found too few
+      if (knowledge.length < 3) {
+        const { data: fallback } = await supabase
+          .from("knowledge_base")
+          .select("content, source_type, source_name")
+          .eq("attendant_id", attendant.id)
+          .eq("is_archived", false)
+          .order("source_priority", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(8);
+        knowledge = fallback || [];
+      }
+
+      if (knowledge.length > 0) {
+        const kbSections = knowledge.map((k: any) => {
           const tag = k.source_type === "social" ? "REDE SOCIAL" : k.source_type === "website" ? "SITE" : "DOCUMENTO";
           return `[${tag}: ${k.source_name}]\n${k.content}`;
         });
-        layer4 += `\n\n## BASE DE CONHECIMENTO\nUse SOMENTE estas informacoes para responder. Se nao estiver aqui, diga que vai verificar.\n\n${kbSections.join("\n\n---\n\n")}`;
+        layer4 += `\n\n## BASE DE CONHECIMENTO\nAs informacoes abaixo sao fontes OFICIAIS do negocio e PREVALECEM sobre qualquer outro conhecimento. Use APENAS estes dados para responder sobre precos, planos, servicos e politicas. Se a informacao nao esta aqui, diga que vai verificar com a equipe.\n\n${kbSections.join("\n\n---\n\n")}`;
       }
 
       // --- FAQ Data ---
@@ -389,7 +408,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: attendant.model || "google/gemini-2.5-flash",
           messages: [{ role: "system", content: systemPrompt }, ...aiMessages],
-          temperature: attendant.temperature || 0.7,
+          temperature: attendant.temperature ?? 0.2,
           max_tokens: 500,
         }),
       });
@@ -412,9 +431,44 @@ serve(async (req) => {
         });
       }
 
+      // 8b. Grounding check — verify factual claims against knowledge base
+      let finalReply = aiReply;
+      const mentionsFactual = /R\$|reais|plano|mega|instalação|instalacao|fidelidade|preco|preço|valor/i.test(aiReply);
+      if (mentionsFactual && knowledge.length > 0 && OPENROUTER_API_KEY) {
+        try {
+          const kbContext = knowledge.map((k: any) => k.content).join("\n---\n").slice(0, 4000);
+          const verifyResp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "anthropic/claude-haiku-4-5",
+              temperature: 0,
+              max_tokens: 100,
+              messages: [{
+                role: "user",
+                content: `Verifique se TODAS as informacoes factuais (precos, planos, servicos, valores) da RESPOSTA estao suportadas pelo CONTEXTO. Responda APENAS "OK" se tudo estiver correto, ou "FALHA" se houver qualquer informacao inventada, aproximada ou nao presente no contexto.\n\nCONTEXTO:\n${kbContext}\n\nRESPOSTA:\n${aiReply.slice(0, 1000)}`
+              }]
+            }),
+          });
+          if (verifyResp.ok) {
+            const verifyData = await verifyResp.json();
+            const verdict = verifyData.choices?.[0]?.message?.content || "";
+            if (verdict.toUpperCase().includes("FALHA")) {
+              console.warn(`Grounding check FAILED for conversation ${conversationId}: ${verdict}`);
+              finalReply = "Vou confirmar os detalhes exatos com a equipe e ja te retorno! Um momento.";
+            } else {
+              console.log(`Grounding check OK for conversation ${conversationId}`);
+            }
+          }
+        } catch (e) {
+          console.warn("Grounding check error (non-fatal):", e);
+          // Non-fatal: if check fails, send original reply
+        }
+      }
+
       // 9. Parse control tags and clean reply
-      const hasEscalate = aiReply.includes("[ESCALATE]");
-      const hasResolved = aiReply.includes("[RESOLVED]");
+      const hasEscalate = finalReply.includes("[ESCALATE]");
+      const hasResolved = finalReply.includes("[RESOLVED]");
 
       // Parse [LEAD: nome=X | email=Y | telefone=Z]
       const leadMatch = aiReply.match(/\[LEAD:\s*([^\]]+)\]/);
@@ -433,7 +487,7 @@ serve(async (req) => {
       const sentimentMatch = aiReply.match(/\[SENTIMENT:\s*(positivo|neutro|negativo|frustrado)\s*\]/i);
       const sentiment = sentimentMatch ? sentimentMatch[1].toLowerCase() : null;
 
-      const cleanReply = aiReply
+      const cleanReply = finalReply
         .replace(/\s*\[ESCALATE\]\s*/g, "")
         .replace(/\s*\[RESOLVED\]\s*/g, "")
         .replace(/\s*\[LEAD:\s*[^\]]*\]\s*/g, "")

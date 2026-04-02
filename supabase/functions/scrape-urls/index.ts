@@ -551,7 +551,19 @@ serve(async (req) => {
           return { result: { url, platform, status: "empty", details: "Nenhum conteúdo extraído" } as any, rawContent: "", preview };
         }
 
+        // Filter low-value social media content (mostly emojis/hashtags or very short)
+        if (platform !== "website" && platform !== "google_maps") {
+          const textOnly = rawContent.replace(/[#@]\S+/g, '').replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
+          const usefulTextRatio = textOnly.length / Math.max(rawContent.length, 1);
+
+          if (rawContent.length < 100 || usefulTextRatio < 0.3) {
+            console.log(`[${platform}] Skipping low-value content (${rawContent.length} chars, ${Math.round(usefulTextRatio * 100)}% useful text)`);
+            return { result: { url, platform, status: "filtered", details: "Conteúdo de baixo valor filtrado" } as any, rawContent: "", preview };
+          }
+        }
+
         const chunks = chunkContent(rawContent);
+        const sourcePriority = platform === "website" ? 70 : 10;
         const rows = chunks.map((chunk, i) => ({
           tenant_id: tenantId,
           attendant_id: attendantId || null,
@@ -560,6 +572,7 @@ serve(async (req) => {
           source_name: `${platform.charAt(0).toUpperCase() + platform.slice(1)} - ${url.replace(/https?:\/\/(www\.)?/, "").slice(0, 50)}`,
           content: chunk,
           chunk_index: i,
+          source_priority: sourcePriority,
           metadata: { total_chunks: chunks.length, platform, scraped_at: new Date().toISOString(), raw_length: rawContent.length },
         }));
 
@@ -601,6 +614,7 @@ serve(async (req) => {
         source_name: "Texto colado pelo cliente",
         content: chunk,
         chunk_index: i,
+        source_priority: 90,
         metadata: { total_chunks: chunks.length, scraped_at: new Date().toISOString() },
       }));
       await supabase.from("knowledge_base").insert(rows).catch(e => console.error("Pasted text insert error:", e));
