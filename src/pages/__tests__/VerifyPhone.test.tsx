@@ -22,11 +22,17 @@ vi.mock("@/hooks/use-toast", () => ({
   useToast: () => ({ toast: mockToast }),
 }));
 
-// Mock supabase functions invoke
+// Mock supabase functions invoke + from (for phone_verified check)
 const mockInvoke = vi.fn();
+const mockSingle = vi.fn().mockResolvedValue({ data: { phone_verified: false }, error: null });
+const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
+const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     functions: { invoke: (...args: unknown[]) => mockInvoke(...args) },
+    from: (...args: unknown[]) => mockFrom(...args),
+    auth: { updateUser: vi.fn().mockResolvedValue({ data: {}, error: null }) },
   },
 }));
 
@@ -123,6 +129,12 @@ describe("VerifyPhone", () => {
       }); // verify-otp
 
     renderPage();
+
+    // Wait for send-otp to be called (now async due to phone_verified check)
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith("send-otp", expect.anything());
+    });
+
     const inputs = screen.getAllByRole("textbox");
     "999999".split("").forEach((digit, i) => {
       fireEvent.change(inputs[i], { target: { value: digit } });

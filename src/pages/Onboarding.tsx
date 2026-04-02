@@ -149,20 +149,28 @@ export default function Onboarding() {
 
   const isNewAgent = new URLSearchParams(window.location.search).get("newAgent") === "true";
 
-  // Guard: redirect to verify-phone if phone not verified
+  // Guard: redirect to verify-phone if phone not verified (with retry to avoid race condition)
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("phone_verified")
-      .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data && !data.phone_verified) {
-          toast({ title: "Verificação necessária", description: "Verifique seu número de WhatsApp antes de continuar.", variant: "destructive" });
-          navigate("/verify-phone");
-        }
-      });
+    let cancelled = false;
+    const checkVerification = async (retries = 2) => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("phone_verified")
+        .eq("user_id", user.id)
+        .single();
+      if (cancelled) return;
+      if (data?.phone_verified) return; // verified, stay on onboarding
+      if (retries > 0) {
+        await new Promise(r => setTimeout(r, 1000));
+        if (!cancelled) return checkVerification(retries - 1);
+        return;
+      }
+      toast({ title: "Verificação necessária", description: "Verifique seu número de WhatsApp antes de continuar.", variant: "destructive" });
+      navigate("/verify-phone");
+    };
+    checkVerification();
+    return () => { cancelled = true; };
   }, [user]);
 
   // Fetch agent templates from Supabase

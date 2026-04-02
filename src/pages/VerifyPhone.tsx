@@ -100,12 +100,26 @@ export default function VerifyPhone() {
     }
   }, [authLoading, user]);
 
-  // Send OTP once we have a phone (guard against double-fire)
+  // Send OTP once we have a phone (guard against double-fire + already-verified redirect)
   useEffect(() => {
-    if (user && phone && !otpSent && !collectingPhone && !sendingOtp.current) {
-      sendingOtp.current = true;
-      sendOtp();
-    }
+    if (!user || !phone || otpSent || collectingPhone || sendingOtp.current) return;
+    sendingOtp.current = true;
+    // Check if already verified (prevents resend on redirect loop from onboarding guard)
+    supabase
+      .from("profiles")
+      .select("phone_verified")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.phone_verified) {
+          navigate("/onboarding");
+        } else {
+          sendOtp();
+        }
+      })
+      .catch(() => {
+        sendOtp();
+      });
   }, [user, phone, collectingPhone]);
 
   // Handle phone submission from Google OAuth users

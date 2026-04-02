@@ -57,6 +57,9 @@ const statusConfig: Record<string, { color: string; text: string; icon: React.Re
   error: { color: "bg-destructive", text: "Erro", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
 };
 
+const QR_LIFETIME_SECONDS = 40;
+const CONNECTING_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+
 export default function WhatsAppTab({ plan }: { plan: string }) {
   const { user } = useAuth();
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
@@ -67,6 +70,7 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
   const [showCreate, setShowCreate] = useState(false);
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [qrData, setQrData] = useState<{ instanceName: string; qr: string } | null>(null);
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(0);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
   const fetchInstances = useCallback(async () => {
@@ -83,10 +87,36 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
 
   useEffect(() => { fetchInstances(); }, [fetchInstances]);
 
-  // Poll status for connecting instances
+  // QR code countdown timer
+  useEffect(() => {
+    if (!qrData) return;
+    setQrSecondsLeft(QR_LIFETIME_SECONDS);
+    const interval = setInterval(() => {
+      setQrSecondsLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [qrData?.instanceName, qrData?.qr]);
+
+  // Poll status for connecting instances + auto-expire stale ones
   useEffect(() => {
     const connectingInstances = instances.filter(i => i.status === "connecting");
     if (connectingInstances.length === 0) return;
+
+    // On mount, auto-expire instances stuck in "connecting" for > 2 minutes
+    for (const inst of connectingInstances) {
+      const updatedAt = new Date(inst.updated_at).getTime();
+      if (Date.now() - updatedAt > CONNECTING_TIMEOUT_MS) {
+        callEvolutionApi("status", {}, { instanceName: inst.instance_name })
+          .then(() => fetchInstances())
+          .catch(console.error);
+      }
+    }
 
     const interval = setInterval(async () => {
       for (const inst of connectingInstances) {
@@ -95,6 +125,8 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
           if (result.status === "connected") {
             toast.success(`${inst.display_name || inst.instance_name} conectado!`);
             setQrData(null);
+            fetchInstances();
+          } else if (result.status === "disconnected") {
             fetchInstances();
           }
         } catch (e) {
@@ -247,33 +279,74 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="py-6 flex flex-col items-center gap-4">
             <div className="text-center">
-              <h3 className="text-sm font-semibold">Escaneie o QR Code</h3>
+              <h3 className="text-sm font-semibold">
+                {qrSecondsLeft > 0 ? "Escaneie o QR Code" : "QR Code expirado"}
+              </h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                Siga os passos abaixo para conectar:
+                {qrSecondsLeft > 0
+                  ? "Siga os passos abaixo para conectar:"
+                  : "O QR Code expirou. Gere um novo para conectar."}
               </p>
             </div>
-            {/* Step-by-step guide */}
-            <div className="flex flex-col gap-2 text-xs text-muted-foreground w-full max-w-sm">
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/30">
-                <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
-                Abra o <strong className="text-foreground">WhatsApp</strong> no celular
+
+            {qrSecondsLeft > 0 && (
+              <>
+                {/* Step-by-step guide */}
+                <div className="flex flex-col gap-2 text-xs text-muted-foreground w-full max-w-sm">
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/30">
+                    <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+                    Abra o <strong className="text-foreground">WhatsApp</strong> no celular
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/30">
+                    <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+                    Vá em <strong className="text-foreground">Aparelhos conectados</strong>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/30">
+                    <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
+                    Aponte a câmera para o <strong className="text-foreground">QR Code</strong> abaixo
+                  </div>
+                </div>
+
+                {/* Timer */}
+                <div className={cn(
+                  "text-xs font-medium px-3 py-1 rounded-full",
+                  qrSecondsLeft > 10 ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"
+                )}>
+                  Expira em {qrSecondsLeft}s
+                </div>
+
+                <div className="bg-white p-4 rounded-xl">
+                  <img
+                    src={qrData.qr.startsWith("data:") ? qrData.qr : `data:image/png;base64,${qrData.qr}`}
+                    alt="QR Code WhatsApp"
+                    className="w-64 h-64 object-contain"
+                  />
+                </div>
+              </>
+            )}
+
+            {qrSecondsLeft === 0 && (
+              <div className="flex flex-col items-center gap-3 py-4">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                  <RefreshCw className="h-7 w-7 text-muted-foreground" />
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const inst = instances.find(i => i.instance_name === qrData.instanceName);
+                    if (inst) {
+                      setQrData(null);
+                      handleConnect(inst);
+                    }
+                  }}
+                  className="gap-1.5"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  Gerar novo QR Code
+                </Button>
               </div>
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/30">
-                <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
-                Vá em <strong className="text-foreground">Aparelhos conectados</strong>
-              </div>
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/30">
-                <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
-                Aponte a câmera para o <strong className="text-foreground">QR Code</strong> abaixo
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-xl">
-              <img
-                src={qrData.qr.startsWith("data:") ? qrData.qr : `data:image/png;base64,${qrData.qr}`}
-                alt="QR Code WhatsApp"
-                className="w-64 h-64 object-contain"
-              />
-            </div>
+            )}
+
             <Button size="sm" variant="ghost" onClick={() => setQrData(null)}>
               Fechar
             </Button>
