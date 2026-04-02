@@ -85,20 +85,32 @@ export default function ConversationDetail() {
     setToggling(true);
     const newVal = !conversation.human_takeover;
 
-    // Assumir: status → escalated; Devolver: status → active
-    const updateData = {
+    // Assumir: human_takeover → true (keep escalated status)
+    // Devolver: human_takeover → false, status stays escalated (becomes log entry)
+    //   Next message from contact will create a new active conversation (handled by webhook)
+    const updateData: Record<string, unknown> = {
       human_takeover: newVal,
-      status: newVal ? "escalated" : "active",
       takeover_by: newVal ? user?.id : null,
       takeover_at: newVal ? new Date().toISOString() : null,
     };
+
+    // Only set status to escalated when assuming (in case it was active before)
+    if (newVal) {
+      updateData.status = "escalated";
+    }
 
     const { error } = await supabase.from("conversations").update(updateData as any).eq("id", id);
     setToggling(false);
 
     if (!error) {
-      setConversation({ ...conversation, human_takeover: newVal, status: newVal ? "escalated" : "active" });
-      toast.success(newVal ? "Você assumiu a conversa" : "Conversa devolvida para a IA");
+      const newStatus = newVal ? "escalated" : conversation.status;
+      setConversation({ ...conversation, human_takeover: newVal, status: newStatus });
+      if (newVal) {
+        toast.success("Você assumiu a conversa");
+      } else {
+        toast.success("Conversa devolvida para a IA. Próxima mensagem do contato abrirá uma nova conversa.");
+        navigate("/conversations");
+      }
     } else {
       toast.error("Erro ao alterar modo");
     }
