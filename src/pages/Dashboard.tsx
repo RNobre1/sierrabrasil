@@ -133,22 +133,38 @@ export default function Dashboard() {
     })();
   }, [user]);
 
-  /* metrics */
-  const total = allConvs.length;
-  const active = allConvs.filter(c => c.status === "active").length;
+  /* metrics — deduplicate by contact where appropriate */
+  const uniqueContacts = new Set(allConvs.map(c => c.contact_name));
+  const total = uniqueContacts.size;
+  const activeContacts = new Set(allConvs.filter(c => c.status === "active").map(c => c.contact_name));
+  const active = activeContacts.size;
   const resolved = allConvs.filter(c => c.status === "resolved").length;
   const escalated = allConvs.filter(c => c.status === "escalated").length;
   const totalEscalations = allConvs.reduce((sum, c) => sum + ((c as any).escalation_count || 0), 0);
-  const resRate = total ? Math.round(resolved / total * 100) : 0;
-  const escRate = total ? Math.round(totalEscalations / total * 100) : 0;
+  const resRate = allConvs.length ? Math.round(resolved / allConvs.length * 100) : 0;
+  const escRate = allConvs.length ? Math.round(totalEscalations / allConvs.length * 100) : 0;
   const onlineAg = attendants.filter(a => a.status === "online").length;
 
-  /* chart data */
+  /* chart data — unique contacts per day */
   const dayChart = useMemo(() => {
-    const d: Record<string, number> = {};
-    allConvs.forEach(c => { const k = new Date(c.started_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }); d[k] = (d[k] || 0) + 1; });
-    return Object.entries(d).slice(-7).map(([date, count]) => ({ date, count }));
+    const d: Record<string, Set<string>> = {};
+    allConvs.forEach(c => {
+      const k = new Date(c.started_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      if (!d[k]) d[k] = new Set();
+      d[k].add(c.contact_name);
+    });
+    return Object.entries(d).slice(-7).map(([date, contacts]) => ({ date, count: contacts.size }));
   }, [allConvs]);
+
+  /* deduplicate recent conversations — one per contact, most recent wins */
+  const dedupedRecent = useMemo(() => {
+    const seen = new Set<string>();
+    return recentConvs.filter(c => {
+      if (seen.has(c.contact_name)) return false;
+      seen.add(c.contact_name);
+      return true;
+    });
+  }, [recentConvs]);
 
   const statusPie = useMemo(() => [
     { name: "Ativas", value: active },
@@ -209,7 +225,7 @@ export default function Dashboard() {
       {/* ═══ ROW 1: KPIs — compact, dense ═══ */}
       <div data-tour="kpis" className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {[
-          { icon: MessageSquare, label: "Conversas", value: String(total), sub: `${totalMsgs} msgs`, accent: "text-indigo-400", bg: "bg-indigo-500/8 border-indigo-500/15", trend: total > 0 ? `+${total}` : null, up: true },
+          { icon: MessageSquare, label: "Contatos", value: String(total), sub: `${totalMsgs} msgs`, accent: "text-indigo-400", bg: "bg-indigo-500/8 border-indigo-500/15", trend: total > 0 ? `+${total}` : null, up: true },
           { icon: CheckCircle2, label: "Resolvidas", value: String(resolved), sub: `${resRate}% resolução`, accent: "text-emerald-400", bg: "bg-emerald-500/8 border-emerald-500/15", trend: resRate > 0 ? `${resRate}%` : null, up: resRate >= 50 },
           { icon: Bot, label: "Agentes", value: `${onlineAg}/${attendants.length}`, sub: `${onlineAg} online`, accent: "text-cyan-400", bg: "bg-cyan-500/8 border-cyan-500/15", trend: null, up: true },
           { icon: Zap, label: "Escalações", value: String(totalEscalations), sub: `${escRate}% das conversas`, accent: "text-rose-400", bg: "bg-rose-500/8 border-rose-500/15", trend: totalEscalations > 0 ? `${escRate}%` : null, up: escRate <= 20 },
@@ -401,7 +417,7 @@ export default function Dashboard() {
           <span /><span>Contato</span><span className="text-center">Canal</span><span className="text-center w-20">Status</span><span className="text-right">Tempo</span><span />
         </div>
         <div className="divide-y divide-white/[0.02]">
-          {recentConvs.map(c => {
+          {dedupedRecent.map(c => {
             const chColor: Record<string, string> = { whatsapp: "text-green-400/60 border-green-500/15", instagram: "text-pink-400/60 border-pink-500/15", web: "text-indigo-400/60 border-indigo-500/15" };
             return (
               <div key={c.id} className="group grid grid-cols-[32px_1fr_80px_auto_40px_16px] items-center gap-3 px-4 py-2 cursor-pointer hover:bg-white/[0.01] transition-all" onClick={() => nav(`/conversations/${c.id}`)}>
