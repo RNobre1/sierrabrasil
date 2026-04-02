@@ -24,12 +24,12 @@ const CLASS_CFG: Record<string, { short: string; dot: string; text: string; acce
 };
 
 function ChBadge({ ch }: { ch: string }) {
+  // Only show WhatsApp for now (web and instagram are coming soon)
+  if (ch !== "whatsapp") return null;
   const m: Record<string, string> = {
     whatsapp: "text-green-400/70 border-green-500/15",
-    instagram: "text-pink-400/70 border-pink-500/15",
-    web: "text-indigo-400/70 border-indigo-500/15",
   };
-  return <span className={`inline-flex items-center whitespace-nowrap px-2 py-[2px] rounded text-[8px] font-bold uppercase tracking-[.05em] border bg-white/[0.02] ${m[ch] ?? m.web}`}>{ch}</span>;
+  return <span className={`inline-flex items-center whitespace-nowrap px-2 py-[2px] rounded text-[8px] font-bold uppercase tracking-[.05em] border bg-white/[0.02] ${m[ch] ?? ""}`}>{ch}</span>;
 }
 
 export default function Agents() {

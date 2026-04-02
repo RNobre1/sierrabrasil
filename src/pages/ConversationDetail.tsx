@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck, Send, Mic } from "lucide-react";
+import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck, Send, Mic, Archive, AlertOctagon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -16,6 +17,10 @@ interface Message {
   role: string;
   content: string;
   created_at: string;
+  metadata?: {
+    sentiment?: "positivo" | "neutro" | "negativo" | "frustrado";
+    [key: string]: unknown;
+  } | null;
 }
 
 interface Conversation {
@@ -33,6 +38,13 @@ const statusMap: Record<string, { label: string; variant: "default" | "secondary
   active: { label: "Ativa", variant: "default" },
   resolved: { label: "Resolvida", variant: "secondary" },
   escalated: { label: "Escalada", variant: "destructive" },
+};
+
+const sentimentConfig: Record<string, { label: string; color: string }> = {
+  positivo: { label: "Sentimento: Positivo", color: "bg-emerald-500" },
+  neutro: { label: "Sentimento: Neutro", color: "bg-muted-foreground" },
+  negativo: { label: "Sentimento: Negativo", color: "bg-amber-500" },
+  frustrado: { label: "Sentimento: Frustrado", color: "bg-rose-500" },
 };
 
 export default function ConversationDetail() {
@@ -204,6 +216,7 @@ export default function ConversationDetail() {
 
   const st = statusMap[conversation.status] || statusMap.active;
   const isHuman = conversation.human_takeover;
+  const isReadOnly = conversation.status === "resolved" || conversation.status === "escalated";
 
   return (
     <div className="space-y-4">
@@ -216,10 +229,12 @@ export default function ConversationDetail() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-display font-semibold">{conversation.contact_name}</h1>
             <Badge variant={st.variant}>{st.label}</Badge>
-            <Badge variant="outline" className={`gap-1 pr-3 text-[11px] font-medium border ${isHuman ? "border-amber-500/30 text-amber-500 bg-amber-500/10 dark:text-amber-400 dark:bg-amber-500/10" : "border-emerald-500/30 text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 dark:bg-emerald-500/10"}`}>
-              {isHuman ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
-              {isHuman ? "Atendimento Humano" : "IA Ativa"}
-            </Badge>
+            {!isReadOnly && (
+              <Badge variant="outline" className={`gap-1 pr-3 text-[11px] font-medium border ${isHuman ? "border-amber-500/30 text-amber-500 bg-amber-500/10 dark:text-amber-400 dark:bg-amber-500/10" : "border-emerald-500/30 text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 dark:bg-emerald-500/10"}`}>
+                {isHuman ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+                {isHuman ? "Atendimento Humano" : "IA Ativa"}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
             {conversation.contact_phone && (
@@ -229,19 +244,39 @@ export default function ConversationDetail() {
             <span className="flex items-center gap-1"><Hash className="h-3 w-3 capitalize" /> {conversation.channel}</span>
           </div>
         </div>
-        <Button
-          data-tour="conv-detail-takeover"
-          variant={isHuman ? "outline" : "default"}
-          size="sm"
-          onClick={toggleHandover}
-          disabled={toggling}
-          className={`gap-1.5 text-xs transition-colors ${
-            !isHuman ? "bg-cosmos-indigo hover:bg-cosmos-indigo/90 text-white shadow-cosmos-sm hover:shadow-glow-indigo border-transparent" : "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
-          }`}
-        >
-          {isHuman ? <><Bot className="h-4 w-4" /> Devolver para Agente</> : <><UserCheck className="h-4 w-4" /> Assumir Conversa</>}
-        </Button>
+        {!isReadOnly && (
+          <Button
+            data-tour="conv-detail-takeover"
+            variant={isHuman ? "outline" : "default"}
+            size="sm"
+            onClick={toggleHandover}
+            disabled={toggling}
+            className={`gap-1.5 text-xs transition-colors ${
+              !isHuman ? "bg-cosmos-indigo hover:bg-cosmos-indigo/90 text-white shadow-cosmos-sm hover:shadow-glow-indigo border-transparent" : "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
+            }`}
+          >
+            {isHuman ? <><Bot className="h-4 w-4" /> Devolver para Agente</> : <><UserCheck className="h-4 w-4" /> Assumir Conversa</>}
+          </Button>
+        )}
       </div>
+
+      {/* Read-only banner */}
+      {isReadOnly && (
+        <div className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[13px] font-medium border ${
+          conversation.status === "resolved"
+            ? "bg-white/[0.02] border-white/[0.06] text-white/50"
+            : "bg-red-500/[0.04] border-red-500/[0.1] text-red-400/70"
+        }`}>
+          {conversation.status === "resolved"
+            ? <Archive className="h-4 w-4 shrink-0" />
+            : <AlertOctagon className="h-4 w-4 shrink-0" />
+          }
+          {conversation.status === "resolved"
+            ? "Conversa resolvida — historico de atendimento"
+            : "Conversa escalada — historico de atendimento"
+          }
+        </div>
+      )}
 
       {/* Chat */}
       <Card className="p-4" data-tour="conv-detail-messages">
@@ -258,6 +293,7 @@ export default function ConversationDetail() {
             }
 
             const isContact = msg.role === "contact";
+            const sentiment = !isContact && msg.metadata?.sentiment ? sentimentConfig[msg.metadata.sentiment] : null;
             return (
               <div key={msg.id} className={`flex ${isContact ? "justify-start" : "justify-end"}`}>
                 <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
@@ -266,8 +302,20 @@ export default function ConversationDetail() {
                     : "bg-primary text-primary-foreground rounded-br-md"
                 }`}>
                   <p className="text-sm whitespace-pre-line">{msg.content.replace(/\[BREAK\]/g, "\n")}</p>
-                  <p className={`mt-1 text-[10px] ${isContact ? "text-muted-foreground" : "text-primary-foreground/70"}`}>
+                  <p className={`mt-1 flex items-center gap-1.5 text-[10px] ${isContact ? "text-muted-foreground" : "text-primary-foreground/70"}`}>
                     {formatTime(msg.created_at)}
+                    {sentiment && (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className={`inline-block h-2 w-2 rounded-full ${sentiment.color}`} />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            {sentiment.label}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </p>
                 </div>
               </div>
@@ -279,8 +327,8 @@ export default function ConversationDetail() {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Reply input — visible only during human takeover */}
-        {isHuman && (
+        {/* Reply input — visible only during human takeover on active conversations */}
+        {isHuman && !isReadOnly && (
           <div className="flex items-center gap-2 pt-3 border-t border-border mt-2">
             <Input
               placeholder="Digite sua mensagem..."

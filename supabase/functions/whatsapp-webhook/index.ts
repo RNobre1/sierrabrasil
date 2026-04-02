@@ -20,9 +20,7 @@ Voce e reativo: responde mensagens, nunca inicia conversa.
 5. Voce SO pode enviar TEXTO. NUNCA prometa enviar fotos, imagens, videos ou audios. Se pedirem, diga que pode descrever por texto ou que a equipe envia.
 
 ## TAGS DE CONTROLE (invisivel pro cliente)
-Adicione UMA tag no FINAL da resposta quando aplicavel (NUNCA explique a tag pro cliente):
-- [ESCALATE] — Quando: cliente pede humano, frustracao extrema, assunto fora do escopo, ou voce nao consegue resolver apos 2 tentativas. Antes da tag, diga algo como "Vou te transferir pra um atendente. Aguarda um momento."
-- [RESOLVED] — Quando: cliente agradece e se despede, problema foi resolvido, ou cliente confirma que nao precisa de mais nada.
+Adicione a tag [RESOLVED] no FINAL da resposta quando o cliente agradece e se despede, o problema foi resolvido, ou o cliente confirma que nao precisa de mais nada. NUNCA explique a tag pro cliente.
 Se a conversa continua normalmente, NAO use nenhuma tag.
 
 ## FORMATO WHATSAPP
@@ -226,8 +224,9 @@ serve(async (req) => {
       }
 
       if (existingConv) {
-        conversationId = existingConv.id;
-        if ((existingConv as any).human_takeover === true) {
+        // Escalated + human_takeover: save message but don't respond (human is handling)
+        if (existingConv.status === "escalated" && (existingConv as any).human_takeover === true) {
+          conversationId = existingConv.id;
           await supabase.from("messages").insert({
             conversation_id: conversationId, role: "contact", content: messageContent,
           });
@@ -236,7 +235,16 @@ serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-      } else {
+        // Escalated but returned to agent: archive the escalated conversation and create new active one
+        if (existingConv.status === "escalated" && !(existingConv as any).human_takeover) {
+          console.log(`Archiving escalated conversation ${existingConv.id}, creating new active`);
+          existingConv = null; // Force creation of new conversation below
+        } else {
+          conversationId = existingConv.id;
+        }
+      }
+
+      if (!existingConv) {
         const { data: newConv, error: convErr } = await supabase
           .from("conversations")
           .insert({
@@ -304,9 +312,12 @@ serve(async (req) => {
       if (tzHour >= 12 && tzHour < 18) greeting = "Boa tarde";
       else if (tzHour >= 18 || tzHour < 6) greeting = "Boa noite";
 
-      let layer4 = `\n\n## CONTEXTO
-Saudacao: use "${greeting}" quando apropriado.
-Nome do cliente: ${contactName}.`;
+      const activeSkills: string[] = (attendant as any).active_skills ?? [];
+      const hasGreeting = activeSkills.includes("greeting");
+
+      let layer4 = hasGreeting
+        ? `\n\n## CONTEXTO\nSaudacao: use "${greeting}" personalizado com o nome do cliente (${contactName}) na primeira interacao.`
+        : `\n\n## CONTEXTO`;
 
       // Knowledge base
       const { data: knowledge } = await supabase
@@ -325,7 +336,6 @@ Nome do cliente: ${contactName}.`;
       }
 
       // --- FAQ Data ---
-      const activeSkills: string[] = (attendant as any).active_skills ?? [];
       if (activeSkills.includes("faq")) {
         const { data: faqs } = await supabase
           .from("agent_faqs")
@@ -343,7 +353,7 @@ Nome do cliente: ${contactName}.`;
       // Skills — maps skill IDs to prompt instructions
       const skillMap: Record<string, string> = {
         "greeting": `Use "${greeting}" personalizado com o nome do cliente (${contactName}) na primeira interacao.`,
-        "escalation": "Se o cliente pedir humano ou demonstrar frustracao extrema, diga que vai transferir e encerre com a tag [ESCALATE]. Nao explique a tag pro cliente.",
+        "escalation": "Se o cliente pedir humano, demonstrar frustracao extrema, assunto fora do escopo, ou voce nao conseguir resolver apos 2 tentativas, diga algo como 'Vou te transferir pra um atendente. Aguarda um momento.' e adicione a tag [ESCALATE] no FINAL da resposta. NUNCA explique a tag pro cliente.",
         "lead-capture": "Identifique oportunidades naturais pra coletar nome, email e telefone do cliente. Faca de forma sutil e conversacional. Quando coletar qualquer dado, adicione no FINAL da resposta (invisivel pro cliente): [LEAD: nome=X | email=Y | telefone=Z]. Preencha apenas os campos que conseguiu.",
         "sentiment": "Analise o sentimento do cliente em cada mensagem. Adapte o tom: frustrado = mais empatico e cuidadoso, positivo = mais animado e casual, neutro = equilibrado. No FINAL da resposta, adicione (invisivel pro cliente): [SENTIMENT: positivo|neutro|negativo|frustrado].",
         "follow-up": "Se o cliente volta apos um tempo, faca referencia a conversa anterior de forma natural (ex: 'E ai, resolveu aquela questao?'). Mostre que lembra do contexto.",

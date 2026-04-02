@@ -97,7 +97,12 @@ serve(async (req) => {
         if (tzHour >= 12 && tzHour < 18) greeting = "Boa tarde";
         else if (tzHour >= 18 || tzHour < 6) greeting = "Boa noite";
         
-        let layer4 = `\n\n## CAMADA 4: CONTEXTO DINÂMICO E DADOS DA EMPRESA\nHorário atual: Utilize a saudação "${greeting}" quando for apropriado iniciar a conversa ou cumprimentar o cliente.`;
+        const activeSkills: string[] = (attendant as any).active_skills ?? [];
+        const hasGreeting = activeSkills.includes("greeting");
+
+        let layer4 = hasGreeting
+          ? `\n\n## CAMADA 4: CONTEXTO DINÂMICO E DADOS DA EMPRESA\nSaudação: utilize "${greeting}" personalizado com o nome do cliente na primeira interação.`
+          : `\n\n## CAMADA 4: CONTEXTO DINÂMICO E DADOS DA EMPRESA`;
 
         // Fetch knowledge base content
         const { data: knowledge } = await supabase
@@ -117,7 +122,6 @@ serve(async (req) => {
         }
 
         // --- FAQ Data ---
-        const activeSkills: string[] = (attendant as any).active_skills ?? [];
         if (activeSkills.includes("faq")) {
           const { data: faqs } = await supabase
             .from("agent_faqs")
@@ -135,7 +139,7 @@ serve(async (req) => {
         // --- Skills ---
         const skillMap: Record<string, string> = {
           "greeting": `Use "${greeting}" personalizado com o nome do cliente na primeira interacao.`,
-          "escalation": "Se o cliente pedir humano ou demonstrar frustracao extrema, diga que vai transferir e encerre.",
+          "escalation": "Se o cliente pedir humano, demonstrar frustracao extrema, assunto fora do escopo, ou voce nao conseguir resolver apos 2 tentativas, diga algo como 'Vou te transferir pra um atendente. Aguarda um momento.' e adicione a tag [ESCALATE] no FINAL da resposta. NUNCA explique a tag pro cliente.",
           "lead-capture": "Identifique oportunidades naturais pra coletar nome, email e telefone do cliente. Faca de forma sutil.",
           "sentiment": "Analise o sentimento do cliente. Adapte o tom: frustrado = mais empatico, positivo = mais animado.",
           "follow-up": "Se o cliente volta apos um tempo, faca referencia a conversa anterior.",

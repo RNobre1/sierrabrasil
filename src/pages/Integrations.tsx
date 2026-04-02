@@ -177,9 +177,22 @@ export default function Integrations() {
   const totalCount = categories.reduce((acc, c) => acc + c.integrations.length, 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      {/* Coming soon overlay */}
+      <div className="absolute inset-0 z-20 flex items-start justify-center pt-32 pointer-events-none">
+        <div className="pointer-events-auto text-center space-y-3 bg-background/80 backdrop-blur-sm rounded-2xl border border-border/40 px-8 py-6 shadow-2xl shadow-black/20">
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
+            <Puzzle className="h-6 w-6 text-primary" />
+          </div>
+          <h3 className="text-lg font-display font-semibold text-foreground">Integrações em breve</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            Estamos preparando dezenas de integrações para turbinar seu agente. Fique de olho!
+          </p>
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/30 bg-gradient-to-br from-primary/5 via-card to-card p-6 md:p-8" data-tour="integrations-header">
+      <div className="relative overflow-hidden rounded-2xl border border-border/30 bg-gradient-to-br from-primary/5 via-card to-card p-6 md:p-8 blur-[2px] opacity-60" data-tour="integrations-header">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="relative">
           <div className="flex items-center gap-3 mb-2">
@@ -200,7 +213,7 @@ export default function Integrations() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md" data-tour="integrations-search">
+      <div className="relative max-w-md blur-[2px] opacity-60 pointer-events-none" data-tour="integrations-search">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
         <Input
           placeholder="Buscar integração..."
@@ -211,7 +224,7 @@ export default function Integrations() {
       </div>
 
       {/* Categories */}
-      <div className="space-y-10" data-tour="integrations-categories">
+      <div className="space-y-10 blur-[2px] opacity-60 pointer-events-none" data-tour="integrations-categories">
         {filteredCategories.map((category) => (
           <section key={category.title}>
             <div className="flex items-center gap-2.5 mb-4">

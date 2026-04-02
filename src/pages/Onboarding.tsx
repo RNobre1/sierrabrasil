@@ -894,7 +894,7 @@ export default function Onboarding() {
         name: finalAttendantName,
         persona: finalPersona,
         instructions,
-        channels: ["whatsapp", "web"],
+        channels: ["whatsapp"],
         status: "online",
         model: recommendedModel,
         recommended_model: recommendedModel,

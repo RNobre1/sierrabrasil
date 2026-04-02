@@ -402,10 +402,9 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [x] 158 testes passando
 
 ### TODO (Ordem de Execucao)
-1. **Pagamento Stripe (MUST)** — Tabelas, webhooks, checkout, portal, validacao server-side, seguranca
+1. **Memoria do agente** — Tabela `agent_memories`, sumarizacao automatica ao final de conversas, injecao no prompt, TTL configuravel. Aba "Memoria" no AgentDetail ja existe (placeholder). Monetizacao como add-on pos-MVP.
 2. **Filtro de Contatos (Whitelist/Blacklist)** — Tabela `contact_rules`, funcao SQL `should_respond_to_contact`, integracao webhook, UI de configuracao. Detalhes em `docs/plano-filtro-contatos.md`
 3. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
-4. **Memoria do agente** — Tabela, sumarizacao, injecao no prompt, TTL, add-on R$67/mes
 
 ## Backlog (Pos-MVP — "Coming Soon" no Frontend)
 
@@ -420,6 +419,9 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [ ] Webchat embeddable
 - [ ] WhatsApp Business Cloud API (oficial Meta)
 - [ ] Abstracoes de canal (interface unica send/receive)
+
+### Pagamento
+- [ ] **Pagamento Stripe** — Tabelas (subscriptions, addon_subscriptions, plans, audit_logs), webhooks, checkout, portal, validacao server-side, seguranca. Ate la, planos sao liberados manualmente via banco de dados.
 
 ### Funcionalidades
 - [ ] Relatorios com dados reais (8 templates ja definidos)

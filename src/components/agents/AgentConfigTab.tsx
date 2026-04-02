@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 
-const CHANNELS = ["whatsapp", "instagram", "web"] as const;
+const CHANNELS = ["whatsapp"] as const;
 
 const CONVERSATION_MODES = [
   { id: "precise", label: "Preciso", desc: "Respostas objetivas e técnicas", icon: Brain, model: "google/gemini-2.5-pro", temperature: 0.3 },

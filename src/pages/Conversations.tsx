@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { Search, ArrowRight, Inbox, MessageSquare, Zap, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Search, ArrowRight, Inbox, MessageSquare, Zap, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,11 +67,17 @@ function StBadge({ st }: { st: string }) {
   );
 }
 
+/** Grouping key: prefer contact_phone, fall back to contact_name */
+function contactKey(c: ConversationRow) {
+  return c.contact_phone?.trim() || c.contact_name;
+}
+
 export default function Conversations() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<ConversationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const nav = useNavigate();
   const { user } = useAuth();
 
@@ -91,15 +98,101 @@ export default function Conversations() {
     })();
   }, [user]);
 
-  const cnt: Record<FilterKey, number> = {
-    all: rows.length, active: rows.filter(c => c.status === "active").length,
-    resolved: rows.filter(c => c.status === "resolved").length, escalated: rows.filter(c => c.status === "escalated").length,
-  };
-  const filtered = rows.filter(c => {
-    if (filter !== "all" && c.status !== filter) return false;
-    if (search) { const q = search.toLowerCase(); return c.contact_name.toLowerCase().includes(q) || (c.contact_phone ?? "").includes(q); }
-    return true;
+  // Reset expanded state when filter changes
+  useEffect(() => { setExpanded(new Set()); }, [filter]);
+
+  const toggle = (key: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    next.has(key) ? next.delete(key) : next.add(key);
+    return next;
   });
+
+  /**
+   * For "all" and "active" filters: deduplicate by contact, showing the active
+   * conversation or the most recent one per contact.
+   */
+  const deduplicatedRows = useMemo(() => {
+    const byContact = new Map<string, ConversationRow>();
+    // rows are already sorted by started_at DESC from Supabase
+    for (const c of rows) {
+      const key = contactKey(c);
+      const existing = byContact.get(key);
+      if (!existing) {
+        byContact.set(key, c);
+      } else if (c.status === "active" && existing.status !== "active") {
+        // Active always wins
+        byContact.set(key, c);
+      }
+      // Otherwise keep the first (most recent) one
+    }
+    return Array.from(byContact.values());
+  }, [rows]);
+
+  /**
+   * For "resolved" and "escalated" filters: group conversations by contact.
+   * Returns a Map of contactKey -> conversation[] (all matching the filter status).
+   */
+  const groupedByContact = useMemo(() => {
+    const groups = new Map<string, ConversationRow[]>();
+    const statusFilter = filter; // "resolved" or "escalated"
+    for (const c of rows) {
+      if (c.status !== statusFilter) continue;
+      const key = contactKey(c);
+      const arr = groups.get(key) ?? [];
+      arr.push(c);
+      groups.set(key, arr);
+    }
+    return groups;
+  }, [rows, filter]);
+
+  /** Whether we should use grouped/expandable view */
+  const isGroupedView = filter === "resolved" || filter === "escalated";
+
+  /** Count unique contacts per status for badges */
+  const uniqueContacts = useMemo(() => {
+    const count = (status: string) => {
+      const seen = new Set<string>();
+      for (const c of rows) {
+        if (c.status === status) seen.add(contactKey(c));
+      }
+      return seen.size;
+    };
+    return { resolved: count("resolved"), escalated: count("escalated") };
+  }, [rows]);
+
+  const cnt: Record<FilterKey, number> = {
+    all: deduplicatedRows.length,
+    active: deduplicatedRows.filter(c => c.status === "active").length,
+    resolved: uniqueContacts.resolved,
+    escalated: uniqueContacts.escalated,
+  };
+
+  /** Apply search filter to the deduplicated list */
+  const filteredFlat = useMemo(() => {
+    let list = filter === "all" ? deduplicatedRows
+      : filter === "active" ? deduplicatedRows.filter(c => c.status === "active")
+      : deduplicatedRows; // unused for grouped, but kept for safety
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(c => c.contact_name.toLowerCase().includes(q) || (c.contact_phone ?? "").includes(q));
+    }
+    return list;
+  }, [deduplicatedRows, filter, search]);
+
+  /** Apply search filter to grouped view */
+  const filteredGroups = useMemo(() => {
+    if (!isGroupedView) return new Map<string, ConversationRow[]>();
+    const result = new Map<string, ConversationRow[]>();
+    for (const [key, convs] of groupedByContact) {
+      const rep = convs[0];
+      if (search) {
+        const q = search.toLowerCase();
+        if (!rep.contact_name.toLowerCase().includes(q) && !(rep.contact_phone ?? "").includes(q)) continue;
+      }
+      result.set(key, convs);
+    }
+    return result;
+  }, [groupedByContact, isGroupedView, search]);
 
   if (loading) return (
     <div className="space-y-5 pt-2">
@@ -155,7 +248,8 @@ export default function Conversations() {
           <span /><span>Contato</span><span className="text-center">Canal</span><span className="text-center w-24">Status</span><span className="text-right">Tempo</span><span />
         </div>
 
-        {filtered.length === 0 ? (
+        {/* Empty state */}
+        {(isGroupedView ? filteredGroups.size === 0 : filteredFlat.length === 0) ? (
           <div className="flex flex-col items-center justify-center py-20 px-4">
             <div className="h-14 w-14 rounded-2xl bg-indigo-500/[0.06] border border-indigo-500/[0.1] flex items-center justify-center mb-4">
               <Inbox className="h-6 w-6 text-indigo-400/30" />
@@ -163,9 +257,77 @@ export default function Conversations() {
             <p className="text-[13px] font-medium text-white/40">{search ? `Sem resultados para "${search}"` : "Nenhuma conversa ainda"}</p>
             <p className="text-[11px] text-white/20 mt-1 max-w-[260px]">{search ? "Tente outro termo." : "Quando seu atendente receber a primeira mensagem ela aparecerá aqui."}</p>
           </div>
-        ) : (
+        ) : isGroupedView ? (
+          /* ── Grouped / expandable view (resolved & escalated) ── */
           <div className="divide-y divide-white/[0.03]">
-            {filtered.map((c, i) => (
+            {Array.from(filteredGroups.entries()).map(([key, convs]) => {
+              const rep = convs[0]; // representative row (most recent)
+              const isOpen = expanded.has(key);
+              return (
+                <div key={key}>
+                  {/* Contact header row */}
+                  <div
+                    onClick={() => toggle(key)}
+                    className="group grid grid-cols-[20px_40px_1fr_auto_48px] sm:grid-cols-[20px_40px_1fr_82px_auto_48px_20px] items-center gap-4 px-4 py-3 cursor-pointer transition-all duration-150 hover:bg-white/[0.015]"
+                  >
+                    <div className="flex items-center justify-center">
+                      <motion.div animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.15 }}>
+                        <ChevronRight className="h-3.5 w-3.5 text-white/25" />
+                      </motion.div>
+                    </div>
+                    <div className={`h-10 w-10 rounded-[10px] flex items-center justify-center text-white font-display font-semibold text-[11px] shadow-lg shrink-0 ${pick(rep.contact_name)}`}>{ini(rep.contact_name)}</div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-white/90 truncate leading-snug">{rep.contact_name}</p>
+                      <p className="text-[10px] text-white/25 mt-[1px]">
+                        {convs.length} conversa{convs.length > 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    <ChBadge ch={rep.channel} />
+                    <StBadge st={rep.status} />
+                    <span className="hidden sm:block text-[10px] text-white/20 font-mono tabular-nums text-right">{ago(rep.started_at)}</span>
+                    <span className="hidden sm:block" />
+                  </div>
+
+                  {/* Expanded sub-rows */}
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        {convs.map(c => (
+                          <div
+                            key={c.id}
+                            onClick={() => nav(`/conversations/${c.id}`)}
+                            className="group grid grid-cols-[20px_40px_1fr_auto_48px] sm:grid-cols-[20px_40px_1fr_82px_auto_48px_20px] items-center gap-4 pl-6 pr-4 py-2.5 cursor-pointer transition-all duration-150 bg-white/[0.008] hover:bg-white/[0.025] border-t border-white/[0.02]"
+                          >
+                            <span />
+                            <div className="h-7 w-7 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+                              <MessageSquare className="h-3 w-3 text-white/20" />
+                            </div>
+                            <div className="min-w-0">
+                              {c.last_message ? <p className="text-[11px] text-white/30 truncate max-w-md leading-snug">{c.last_message}</p> : <p className="text-[10px] text-white/15 italic">Sem mensagens</p>}
+                            </div>
+                            <span className="hidden sm:block" />
+                            <span className="hidden sm:block" />
+                            <span className="hidden sm:block text-[10px] text-white/20 font-mono tabular-nums text-right">{ago(c.started_at)}</span>
+                            <ArrowRight className="hidden sm:block h-3 w-3 text-white/[0.05] group-hover:text-white/[0.15] transition-colors" />
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* ── Flat / deduplicated view (all & active) ── */
+          <div className="divide-y divide-white/[0.03]">
+            {filteredFlat.map(c => (
               <div key={c.id} onClick={() => nav(`/conversations/${c.id}`)}
                 className="group grid grid-cols-[40px_1fr_auto] sm:grid-cols-[40px_1fr_82px_auto_48px_20px] items-center gap-4 px-4 py-3 cursor-pointer transition-all duration-150 hover:bg-white/[0.015]"
               >

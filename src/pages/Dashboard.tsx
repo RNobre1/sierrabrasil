@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import {
   MessageSquare, CheckCircle2, Play, Settings, Sparkles, ArrowRight,
   Zap, BarChart3, Crown, Activity, TrendingUp, TrendingDown, Bot,
-  ChevronRight, ArrowUpRight, ArrowDownRight, Percent, Radio
+  ChevronRight, ArrowUpRight, ArrowDownRight, Percent, Radio,
+  Users, Phone, Mail
 } from "lucide-react";
 import TrialTimer from "@/components/TrialTimer";
 import { Button } from "@/components/ui/button";
@@ -18,8 +19,9 @@ import GuidedTour from "@/components/GuidedTour";
 import WhatsAppConnectBanner from "@/components/WhatsAppConnectBanner";
 
 /* ═══ Types ═══ */
-interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class?: string | null; }
+interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class?: string | null; active_skills?: string[] | null; }
 interface Conversation { id: string; contact_name: string; status: string; started_at: string; channel: string; escalation_count?: number; }
+interface Lead { id: string; contact_name: string | null; contact_email: string | null; contact_phone: string | null; source: string; created_at: string; }
 
 /* ═══ Design tokens ═══ */
 const NEON = "#39FF14";
@@ -73,6 +75,9 @@ export default function Dashboard() {
   const [tenantPlan, setTenantPlan] = useState("starter");
   const [loading, setLoading] = useState(true);
   const [hasWhatsApp, setHasWhatsApp] = useState(true);
+  const [hasLeadCapture, setHasLeadCapture] = useState(false);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [totalLeads, setTotalLeads] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -82,15 +87,39 @@ export default function Dashboard() {
       setTenantCreatedAt(t.created_at);
       setTenantPlan(t.plan || "starter");
       const [att, conv, allC, msg] = await Promise.all([
-        supabase.from("attendants").select("id, name, status, channels, model, class").eq("tenant_id", t.id),
+        supabase.from("attendants").select("id, name, status, channels, model, class, active_skills").eq("tenant_id", t.id),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", t.id).order("started_at", { ascending: false }).limit(10),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", t.id),
         supabase.from("messages").select("id", { count: "exact", head: true }),
       ]);
-      setAttendants(att.data ?? []);
+      const attendantList = att.data ?? [];
+      setAttendants(attendantList);
       setRecentConvs(conv.data ?? []);
       setAllConvs(allC.data ?? []);
       setTotalMsgs(msg.count ?? 0);
+
+      // Check if any attendant has lead-capture skill active
+      const leadCaptureActive = attendantList.some(
+        a => a.active_skills?.includes("lead-capture")
+      );
+      setHasLeadCapture(leadCaptureActive);
+
+      if (leadCaptureActive) {
+        const [recentLeads, leadsCount] = await Promise.all([
+          supabase
+            .from("agent_leads")
+            .select("id, contact_name, contact_email, contact_phone, source, created_at")
+            .eq("tenant_id", t.id)
+            .order("created_at", { ascending: false })
+            .limit(8),
+          supabase
+            .from("agent_leads")
+            .select("id", { count: "exact", head: true })
+            .eq("tenant_id", t.id),
+        ]);
+        setLeads(recentLeads.data ?? []);
+        setTotalLeads(leadsCount.count ?? 0);
+      }
 
       const { data: wpInstances } = await supabase
         .from("whatsapp_instances")
@@ -387,6 +416,52 @@ export default function Dashboard() {
           })}
         </div>
       </div>
+
+      {/* ═══ ROW 5: Leads (only if lead-capture skill active) ═══ */}
+      {hasLeadCapture && (
+        <div data-tour="dashboard-leads" className="cosmos-card p-0">
+          <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+            <div className="flex items-center gap-2">
+              <Users className="h-3 w-3 text-violet-400" />
+              <span className="text-[12px] font-display font-semibold text-white/70">Leads Capturados</span>
+              <span className="inline-flex items-center justify-center h-[18px] min-w-[18px] px-1.5 rounded-full text-[9px] font-mono font-bold bg-violet-500/15 text-violet-400 border border-violet-500/20">{totalLeads}</span>
+            </div>
+          </div>
+          {leads.length === 0 ? (
+            <div className="px-4 pb-4 pt-2">
+              <p className="text-[10px] text-white/20 text-center py-4">
+                Nenhum lead capturado ainda. Quando seus clientes interagirem, os dados aparecerão aqui.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="hidden sm:grid grid-cols-[1fr_130px_130px_60px_70px] items-center gap-3 px-4 py-1 border-b border-white/[0.025] text-[8px] font-mono uppercase tracking-[.1em] text-white/12 select-none">
+                <span>Nome</span><span>Telefone</span><span>Email</span><span>Fonte</span><span className="text-right">Quando</span>
+              </div>
+              <div className="divide-y divide-white/[0.02]">
+                {leads.map(l => (
+                  <div key={l.id} className="grid grid-cols-[1fr_130px_130px_60px_70px] items-center gap-3 px-4 py-2.5 hover:bg-white/[0.01] transition-all">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`h-6 w-6 shrink-0 rounded-md flex items-center justify-center text-white font-display font-bold text-[7px] ${pick(l.contact_name || "?")}`}>
+                        {ini(l.contact_name || "?")}
+                      </div>
+                      <span className="text-[11px] font-medium text-white/70 truncate">{l.contact_name || "Sem nome"}</span>
+                    </div>
+                    <span className="text-[10px] text-white/30 font-mono flex items-center gap-1 truncate">
+                      {l.contact_phone ? <><Phone className="h-2.5 w-2.5 shrink-0 text-white/15" />{l.contact_phone}</> : <span className="text-white/10">—</span>}
+                    </span>
+                    <span className="text-[10px] text-white/30 font-mono flex items-center gap-1 truncate">
+                      {l.contact_email ? <><Mail className="h-2.5 w-2.5 shrink-0 text-white/15" />{l.contact_email}</> : <span className="text-white/10">—</span>}
+                    </span>
+                    <span className="text-[8px] text-white/15 font-mono uppercase">{l.source}</span>
+                    <span className="text-[8px] text-white/12 font-mono tabular-nums text-right">{ago(l.created_at)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <MeteoraWatermark />
       <WhatsAppConnectBanner isConnected={hasWhatsApp} />

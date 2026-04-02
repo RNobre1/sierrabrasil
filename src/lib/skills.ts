@@ -26,7 +26,7 @@ export const SKILL_INSTRUCTION_MAP: Record<string, string | ((ctx: SkillContext)
   },
 
   escalation:
-    "Se o cliente pedir humano ou demonstrar frustracao extrema, diga que vai transferir e encerre com a tag [ESCALATE]. Nao explique a tag pro cliente.",
+    "Se o cliente pedir humano, demonstrar frustracao extrema, assunto fora do escopo, ou voce nao conseguir resolver apos 2 tentativas, diga algo como 'Vou te transferir pra um atendente. Aguarda um momento.' e adicione a tag [ESCALATE] no FINAL da resposta. NUNCA explique a tag pro cliente.",
 
   "lead-capture":
     "Identifique oportunidades naturais pra coletar nome, email e telefone do cliente. Faca de forma sutil e conversacional. Quando coletar qualquer dado, adicione no FINAL da resposta (invisivel pro cliente): [LEAD: nome=X | email=Y | telefone=Z]. Preencha apenas os campos que conseguiu.",

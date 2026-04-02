@@ -503,9 +503,9 @@ export default function Account() {
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
             <div>
               <p className="text-sm font-semibold capitalize">Professional</p>
-              <p className="text-xs text-muted-foreground">Até 5.000 conversas/mês</p>
+              <p className="text-xs text-muted-foreground">Gerenciamento de planos em breve</p>
             </div>
-            <Button variant="outline" size="sm" disabled>Gerenciar plano</Button>
+            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">Em breve</span>
           </div>
         </CardContent>
       </Card>

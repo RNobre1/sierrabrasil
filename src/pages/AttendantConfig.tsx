@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 
-const CHANNELS = ["whatsapp", "instagram", "web"] as const;
+const CHANNELS = ["whatsapp"] as const;
 
 export default function AttendantConfig() {
   const navigate = useNavigate();
