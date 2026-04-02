@@ -216,7 +216,8 @@ export default function ConversationDetail() {
 
   const st = statusMap[conversation.status] || statusMap.active;
   const isHuman = conversation.human_takeover;
-  const isReadOnly = conversation.status === "resolved" || conversation.status === "escalated";
+  // Read-only: resolved always, escalated only when returned to agent (not during human takeover)
+  const isReadOnly = conversation.status === "resolved" || (conversation.status === "escalated" && !conversation.human_takeover);
 
   return (
     <div className="space-y-4">
