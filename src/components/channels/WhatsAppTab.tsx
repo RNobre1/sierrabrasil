@@ -91,13 +91,22 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
     }
   }, [user]);
 
-  // Fetch attendants for agent binding
+  // Fetch attendants for agent binding (scoped to user's tenant)
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("attendants")
-      .select("id, name")
-      .then(({ data }) => { if (data) setAttendants(data); });
+    (async () => {
+      const { data: tenant } = await supabase
+        .from("tenants")
+        .select("id")
+        .eq("owner_id", user.id)
+        .single();
+      if (!tenant) return;
+      const { data } = await supabase
+        .from("attendants")
+        .select("id, name")
+        .eq("tenant_id", tenant.id);
+      if (data) setAttendants(data);
+    })();
   }, [user]);
 
   useEffect(() => { fetchInstances(); }, [fetchInstances]);
