@@ -312,11 +312,12 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
                   Expira em {qrSecondsLeft}s
                 </div>
 
-                <div className="bg-white p-4 rounded-xl">
+                <div className="bg-white p-4 rounded-xl shadow-sm">
                   <img
                     src={qrData.qr.startsWith("data:") ? qrData.qr : `data:image/png;base64,${qrData.qr}`}
                     alt="QR Code WhatsApp"
                     className="w-64 h-64 object-contain"
+                    style={{ filter: "grayscale(100%) contrast(1.5)" }}
                   />
                 </div>
               </>

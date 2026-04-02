@@ -1,4 +1,4 @@
-import { Headphones, TrendingUp, ArrowRight } from "lucide-react";
+import { Headphones, TrendingUp, ArrowRight, Zap, Clock, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 
 type AgentClass = "support" | "sales";
@@ -24,17 +24,59 @@ const classes = [
   },
 ];
 
+const highlights = [
+  { icon: <Clock className="h-3.5 w-3.5" />, text: "Pronto em minutos" },
+  { icon: <Zap className="h-3.5 w-3.5" />, text: "Atende 24h sem parar" },
+  { icon: <Shield className="h-3.5 w-3.5" />, text: "Nunca perde um cliente" },
+];
+
 export default function AgentClassSelector({ onSelect }: AgentClassSelectorProps) {
   return (
     <div className="flex flex-col items-center text-center space-y-8 px-4 py-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-display font-semibold text-foreground">
-          Qual tipo de agente você gostaria de criar?
-        </h2>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Cada tipo vem com habilidades específicas pré-configuradas. Você pode personalizar depois.
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-3"
+      >
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+          Falta pouco
         </p>
-      </div>
+        <h2 className="text-2xl font-display font-bold text-foreground leading-tight max-w-md mx-auto">
+          Seu negocio esta prestes a ganhar um{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">
+            funcionario incansavel
+          </span>
+        </h2>
+        <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+          Em poucos minutos voce vai ter um agente de IA que atende seus clientes automaticamente — sem ferias, sem atraso, sem erro.
+        </p>
+
+        <div className="flex items-center justify-center gap-4 pt-2">
+          {highlights.map((h, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 + i * 0.1 }}
+              className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
+            >
+              <span className="text-primary">{h.icon}</span>
+              {h.text}
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        className="space-y-2"
+      >
+        <p className="text-sm font-medium text-foreground">Escolha o perfil do seu agente:</p>
+        <p className="text-xs text-muted-foreground">Voce pode personalizar tudo depois.</p>
+      </motion.div>
 
       <div className="grid gap-4 w-full max-w-lg sm:grid-cols-2">
         {classes.map((cls, i) => (
@@ -42,9 +84,9 @@ export default function AgentClassSelector({ onSelect }: AgentClassSelectorProps
             key={cls.id}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
+            transition={{ delay: 0.5 + i * 0.12 }}
             onClick={() => onSelect(cls.id)}
-            className="group text-left rounded-2xl border border-border/40 bg-card/50 p-5 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 cursor-pointer"
+            className="group text-left rounded-2xl border border-border/40 bg-card/50 p-5 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.97] transition-all duration-200 cursor-pointer"
           >
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/15 transition-colors">
               {cls.icon}

@@ -38,7 +38,15 @@ export const SKILL_INSTRUCTION_MAP: Record<string, string | ((ctx: SkillContext)
     "Se o cliente volta apos um tempo, faca referencia a conversa anterior de forma natural (ex: 'E ai, resolveu aquela questao?'). Mostre que lembra do contexto.",
 
   "multi-language":
-    "Detecte automaticamente o idioma da mensagem do cliente. Se for diferente de portugues, responda NO MESMO IDIOMA do cliente. Idiomas suportados: portugues, ingles, espanhol, frances, italiano, alemao. Mantenha o tom natural e humanizado no idioma detectado.",
+    `REGRA PRIORITARIA DE IDIOMA (sobrepoe a secao de humanizacao PT-BR acima):
+Detecte o idioma da ULTIMA mensagem do cliente. Se NAO for portugues, IGNORE todas as instrucoes de tom PT-BR e responda INTEIRAMENTE no idioma do cliente. NUNCA misture idiomas.
+Naturalidade por idioma:
+- Ingles: use contracoes (I'm, don't, gonna, wanna), girias (sure thing, no worries, got it, sounds good), tom casual de texting.
+- Espanhol: use contracoes (pa' que, ta' bien), girias (vale, genial, dale, tranqui, mola), tom natural latinoamericano/espanhol.
+- Frances: use contracoes (j'suis, t'inquiete, c'est), girias (super, nickel, impec, bref), tom casual.
+- Italiano: use contracoes (com'e, dov'e), girias (figurati, dai, boh, magari), tom casual.
+- Alemao: use tom casual (klar, na klar, alles klar, genau, passt), contracoes informais.
+Mantenha o MESMO nivel de informalidade e emojis que usaria em portugues, mas adaptado ao idioma detectado.`,
 
   faq:
     "Quando houver dados de FAQ fornecidos no contexto, priorize respostas da FAQ antes de elaborar com IA generativa. Respostas de FAQ devem ser usadas diretamente, adaptando apenas o tom conversacional.",

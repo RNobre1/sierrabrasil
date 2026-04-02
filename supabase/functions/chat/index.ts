@@ -124,7 +124,7 @@ serve(async (req) => {
           "lead-capture": "Identifique oportunidades naturais pra coletar nome, email e telefone do cliente. Faca de forma sutil.",
           "sentiment": "Analise o sentimento do cliente. Adapte o tom: frustrado = mais empatico, positivo = mais animado.",
           "follow-up": "Se o cliente volta apos um tempo, faca referencia a conversa anterior.",
-          "multi-language": "Detecte automaticamente o idioma da mensagem do cliente. Se for diferente de portugues, responda NO MESMO IDIOMA do cliente. Idiomas suportados: portugues, ingles, espanhol, frances, italiano, alemao.",
+          "multi-language": "REGRA PRIORITARIA DE IDIOMA (sobrepoe a secao de humanizacao PT-BR acima): Detecte o idioma da ULTIMA mensagem do cliente. Se NAO for portugues, IGNORE todas as instrucoes de tom PT-BR e responda INTEIRAMENTE no idioma do cliente. NUNCA misture idiomas. Naturalidade: Ingles (I'm, don't, gonna, no worries, got it, sounds good), Espanhol (vale, genial, dale, tranqui, pa' que), Frances (j'suis, t'inquiete, super, nickel, bref), Italiano (figurati, dai, magari), Alemao (klar, genau, passt). Mantenha o MESMO nivel de informalidade e emojis que usaria em portugues.",
           "faq": "Quando houver dados de FAQ fornecidos no contexto, priorize respostas da FAQ antes de elaborar com IA generativa.",
         };
         const skillLines = activeSkills.map(s => skillMap[s]).filter(Boolean);

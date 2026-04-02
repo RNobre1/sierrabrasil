@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, User, Loader2, ArrowRight, Rocket, FileText, Lock, Wifi } from "lucide-react";
+import { Send, Sparkles, User, Loader2, ArrowRight, Rocket, FileText, Lock, Wifi, CheckCircle2, MessageSquare, Zap, Play, LayoutDashboard } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -968,7 +969,7 @@ export default function Onboarding() {
   if (phase === "class-select") {
     return (
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
-        <OnboardingHeader title="Tipo de Agente" subtitle="Escolha o perfil ideal para o seu negócio" progress={15} />
+        <OnboardingHeader title="Crie seu agente" subtitle="Escolha, personalize e ative em minutos" progress={15} />
         <div className="flex-1 flex items-center justify-center p-6">
           <AgentClassSelector onSelect={handleAgentTemplateSelect} />
         </div>
@@ -978,43 +979,138 @@ export default function Onboarding() {
 
   // ========== WHATSAPP CONNECT PHASE ==========
   if (phase === "whatsapp-connect") {
+    const agentName = attendantNameFromChat || overviewData.businessName || "Seu Agente";
+    const agentType = selectedAgentClass === "sales" ? "vendas" : "atendimento";
+
+    const achievements = [
+      { icon: <CheckCircle2 className="h-4 w-4" />, text: `Agente de ${agentType} configurado` },
+      { icon: <Sparkles className="h-4 w-4" />, text: "Inteligencia artificial treinada com seus dados" },
+      { icon: <MessageSquare className="h-4 w-4" />, text: "Pronto para atender clientes 24h por dia" },
+      ...(overviewData.products ? [{ icon: <Zap className="h-4 w-4" />, text: `Conhece seus produtos e servicos` }] : []),
+    ];
+
     return (
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
-        <OnboardingHeader title="Conectar WhatsApp" subtitle="Ultimo passo! Conecte seu numero" progress={95} />
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-md space-y-6 text-center">
-            <div className="h-16 w-16 rounded-2xl bg-cosmos-emerald/10 flex items-center justify-center mx-auto">
-              <Wifi className="h-8 w-8 text-cosmos-emerald" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-display font-semibold text-foreground">
-                Conecte seu WhatsApp
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Seu agente esta pronto! Conecte o WhatsApp pra ele comecar a atender automaticamente.
+        <OnboardingHeader title="Agente criado!" subtitle="Veja o que voce acabou de construir" progress={95} />
+        <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
+          <div className="w-full max-w-md space-y-8 text-center py-4">
+
+            {/* Celebration header */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="space-y-4"
+            >
+              <div className="relative mx-auto w-20 h-20">
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/20 to-cosmos-emerald/20 blur-xl" />
+                <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-primary to-cosmos-emerald flex items-center justify-center shadow-lg shadow-primary/25">
+                  <Rocket className="h-9 w-9 text-white" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-display font-bold text-foreground">
+                  {agentName} esta pronto!
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                  Em poucos minutos voce criou um agente de IA que vai trabalhar pelo seu negocio 24 horas por dia, 7 dias por semana — sem custo de equipe extra.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Achievement list */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+              className="space-y-2"
+            >
+              {achievements.map((a, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + i * 0.1 }}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-cosmos-emerald/5 border border-cosmos-emerald/10 text-left"
+                >
+                  <span className="text-cosmos-emerald shrink-0">{a.icon}</span>
+                  <span className="text-sm text-foreground">{a.text}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Divider */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="space-y-3"
+            >
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/40" /></div>
+                <div className="relative flex justify-center text-xs"><span className="bg-background px-4 text-muted-foreground/70">ultimo passo</span></div>
+              </div>
+
+              <p className="text-sm font-medium text-foreground">
+                Conecte o WhatsApp para ativar seu agente
               </p>
-            </div>
-            <div className="flex flex-col gap-3">
+              <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                Basta escanear o QR Code com o celular. Leva menos de 30 segundos.
+              </p>
+            </motion.div>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1 }}
+              className="flex flex-col gap-3"
+            >
               <Button
                 onClick={() => {
                   clearPersisted();
                   navigate("/channels");
                 }}
-                className="w-full h-12 rounded-xl bg-cosmos-emerald hover:bg-cosmos-emerald/90 text-white"
+                className="w-full h-12 rounded-xl bg-cosmos-emerald hover:bg-cosmos-emerald/90 text-white shadow-lg shadow-cosmos-emerald/25 hover:shadow-xl hover:shadow-cosmos-emerald/30 active:scale-[0.97] transition-all duration-150 font-medium text-sm"
               >
-                <Wifi className="h-4 w-4 mr-2" /> Conectar agora
+                <Wifi className="h-4 w-4 mr-2" /> Conectar WhatsApp agora
               </Button>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    clearPersisted();
+                    navigate("/attendant/playground");
+                  }}
+                  className="flex-1 h-10 rounded-xl text-xs gap-1.5 active:scale-[0.97] transition-all duration-150"
+                >
+                  <Play className="h-3.5 w-3.5" /> Testar no Playground
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    clearPersisted();
+                    navigate("/dashboard");
+                  }}
+                  className="flex-1 h-10 rounded-xl text-xs gap-1.5 active:scale-[0.97] transition-all duration-150"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5" /> Ir pro Dashboard
+                </Button>
+              </div>
+
               <button
                 onClick={() => {
                   clearPersisted();
                   toast({ title: "Tudo certo!", description: "Voce pode conectar o WhatsApp depois em Canais." });
                   navigate("/dashboard");
                 }}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors pt-1"
               >
-                Fazer isso depois
+                Configurar WhatsApp depois
               </button>
-            </div>
+            </motion.div>
+
           </div>
         </div>
       </div>
