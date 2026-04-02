@@ -166,7 +166,6 @@ export default function Onboarding() {
         if (!cancelled) return checkVerification(retries - 1);
         return;
       }
-      toast({ title: "Verificação necessária", description: "Verifique seu número de WhatsApp antes de continuar.", variant: "destructive" });
       navigate("/verify-phone");
     };
     checkVerification();
