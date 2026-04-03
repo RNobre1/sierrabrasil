@@ -5,7 +5,7 @@ import {
   ArrowUpRight, ArrowDownRight, Percent,
   Users, Phone, Mail
 } from "lucide-react";
-import { getAgentIcon } from "@/lib/agent-icons";
+import { getAgentIcon, isCustomIcon, getCustomIconUrl } from "@/lib/agent-icons";
 import TrialTimer from "@/components/TrialTimer";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -263,12 +263,17 @@ export default function Dashboard() {
           <div className="px-3 pb-3">
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
               {attendants.slice(0, 12).map(a => {
-                const AIcon = getAgentIcon(a.icon);
+                const isCustom = isCustomIcon(a.icon);
+                const AIcon = isCustom ? null : getAgentIcon(a.icon);
                 return (
                   <div key={a.id} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/[0.01] border border-white/[0.03] hover:border-white/[0.07] hover:bg-white/[0.02] transition-all cursor-pointer" onClick={() => nav(`/agents/detail?id=${a.id}`)}>
                     <div className="relative">
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${pick(a.name)}`}>
-                        <AIcon className="h-3.5 w-3.5 text-white" />
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center overflow-hidden ${pick(a.name)}`}>
+                        {isCustom ? (
+                          <img src={getCustomIconUrl(a.icon!)} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          AIcon && <AIcon className="h-3.5 w-3.5 text-white" />
+                        )}
                       </div>
                       <span className={`absolute -right-0.5 -top-0.5 h-[7px] w-[7px] rounded-full border-[1.5px] border-[#161822] ${a.status === "online" ? "bg-emerald-400" : "bg-white/15"}`} />
                     </div>

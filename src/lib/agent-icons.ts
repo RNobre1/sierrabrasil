@@ -100,11 +100,27 @@ function kebabToPascal(str: string): string {
 }
 
 /**
+ * Check if the icon id represents a custom uploaded image.
+ */
+export function isCustomIcon(iconId: string | null | undefined): boolean {
+  return !!iconId && iconId.startsWith("custom:");
+}
+
+/**
+ * Extract the data URI from a custom icon id.
+ */
+export function getCustomIconUrl(iconId: string): string {
+  return iconId.replace("custom:", "");
+}
+
+/**
  * Get the lucide-react icon component for a given icon id.
  * Falls back to Bot if the icon is not found.
+ * Returns null for custom icons (the component should render <img> instead).
  */
-export function getAgentIcon(iconId: string | null | undefined): LucideIcon {
+export function getAgentIcon(iconId: string | null | undefined): LucideIcon | null {
   if (!iconId) return LucideIcons.Bot;
+  if (isCustomIcon(iconId)) return null;
   const name = kebabToPascal(iconId);
   const Icon = (LucideIcons as Record<string, unknown>)[name] as
     | LucideIcon

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bot, Plus, Play, Settings, Headphones, TrendingUp, Zap, ChevronRight, Wifi, WifiOff, Shield, Activity, Search, X, Lock, ArrowRight, Loader2 } from "lucide-react";
-import { getAgentIcon } from "@/lib/agent-icons";
+import { getAgentIcon, isCustomIcon, getCustomIconUrl } from "@/lib/agent-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -357,7 +357,8 @@ export default function Agents() {
         {filtered.map((a, i) => {
           const cls = CLASS_CFG[a.class || "support"] || CLASS_CFG.support;
           const model = a.model ? a.model.split("/").pop()?.replace("-preview", "") : "default";
-          const AgentIcon = getAgentIcon(a.icon);
+          const isCustom = isCustomIcon(a.icon);
+          const AgentIcon = isCustom ? null : getAgentIcon(a.icon);
 
           return (
             <div
@@ -374,8 +375,12 @@ export default function Agents() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className={`h-10 w-10 rounded-[10px] flex items-center justify-center border bg-gradient-to-br ${cls.accent}`}>
-                        <AgentIcon className="h-4.5 w-4.5 text-white/70" />
+                      <div className={`h-10 w-10 rounded-[10px] flex items-center justify-center border overflow-hidden bg-gradient-to-br ${cls.accent}`}>
+                        {isCustom ? (
+                          <img src={getCustomIconUrl(a.icon!)} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          AgentIcon && <AgentIcon className="h-4.5 w-4.5 text-white/70" />
+                        )}
                       </div>
                       <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#161822] ${a.status === "online" ? "bg-emerald-400 animate-pulse-dot" : "bg-white/20"}`} />
                     </div>
