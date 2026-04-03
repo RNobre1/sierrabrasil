@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -78,6 +80,7 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
   const [qrSecondsLeft, setQrSecondsLeft] = useState(0);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [attendants, setAttendants] = useState<Attendant[]>([]);
+  const [deletingInstance, setDeletingInstance] = useState<WhatsAppInstance | null>(null);
 
   const fetchInstances = useCallback(async () => {
     if (!user) return;
@@ -266,13 +269,14 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
   };
 
   const handleDelete = async (inst: WhatsAppInstance) => {
-    if (!confirm(`Remover "${inst.display_name || inst.instance_name}"? Esta ação não pode ser desfeita.`)) return;
     try {
       await callEvolutionApi("delete", { instanceName: inst.instance_name });
       toast.success("Número removido");
       fetchInstances();
     } catch (e: any) {
       toast.error(e.message);
+    } finally {
+      setDeletingInstance(null);
     }
   };
 
@@ -466,22 +470,23 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
                   </div>
 
                   {/* Agent binding */}
-                  <div className="flex items-center gap-2 text-[11px]">
+                  <div className="flex items-center gap-2 text-[11px]" data-tour="channels-agent-binding">
                     <span className="text-muted-foreground">Agente:</span>
                     {attendants.length <= 1 ? (
                       <span className="font-medium text-foreground">
                         {attendants.find(a => a.id === inst.attendant_id)?.name || attendants[0]?.name || "Nenhum"}
                       </span>
                     ) : (
-                      <select
-                        value={inst.attendant_id || ""}
-                        onChange={e => handleChangeAgent(inst, e.target.value)}
-                        className="bg-muted border-none rounded-md text-[11px] font-medium text-foreground h-6 px-1.5 cursor-pointer"
-                      >
-                        {attendants.map(a => (
-                          <option key={a.id} value={a.id}>{a.name}</option>
-                        ))}
-                      </select>
+                      <Select value={inst.attendant_id || ""} onValueChange={(val) => handleChangeAgent(inst, val)}>
+                        <SelectTrigger className="h-7 w-auto text-[11px] bg-muted border-none">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {attendants.map(a => (
+                            <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
                   </div>
 
@@ -536,7 +541,7 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
                       size="sm"
                       variant="ghost"
                       className="h-7 text-xs gap-1 text-destructive opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
-                      onClick={() => handleDelete(inst)}
+                      onClick={() => setDeletingInstance(inst)}
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -547,6 +552,26 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
           })}
         </div>
       )}
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deletingInstance} onOpenChange={(open) => !open && setDeletingInstance(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover numero</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover "{deletingInstance?.display_name || deletingInstance?.instance_name}"? Esta acao nao pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deletingInstance && handleDelete(deletingInstance)}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -321,7 +321,7 @@ export default function ConversationDetail() {
                       <TooltipProvider delayDuration={200}>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className={`inline-block h-2 w-2 rounded-full ${sentiment.color}`} />
+                            <span data-tour="conv-detail-sentiment" className={`inline-block h-2 w-2 rounded-full ${sentiment.color}`} />
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
                             {sentiment.label}

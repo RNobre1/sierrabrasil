@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bot, Plus, Play, Settings, Headphones, TrendingUp, Zap, ChevronRight, Wifi, WifiOff, Shield, Activity, Search, X, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { getAgentIcon } from "@/lib/agent-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,6 +20,7 @@ interface Attendant {
   model: string | null;
   persona: string | null;
   class: string | null;
+  icon: string | null;
 }
 
 const CLASS_CFG: Record<string, { short: string; dot: string; text: string; accent: string }> = {
@@ -71,7 +73,7 @@ export default function Agents() {
       if (!t) { setLoading(false); return; }
       setTenantPlan(t.plan);
       setTenantId(t.id);
-      const { data } = await supabase.from("attendants").select("id, name, status, channels, model, persona, class").eq("tenant_id", t.id);
+      const { data } = await supabase.from("attendants").select("id, name, status, channels, model, persona, class, icon").eq("tenant_id", t.id);
       setAgents((data as any) ?? []);
       setLoading(false);
     })();
@@ -124,7 +126,7 @@ export default function Agents() {
       // Refresh agents list
       const { data } = await supabase
         .from("attendants")
-        .select("id, name, status, channels, model, persona, class")
+        .select("id, name, status, channels, model, persona, class, icon")
         .eq("tenant_id", tenantId);
       setAgents((data as any) ?? []);
     } catch (e: any) {
@@ -355,6 +357,7 @@ export default function Agents() {
         {filtered.map((a, i) => {
           const cls = CLASS_CFG[a.class || "support"] || CLASS_CFG.support;
           const model = a.model ? a.model.split("/").pop()?.replace("-preview", "") : "default";
+          const AgentIcon = getAgentIcon(a.icon);
 
           return (
             <div
@@ -372,7 +375,7 @@ export default function Agents() {
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <div className={`h-10 w-10 rounded-[10px] flex items-center justify-center border bg-gradient-to-br ${cls.accent}`}>
-                        <Bot className="h-4.5 w-4.5 text-white/70" />
+                        <AgentIcon className="h-4.5 w-4.5 text-white/70" />
                       </div>
                       <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#161822] ${a.status === "online" ? "bg-emerald-400 animate-pulse-dot" : "bg-white/20"}`} />
                     </div>

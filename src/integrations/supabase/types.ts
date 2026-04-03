@@ -165,6 +165,7 @@ export type Database = {
           channels: string[] | null
           class: string | null
           created_at: string
+          icon: string | null
           id: string
           instructions: string | null
           model: string | null
@@ -183,6 +184,7 @@ export type Database = {
           channels?: string[] | null
           class?: string | null
           created_at?: string
+          icon?: string | null
           id?: string
           instructions?: string | null
           model?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           channels?: string[] | null
           class?: string | null
           created_at?: string
+          icon?: string | null
           id?: string
           instructions?: string | null
           model?: string | null

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, User, Loader2, Rocket, CheckCircle2, Bot, Play, ArrowLeft } from "lucide-react";
+import { Send, Sparkles, User, Loader2, Rocket, CheckCircle2, Bot, Play, ArrowLeft, Headphones, TrendingUp, ArrowRight, BookOpen } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import AgentClassSelector from "@/components/onboarding/AgentClassSelector";
 
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 type DisplayMsg = { role: "user" | "assistant"; content: string };
@@ -354,11 +353,79 @@ export default function NewAgentOnboarding() {
 
   // ========== CLASS SELECT PHASE ==========
   if (phase === "class-select") {
+    const agentClasses = [
+      {
+        id: "support" as const,
+        icon: <Headphones className="h-7 w-7" />,
+        title: "Atendimento / Suporte",
+        description: "FAQ, resolução de problemas, escalonamento, coleta de feedback e acompanhamento de chamados.",
+        skills: ["Responder dúvidas frequentes", "Resolver problemas técnicos", "Escalonar para humanos", "Coletar feedback"],
+      },
+      {
+        id: "sales" as const,
+        icon: <TrendingUp className="h-7 w-7" />,
+        title: "Vendas / Acompanhamento",
+        description: "Qualificação de leads, follow-up, envio de propostas, fechamento de vendas e pós-venda.",
+        skills: ["Qualificar leads", "Follow-up automático", "Enviar propostas", "Acompanhar pós-venda"],
+      },
+    ];
+
     return (
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
-        <OnboardingHeader title="Novo agente" subtitle="Escolha o tipo e configure em minutos" progress={15} onBack={() => navigate("/agents")} />
+        <OnboardingHeader title="Criar novo agente" subtitle="Configure um novo agente para seu negócio" progress={15} onBack={() => navigate("/agents")} />
         <div className="flex-1 flex items-center justify-center p-6">
-          <AgentClassSelector onSelect={handleClassSelect} />
+          <div className="flex flex-col items-center text-center space-y-8 px-4 py-6">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-3"
+            >
+              <h2 className="text-2xl font-display font-bold text-foreground leading-tight max-w-md mx-auto">
+                Criar novo agente
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                Configure um novo Agente de Inteligência Artificial para atender uma área diferente do seu negócio.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="space-y-2"
+            >
+              <p className="text-sm font-medium text-foreground">Escolha o perfil do agente:</p>
+              <p className="text-xs text-muted-foreground">Você pode personalizar tudo depois.</p>
+            </motion.div>
+
+            <div className="grid gap-4 w-full max-w-lg sm:grid-cols-2">
+              {agentClasses.map((cls, i) => (
+                <motion.button
+                  key={cls.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 + i * 0.12 }}
+                  onClick={() => handleClassSelect(cls.id)}
+                  className="group text-left rounded-2xl border border-border/40 bg-card/50 p-5 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.97] transition-all duration-200 cursor-pointer"
+                >
+                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/15 transition-colors">
+                    {cls.icon}
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground mb-1">{cls.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-3">{cls.description}</p>
+                  <ul className="space-y-1">
+                    {cls.skills.map(s => (
+                      <li key={s} className="text-[11px] text-muted-foreground/80 flex items-center gap-1.5">
+                        <ArrowRight className="h-2.5 w-2.5 text-primary/60" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </motion.button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -434,6 +501,14 @@ export default function NewAgentOnboarding() {
                 className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.97] transition-all duration-150 font-medium text-sm"
               >
                 <Bot className="h-4 w-4 mr-2" /> Configurar agente
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/agents/detail?id=${createdAgentId}&tab=knowledge`)}
+                className="w-full h-10 rounded-xl text-xs gap-1.5 active:scale-[0.97] transition-all duration-150"
+              >
+                <BookOpen className="h-3.5 w-3.5" /> Adicionar redes sociais e documentos
               </Button>
 
               <div className="flex gap-2">

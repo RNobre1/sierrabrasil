@@ -198,9 +198,22 @@ export default function Reports() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      {/* Coming soon overlay */}
+      <div className="absolute inset-0 z-20 flex items-start justify-center pt-32 pointer-events-none">
+        <div className="pointer-events-auto text-center space-y-3 bg-background/80 backdrop-blur-sm rounded-2xl border border-border/40 px-8 py-6 shadow-2xl shadow-black/20">
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
+            <BarChart3 className="h-6 w-6 text-primary" />
+          </div>
+          <h3 className="text-lg font-display font-semibold text-foreground">Relatórios em breve</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            Estamos preparando relatórios detalhados de vendas, atendimento e performance dos seus agentes.
+          </p>
+        </div>
+      </div>
+
       {/* Header + Agent Filter */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 blur-[2px] opacity-60 pointer-events-none">
         <div>
           <h1 className="text-xl sm:text-2xl font-display font-semibold">Relatórios</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">Métricas, análises e relatórios automáticos</p>

@@ -433,7 +433,9 @@ export default function Conversations() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-[13px] font-semibold text-white/90 truncate leading-snug">{c.contact_name}</p>
-                    <SentimentBar score={contactSentimentMap.get(contactKey(c)) ?? null} />
+                    <span data-tour="conv-sentiment">
+                      <SentimentBar score={contactSentimentMap.get(contactKey(c)) ?? null} />
+                    </span>
                   </div>
                   {c.last_message ? <p className="text-[11px] text-white/25 truncate mt-[1px] max-w-md leading-snug">{c.last_message}</p> : <p className="text-[10px] text-white/15 italic mt-[1px]">Sem mensagens</p>}
                 </div>

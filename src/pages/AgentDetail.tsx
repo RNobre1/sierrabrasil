@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Bot, Power, PowerOff, Settings, Play, Zap, BookOpen, Brain, Sparkles, Headphones, TrendingUp } from "lucide-react";
+import { ArrowLeft, Power, PowerOff, Settings, Play, Zap, BookOpen, Brain, Sparkles, Headphones, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import AgentSkillsTab from "@/components/agents/AgentSkillsTab";
 import AgentKnowledgeTab from "@/components/agents/AgentKnowledgeTab";
 import AgentMemoryTab from "@/components/agents/AgentMemoryTab";
 import AgentConfigTab from "@/components/agents/AgentConfigTab";
+import AgentIconPicker from "@/components/agents/AgentIconPicker";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -67,6 +68,12 @@ export default function AgentDetail() {
     setAgent({ ...agent, status: newStatus });
   };
 
+  const handleIconChange = async (iconId: string) => {
+    if (!agent) return;
+    await supabase.from("attendants").update({ icon: iconId }).eq("id", agent.id);
+    setAgent({ ...agent, icon: iconId });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -112,9 +119,11 @@ export default function AgentDetail() {
           </Button>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
-                <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-              </div>
+              <AgentIconPicker
+                value={agent.icon || "bot"}
+                onChange={handleIconChange}
+                size="lg"
+              />
               <span className={`absolute -right-0.5 -top-0.5 h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full border-2 border-card ${agent.status === "online" ? "bg-meteora-green animate-pulse-dot" : "bg-muted-foreground/50"}`} />
               <span className={`absolute -left-0.5 -bottom-0.5 h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full border-2 border-card flex items-center justify-center ${isSupport ? "bg-blue-500" : "bg-emerald-500"}`}>
                 {isSupport ? <Headphones className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" /> : <TrendingUp className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" />}

@@ -5,6 +5,7 @@ import {
   ArrowUpRight, ArrowDownRight, Percent,
   Users, Phone, Mail
 } from "lucide-react";
+import { getAgentIcon } from "@/lib/agent-icons";
 import TrialTimer from "@/components/TrialTimer";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +20,7 @@ import GuidedTour from "@/components/GuidedTour";
 import WhatsAppConnectBanner from "@/components/WhatsAppConnectBanner";
 
 /* ═══ Types ═══ */
-interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class?: string | null; active_skills?: string[] | null; }
+interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class?: string | null; active_skills?: string[] | null; icon?: string | null; }
 interface Conversation { id: string; contact_name: string; status: string; started_at: string; channel: string; escalation_count?: number; }
 interface Lead { id: string; contact_name: string | null; contact_email: string | null; contact_phone: string | null; source: string; created_at: string; }
 
@@ -87,7 +88,7 @@ export default function Dashboard() {
       setTenantCreatedAt(t.created_at);
       setTenantPlan(t.plan || "starter");
       const [att, conv, allC, msg] = await Promise.all([
-        supabase.from("attendants").select("id, name, status, channels, model, class, active_skills").eq("tenant_id", t.id),
+        supabase.from("attendants").select("id, name, status, channels, model, class, active_skills, icon").eq("tenant_id", t.id),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", t.id).order("started_at", { ascending: false }).limit(10),
         supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", t.id),
         supabase.from("messages").select("id", { count: "exact", head: true }),
@@ -245,7 +246,80 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* ═══ ROW 2: Hero Chart + Status Donut ═══ */}
+      {/* ═══ ROW 2: Agents + Recent Conversations ═══ */}
+      <div className="grid gap-2.5 lg:grid-cols-5">
+        {/* Agents compact grid — 3 cols */}
+        <div className="cosmos-card p-0 lg:col-span-3" data-tour="agent-card">
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <div className="flex items-center gap-2">
+              <Bot className="h-3 w-3 text-indigo-400" />
+              <span className="text-[11px] font-display font-semibold text-white/60">Agentes</span>
+              <span className="text-[9px] font-mono text-emerald-400 ml-1">{onlineAg} online</span>
+            </div>
+            <button data-tour="test-button" onClick={() => nav("/agents")} className="text-[8px] font-medium text-white/15 hover:text-white/30 transition-colors flex items-center gap-0.5">
+              Ver todos <ArrowRight className="h-2.5 w-2.5" />
+            </button>
+          </div>
+          <div className="px-3 pb-3">
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+              {attendants.slice(0, 12).map(a => {
+                const AIcon = getAgentIcon(a.icon);
+                return (
+                  <div key={a.id} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/[0.01] border border-white/[0.03] hover:border-white/[0.07] hover:bg-white/[0.02] transition-all cursor-pointer" onClick={() => nav(`/agents/detail?id=${a.id}`)}>
+                    <div className="relative">
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${pick(a.name)}`}>
+                        <AIcon className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <span className={`absolute -right-0.5 -top-0.5 h-[7px] w-[7px] rounded-full border-[1.5px] border-[#161822] ${a.status === "online" ? "bg-emerald-400" : "bg-white/15"}`} />
+                    </div>
+                    <span className="text-[9px] font-medium text-white/50 truncate w-full text-center px-0.5">{a.name}</span>
+                  </div>
+                );
+              })}
+              {attendants.length > 12 && (
+                <div className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-lg border border-dashed border-white/[0.05] hover:border-white/[0.08] cursor-pointer" onClick={() => nav("/agents")}>
+                  <span className="text-[12px] font-display text-white/20">+{attendants.length - 12}</span>
+                  <span className="text-[7px] text-white/10">mais</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Conversations — 2 cols */}
+        <div data-tour="recent-convs" className="cosmos-card p-0 lg:col-span-2">
+          <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-3 w-3 text-cyan-400" />
+              <span className="text-[12px] font-display font-semibold text-white/70">Últimas Conversas</span>
+              <span className="text-[9px] font-mono text-white/15">{total} total</span>
+            </div>
+            <button onClick={() => nav("/conversations")} className="text-[9px] font-medium text-white/15 hover:text-white/30 transition-colors flex items-center gap-0.5">
+              Ver todas <ArrowRight className="h-2.5 w-2.5" />
+            </button>
+          </div>
+          <div className="divide-y divide-white/[0.02]">
+            {dedupedRecent.map(c => {
+              const chColor: Record<string, string> = { whatsapp: "text-green-400/60 border-green-500/15", instagram: "text-pink-400/60 border-pink-500/15", web: "text-indigo-400/60 border-indigo-500/15" };
+              return (
+                <div key={c.id} className="group flex items-center gap-2.5 px-4 py-2 cursor-pointer hover:bg-white/[0.01] transition-all" onClick={() => nav(`/conversations/${c.id}`)}>
+                  <div className={`h-7 w-7 shrink-0 rounded-lg flex items-center justify-center text-white font-display font-bold text-[8px] ${pick(c.contact_name)}`}>{ini(c.contact_name)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-white/75 truncate">{c.contact_name}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className={`inline-flex items-center px-1 py-[0.5px] rounded text-[7px] font-bold uppercase tracking-[.04em] border bg-white/[0.015] ${chColor[c.channel] ?? chColor.web}`}>{c.channel}</span>
+                      <StBadge st={c.status} />
+                    </div>
+                  </div>
+                  <span className="text-[8px] text-white/12 font-mono tabular-nums shrink-0">{ago(c.started_at)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ ROW 3: Hero Chart + Status Donut ═══ */}
       <div className="grid gap-2.5 lg:grid-cols-5">
         {/* Hero chart — 3 cols */}
         <div data-tour="hero-chart" className="cosmos-card p-4 lg:col-span-3">
@@ -336,73 +410,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ═══ ROW 3: Agents + Recent Conversations ═══ */}
-      <div className="grid gap-2.5 lg:grid-cols-5">
-        {/* Agents compact grid — 3 cols */}
-        <div className="cosmos-card p-0 lg:col-span-3" data-tour="agent-card">
-          <div className="flex items-center justify-between px-4 pt-3 pb-2">
-            <div className="flex items-center gap-2">
-              <Bot className="h-3 w-3 text-indigo-400" />
-              <span className="text-[11px] font-display font-semibold text-white/60">Agentes</span>
-              <span className="text-[9px] font-mono text-emerald-400 ml-1">{onlineAg} online</span>
-            </div>
-            <button data-tour="test-button" onClick={() => nav("/agents")} className="text-[8px] font-medium text-white/15 hover:text-white/30 transition-colors flex items-center gap-0.5">
-              Ver todos <ArrowRight className="h-2.5 w-2.5" />
-            </button>
-          </div>
-          <div className="px-3 pb-3">
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
-              {attendants.slice(0, 12).map(a => (
-                <div key={a.id} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/[0.01] border border-white/[0.03] hover:border-white/[0.07] hover:bg-white/[0.02] transition-all cursor-pointer" onClick={() => nav(`/agents/detail?id=${a.id}`)}>
-                  <div className="relative">
-                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-white font-display font-semibold text-[9px] ${pick(a.name)}`}>{ini(a.name)}</div>
-                    <span className={`absolute -right-0.5 -top-0.5 h-[7px] w-[7px] rounded-full border-[1.5px] border-[#161822] ${a.status === "online" ? "bg-emerald-400" : "bg-white/15"}`} />
-                  </div>
-                  <span className="text-[9px] font-medium text-white/50 truncate w-full text-center px-0.5">{a.name}</span>
-                </div>
-              ))}
-              {attendants.length > 12 && (
-                <div className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-lg border border-dashed border-white/[0.05] hover:border-white/[0.08] cursor-pointer" onClick={() => nav("/agents")}>
-                  <span className="text-[12px] font-display text-white/20">+{attendants.length - 12}</span>
-                  <span className="text-[7px] text-white/10">mais</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Conversations — 2 cols */}
-        <div data-tour="recent-convs" className="cosmos-card p-0 lg:col-span-2">
-          <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-3 w-3 text-cyan-400" />
-              <span className="text-[12px] font-display font-semibold text-white/70">Últimas Conversas</span>
-              <span className="text-[9px] font-mono text-white/15">{total} total</span>
-            </div>
-            <button onClick={() => nav("/conversations")} className="text-[9px] font-medium text-white/15 hover:text-white/30 transition-colors flex items-center gap-0.5">
-              Ver todas <ArrowRight className="h-2.5 w-2.5" />
-            </button>
-          </div>
-          <div className="divide-y divide-white/[0.02]">
-            {dedupedRecent.map(c => {
-              const chColor: Record<string, string> = { whatsapp: "text-green-400/60 border-green-500/15", instagram: "text-pink-400/60 border-pink-500/15", web: "text-indigo-400/60 border-indigo-500/15" };
-              return (
-                <div key={c.id} className="group flex items-center gap-2.5 px-4 py-2 cursor-pointer hover:bg-white/[0.01] transition-all" onClick={() => nav(`/conversations/${c.id}`)}>
-                  <div className={`h-7 w-7 shrink-0 rounded-lg flex items-center justify-center text-white font-display font-bold text-[8px] ${pick(c.contact_name)}`}>{ini(c.contact_name)}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-white/75 truncate">{c.contact_name}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className={`inline-flex items-center px-1 py-[0.5px] rounded text-[7px] font-bold uppercase tracking-[.04em] border bg-white/[0.015] ${chColor[c.channel] ?? chColor.web}`}>{c.channel}</span>
-                      <StBadge st={c.status} />
-                    </div>
-                  </div>
-                  <span className="text-[8px] text-white/12 font-mono tabular-nums shrink-0">{ago(c.started_at)}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
 
       {/* ═══ ROW 4: Leads (only if lead-capture skill active) ═══ */}
       {hasLeadCapture && (

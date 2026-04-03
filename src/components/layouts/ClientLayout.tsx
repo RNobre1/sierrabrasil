@@ -23,6 +23,7 @@ interface NavItem {
   label: string;
   expandKey?: string;
   subItems?: SubItem[];
+  comingSoon?: boolean;
 }
 
 interface NavSection {
@@ -67,6 +68,7 @@ const navSections: NavSection[] = [
         icon: BarChart3,
         label: "Relatórios",
         expandKey: "reports",
+        comingSoon: true,
         subItems: [
           { to: "/reports", label: "Vendas", comingSoon: true, disabled: true },
           { to: "/reports", label: "Atendimento", comingSoon: true, disabled: true },
@@ -78,7 +80,7 @@ const navSections: NavSection[] = [
   {
     label: "Configurações",
     items: [
-      { to: "/integrations", icon: Puzzle, label: "Integrações" },
+      { to: "/integrations", icon: Puzzle, label: "Integrações", comingSoon: true },
     ],
   },
 ];
@@ -147,6 +149,9 @@ export default function ClientLayout() {
                         >
                           <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.7} />
                           <span className="truncate">{item.label}</span>
+                          {item.comingSoon && (
+                            <span className="text-[8px] font-medium bg-white/[0.06] text-white/30 px-1.5 py-0.5 rounded-full ml-auto">Em breve</span>
+                          )}
                         </NavLink>
                       );
                     }
@@ -167,6 +172,9 @@ export default function ClientLayout() {
                           >
                             {item.label}
                           </span>
+                          {item.comingSoon && (
+                            <span className="text-[8px] font-medium bg-white/[0.06] text-white/30 px-1.5 py-0.5 rounded-full">Em breve</span>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

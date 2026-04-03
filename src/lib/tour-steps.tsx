@@ -36,6 +36,12 @@ export const CONVERSATIONS_STEPS: TourStep[] = [
     selector: "[data-tour='conversations-search']",
   },
   {
+    title: "Sentimento do contato",
+    description: "A barra colorida mostra o sentimento médio do contato nas conversas. Verde = positivo, amarelo = neutro, vermelho = negativo. É calculada automaticamente pela IA.",
+    icon: <MessageSquare className="h-5 w-5" />,
+    selector: "[data-tour='conv-sentiment']",
+  },
+  {
     title: "Detalhes da conversa",
     description: "Clique em qualquer conversa pra ver o historico completo, status e opção de assumir o atendimento.",
     icon: <MessageSquare className="h-5 w-5" />,
@@ -57,6 +63,12 @@ export const CONVERSATION_DETAIL_STEPS: TourStep[] = [
     description: "Use este botao pra alternar entre IA e atendimento humano. Quando voce assume, a IA para de responder e voce pode digitar diretamente.",
     icon: <Shield className="h-5 w-5" />,
     selector: "[data-tour='conv-detail-takeover']",
+  },
+  {
+    title: "Análise de sentimento",
+    description: "Os pontos coloridos ao lado das mensagens do cliente indicam o sentimento detectado pela IA. Verde = positivo, amarelo = neutro, vermelho = negativo, rosa = frustrado. Passe o mouse para ver o detalhe.",
+    icon: <MessageSquare className="h-5 w-5" />,
+    selector: "[data-tour='conv-detail-sentiment']",
   },
   {
     title: "Historico de mensagens",
@@ -143,6 +155,12 @@ export const CHANNELS_STEPS: TourStep[] = [
     description: "Conecte seu WhatsApp via QR Code. Seu agente comeca a atender na hora, respondendo automaticamente todas as mensagens.",
     icon: <Phone className="h-5 w-5" />,
     selector: "[data-tour='channels-whatsapp']",
+  },
+  {
+    title: "Vinculo agente-numero",
+    description: "Cada numero WhatsApp e vinculado a um agente. Voce pode trocar qual agente usa este numero a qualquer momento.",
+    icon: <Bot className="h-5 w-5" />,
+    selector: "[data-tour='channels-agent-binding']",
   },
 ];
 
