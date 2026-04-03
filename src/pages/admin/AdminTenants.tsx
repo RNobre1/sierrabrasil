@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
-import { Search, Users, Eye, Filter, Download, ArrowUpDown, X, UserCheck, UserX, DollarSign, LogIn } from "lucide-react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { Search, Users, Eye, Filter, Download, ArrowUpDown, X, UserCheck, UserX, DollarSign, LogIn, Loader2, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -53,42 +53,140 @@ export default function AdminTenants() {
   const [sortField, setSortField] = useState<"created_at" | "name" | "plan">("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  const enterTenant = async (tenant: Tenant) => {
-    if (!user) return;
+  // State for blocking approval mode
+  const [waitingApprovalTenant, setWaitingApprovalTenant] = useState<Tenant | null>(null);
+  const [enteringTenant, setEnteringTenant] = useState<string | null>(null);
+  const approvalPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Log the impersonation in audit_logs
-    await supabase.from("audit_logs").insert({
-      admin_user_id: user.id,
-      tenant_id: tenant.id,
-      action: "impersonation_start",
-      details: { tenant_name: tenant.name },
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (approvalPollRef.current) clearInterval(approvalPollRef.current);
+    };
+  }, []);
+
+  const checkExistingApproval = useCallback(async (adminId: string, tenantId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from("notifications")
+      .select("id, action_result, action_data")
+      .eq("type", "admin_access_request")
+      .eq("action_result", "approved")
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(50);
+
+    if (!data || data.length === 0) return false;
+
+    // Filter client-side for action_data match (admin_user_id + tenant_id)
+    return data.some((n) => {
+      const ad = n.action_data as Record<string, string> | null;
+      return ad?.admin_user_id === adminId && ad?.tenant_id === tenantId;
     });
+  }, []);
 
-    // Fetch admin profile name for the notification message
+  const sendAccessRequest = useCallback(async (tenant: Tenant, adminId: string) => {
     const { data: adminProfile } = await supabase
       .from("profiles")
       .select("full_name")
-      .eq("user_id", user.id)
+      .eq("user_id", adminId)
       .single();
 
-    // Notify the tenant owner about the access (transparency)
     await supabase.from("notifications").insert({
       user_id: tenant.owner_id,
       type: "admin_access_request",
       title: "Acesso administrativo solicitado",
-      message: `A equipe de suporte da Meteora Digital (${adminProfile?.full_name || "Admin"}) está acessando sua conta para verificação/suporte.`,
+      message: `A equipe de suporte da Meteora Digital (${adminProfile?.full_name || "Admin"}) está solicitando acesso à sua conta para verificação/suporte. Aprove ou negue a solicitação.`,
       action_type: "approve_deny",
       action_data: {
-        admin_user_id: user.id,
+        admin_user_id: adminId,
         admin_name: adminProfile?.full_name || "Admin",
         tenant_id: tenant.id,
       },
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
+  }, []);
 
+  const startApprovalPolling = useCallback((tenant: Tenant, adminId: string) => {
+    if (approvalPollRef.current) clearInterval(approvalPollRef.current);
+
+    approvalPollRef.current = setInterval(async () => {
+      const approved = await checkExistingApproval(adminId, tenant.id);
+      if (approved) {
+        if (approvalPollRef.current) clearInterval(approvalPollRef.current);
+        approvalPollRef.current = null;
+        setWaitingApprovalTenant(null);
+
+        // Log and enter
+        await supabase.from("audit_logs").insert({
+          admin_user_id: adminId,
+          tenant_id: tenant.id,
+          action: "impersonation_start",
+          details: { tenant_name: tenant.name, approval: "client_approved" },
+        });
+
+        startImpersonation(tenant.id, adminId);
+        toast.success(`Acesso aprovado! Acessando dashboard de ${tenant.name}`);
+        navigate("/dashboard");
+      }
+    }, 10_000); // Poll every 10 seconds
+  }, [checkExistingApproval, navigate]);
+
+  const forceAccess = async (tenant: Tenant) => {
+    if (!user) return;
+
+    // Stop polling
+    if (approvalPollRef.current) clearInterval(approvalPollRef.current);
+    approvalPollRef.current = null;
+
+    // Log forced access prominently
+    await supabase.from("audit_logs").insert({
+      admin_user_id: user.id,
+      tenant_id: tenant.id,
+      action: "forced_access",
+      details: { tenant_name: tenant.name, reason: "emergency_bypass" },
+    });
+
+    setWaitingApprovalTenant(null);
     startImpersonation(tenant.id, user.id);
-    toast.success(`Acessando dashboard de ${tenant.name}`);
+    toast.warning(`Acesso forçado ao dashboard de ${tenant.name} — registrado em audit log`);
     navigate("/dashboard");
+  };
+
+  const enterTenant = async (tenant: Tenant) => {
+    if (!user) return;
+    setEnteringTenant(tenant.id);
+
+    try {
+      // Check for existing approval within the last 24h
+      const alreadyApproved = await checkExistingApproval(user.id, tenant.id);
+
+      if (alreadyApproved) {
+        // Already approved — enter directly
+        await supabase.from("audit_logs").insert({
+          admin_user_id: user.id,
+          tenant_id: tenant.id,
+          action: "impersonation_start",
+          details: { tenant_name: tenant.name, approval: "existing_approval" },
+        });
+
+        startImpersonation(tenant.id, user.id);
+        toast.success(`Acessando dashboard de ${tenant.name}`);
+        navigate("/dashboard");
+      } else {
+        // Need approval — send notification and show waiting dialog
+        await supabase.from("audit_logs").insert({
+          admin_user_id: user.id,
+          tenant_id: tenant.id,
+          action: "impersonation_request",
+          details: { tenant_name: tenant.name },
+        });
+
+        await sendAccessRequest(tenant, user.id);
+        setWaitingApprovalTenant(tenant);
+        startApprovalPolling(tenant, user.id);
+      }
+    } finally {
+      setEnteringTenant(null);
+    }
   };
 
   useEffect(() => {
@@ -281,8 +379,8 @@ export default function AdminTenants() {
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDetail(t)} title="Ver detalhes">
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10" onClick={() => enterTenant(t)} title="Acessar dashboard do cliente">
-                          <LogIn className="h-3.5 w-3.5" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10" onClick={() => enterTenant(t)} disabled={enteringTenant === t.id} title="Acessar dashboard do cliente">
+                          {enteringTenant === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogIn className="h-3.5 w-3.5" />}
                         </Button>
                       </div>
                     </td>
@@ -329,6 +427,59 @@ export default function AdminTenants() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Waiting for Approval Dialog */}
+      <Dialog
+        open={!!waitingApprovalTenant}
+        onOpenChange={(open) => {
+          if (!open) {
+            if (approvalPollRef.current) clearInterval(approvalPollRef.current);
+            approvalPollRef.current = null;
+            setWaitingApprovalTenant(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin text-amber-400" />
+              Aguardando aprovacao
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Uma solicitacao de acesso foi enviada para o cliente{" "}
+              <strong>{waitingApprovalTenant?.name}</strong>. Voce sera notificado quando ele aprovar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-4 mt-2">
+            <p className="text-[11px] text-amber-300 leading-relaxed">
+              O cliente recebera uma notificacao com botoes para permitir ou negar o acesso.
+              Esta janela verifica automaticamente a cada 10 segundos.
+            </p>
+          </div>
+          <DialogFooter className="flex gap-2 mt-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (approvalPollRef.current) clearInterval(approvalPollRef.current);
+                approvalPollRef.current = null;
+                setWaitingApprovalTenant(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => waitingApprovalTenant && forceAccess(waitingApprovalTenant)}
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
+              Forcar acesso (emergencia)
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

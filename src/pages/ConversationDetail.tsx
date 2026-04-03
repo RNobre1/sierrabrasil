@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck, Send, Mic, Archive, AlertOctagon } from "lucide-react";
+import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck, Send, Mic, Archive, AlertOctagon, Brain } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +55,7 @@ export default function ConversationDetail() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+  const [hasMemory, setHasMemory] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -89,6 +90,19 @@ export default function ConversationDetail() {
     const interval = setInterval(() => fetchConversation(false), 5000);
     return () => clearInterval(interval);
   }, [fetchConversation]);
+
+  // Check if agent has memory of this contact
+  useEffect(() => {
+    if (!conversation?.contact_phone) return;
+    const checkMemory = async () => {
+      const { count } = await supabase
+        .from("agent_memories")
+        .select("id", { count: "exact", head: true })
+        .eq("contact_phone", conversation.contact_phone!);
+      setHasMemory((count ?? 0) > 0);
+    };
+    checkMemory();
+  }, [conversation?.contact_phone]);
 
   const toggleHandover = async () => {
     if (!conversation || !id) return;
@@ -252,6 +266,11 @@ export default function ConversationDetail() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-display font-semibold">{conversation.contact_name}</h1>
             <Badge variant={st.variant}>{st.label}</Badge>
+            {hasMemory && (
+              <Badge variant="outline" className="gap-1 pr-2.5 text-[11px] font-medium border-cosmos-violet/30 text-cosmos-violet bg-cosmos-violet/10">
+                <Brain className="h-3 w-3" /> Agente lembra deste contato
+              </Badge>
+            )}
             {!isReadOnly && (
               <Badge variant="outline" className={`gap-1 pr-3 text-[11px] font-medium border ${isHuman ? "border-amber-500/30 text-amber-500 bg-amber-500/10 dark:text-amber-400 dark:bg-amber-500/10" : "border-emerald-500/30 text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 dark:bg-emerald-500/10"}`}>
                 {isHuman ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}

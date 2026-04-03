@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuditLog } from "@/hooks/use-audit";
 
 const CHANNELS = ["whatsapp"] as const;
 
@@ -38,6 +39,7 @@ export default function AgentConfigTab({ agent, onUpdate }: AgentConfigTabProps)
   const [channels, setChannels] = useState<string[]>(agent.channels ?? []);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { logEdit } = useAuditLog();
 
   const selectedMode = CONVERSATION_MODES.find(m => m.id === mode) ?? CONVERSATION_MODES[1];
 
@@ -59,6 +61,17 @@ export default function AgentConfigTab({ agent, onUpdate }: AgentConfigTabProps)
       setSaved(true);
       onUpdate({ name, persona, instructions, model: selectedMode.model, temperature: selectedMode.temperature, channels });
       setTimeout(() => setSaved(false), 3000);
+
+      // Log changes during impersonation
+      const fieldsChanged: string[] = [];
+      if (name !== agent.name) fieldsChanged.push("name");
+      if (persona !== (agent.persona ?? "")) fieldsChanged.push("persona");
+      if (instructions !== (agent.instructions ?? "")) fieldsChanged.push("instructions");
+      if (mode !== detectMode(agent.model, agent.temperature)) fieldsChanged.push("mode");
+      if (JSON.stringify([...channels].sort()) !== JSON.stringify([...(agent.channels ?? [])].sort())) fieldsChanged.push("channels");
+      if (fieldsChanged.length > 0) {
+        await logEdit("agent_config", { agent_id: agent.id, agent_name: name, fields_changed: fieldsChanged });
+      }
     }
   };
 

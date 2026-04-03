@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { Search, ArrowRight, Inbox, MessageSquare, Zap, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
+import { Search, ArrowRight, Inbox, MessageSquare, Zap, AlertTriangle, CheckCircle2, ChevronRight, Brain } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -123,11 +123,28 @@ function contactKey(c: ConversationRow) {
   return c.contact_phone?.trim() || c.contact_name;
 }
 
+function MemoryIndicator({ phone, memoryPhones }: { phone: string | null; memoryPhones: Set<string> }) {
+  if (!phone || !memoryPhones.has(phone)) return null;
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Brain className="h-3 w-3 text-cosmos-violet/60 shrink-0" />
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-[11px]">
+          O agente lembra deste contato
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export default function Conversations() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<ConversationRow[]>([]);
   const [sentimentMap, setSentimentMap] = useState<Map<string, number | null>>(new Map());
+  const [memoryPhones, setMemoryPhones] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const nav = useNavigate();
@@ -194,7 +211,27 @@ export default function Conversations() {
     }
     setLoading(false);
     isInitialLoad.current = false;
-  }, [user, impersonatedTenant]);
+    // Fetch memory data after tenant is cached
+    fetchMemoryPhones();
+  }, [user, impersonatedTenant, fetchMemoryPhones]);
+
+  // Fetch memory phones: which contact_phones have agent_memories
+  const fetchMemoryPhones = useCallback(async () => {
+    if (!tenantIdRef.current) return;
+    const { data: attendants } = await supabase
+      .from("attendants")
+      .select("id")
+      .eq("tenant_id", tenantIdRef.current);
+    if (!attendants || attendants.length === 0) return;
+    const attendantIds = attendants.map(a => a.id);
+    const { data: mems } = await supabase
+      .from("agent_memories")
+      .select("contact_phone")
+      .in("attendant_id", attendantIds);
+    if (mems) {
+      setMemoryPhones(new Set(mems.map(m => m.contact_phone)));
+    }
+  }, []);
 
   // Reset cached tenant when impersonation changes
   useEffect(() => {
@@ -403,6 +440,7 @@ export default function Conversations() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-[13px] font-semibold text-white/90 truncate leading-snug">{rep.contact_name}</p>
+                        <MemoryIndicator phone={rep.contact_phone} memoryPhones={memoryPhones} />
                         <SentimentBar score={contactSentimentMap.get(key) ?? null} />
                       </div>
                       <p className="text-[10px] text-white/25 mt-[1px]">
@@ -462,6 +500,7 @@ export default function Conversations() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-[13px] font-semibold text-white/90 truncate leading-snug">{c.contact_name}</p>
+                    <MemoryIndicator phone={c.contact_phone} memoryPhones={memoryPhones} />
                     <span data-tour="conv-sentiment">
                       <SentimentBar score={contactSentimentMap.get(contactKey(c)) ?? null} />
                     </span>

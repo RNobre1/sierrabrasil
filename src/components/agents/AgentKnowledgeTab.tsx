@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuditLog } from "@/hooks/use-audit";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -125,6 +126,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan, onRefresh }
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "processing" | "done" | "error">("idle");
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { logEdit } = useAuditLog();
 
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.starter;
 
@@ -206,6 +208,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan, onRefresh }
       setUploadProgress(100);
       setUploadStatus("done");
       toast({ title: "Documento enviado!", description: `${file.name} processado em ${chunks.length} partes` });
+      await logEdit("knowledge_upload", { agent_id: agentId, doc_name: file.name, chunks: chunks.length });
       fetchKB();
       onRefresh?.();
     } catch (err: any) {
@@ -228,6 +231,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan, onRefresh }
       .eq("attendant_id", agentId)
       .eq("source_name", sourceName);
     toast({ title: "Documento removido" });
+    await logEdit("knowledge_delete", { agent_id: agentId, doc_name: sourceName });
     fetchKB();
     onRefresh?.();
   };

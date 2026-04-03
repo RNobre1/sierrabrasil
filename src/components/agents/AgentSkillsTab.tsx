@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuditLog } from "@/hooks/use-audit";
 import AgentFaqManager from "./AgentFaqManager";
 import AgentLeadsPanel from "./AgentLeadsPanel";
 
@@ -61,6 +62,7 @@ export default function AgentSkillsTab({ agentId, agentClass, plan, tenantId }: 
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const { logEdit } = useAuditLog();
 
   // Load saved skills from DB
   useEffect(() => {
@@ -91,12 +93,14 @@ export default function AgentSkillsTab({ agentId, agentClass, plan, tenantId }: 
 
   const saveSkills = async () => {
     setSaving(true);
+    const skillsArray = Array.from(enabledSkills);
     const { error } = await supabase.from("attendants").update({
-      active_skills: Array.from(enabledSkills),
+      active_skills: skillsArray,
     } as any).eq("id", agentId);
     setSaving(false);
     if (!error) {
       toast.success("Skills salvas com sucesso");
+      await logEdit("agent_skills", { agent_id: agentId, enabled_skills: skillsArray });
     } else {
       toast.error("Erro ao salvar skills");
     }

@@ -232,20 +232,30 @@ export default function NotificationBell() {
       )
     );
 
+    // Log both approval and denial in audit_logs
+    const notification = notifications.find((n) => n.id === notificationId);
+    const actionData = notification?.action_data as Record<string, string> | null;
+
     if (result === "approved") {
       toast.success("Acesso administrativo permitido");
+
+      if (actionData?.tenant_id && actionData?.admin_user_id) {
+        await supabase.from("audit_logs").insert({
+          admin_user_id: actionData.admin_user_id,
+          tenant_id: actionData.tenant_id,
+          action: "admin_access_approved",
+          details: { approved_at: now, approved_by: user?.id },
+        });
+      }
     } else {
       toast.info("Acesso administrativo negado");
 
-      // Log denial in audit_logs if we have the action_data
-      const notification = notifications.find((n) => n.id === notificationId);
-      const actionData = notification?.action_data as Record<string, string> | null;
       if (actionData?.tenant_id && actionData?.admin_user_id) {
         await supabase.from("audit_logs").insert({
           admin_user_id: actionData.admin_user_id,
           tenant_id: actionData.tenant_id,
           action: "admin_access_denied",
-          details: { denied_at: now },
+          details: { denied_at: now, denied_by: user?.id },
         });
       }
     }
