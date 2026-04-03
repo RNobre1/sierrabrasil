@@ -114,9 +114,10 @@ interface Props {
   agentId: string;
   tenantId: string;
   plan: string;
+  onRefresh?: () => void;
 }
 
-export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
+export default function AgentKnowledgeTab({ agentId, tenantId, plan, onRefresh }: Props) {
   const [items, setItems] = useState<KBItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -206,6 +207,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
       setUploadStatus("done");
       toast({ title: "Documento enviado!", description: `${file.name} processado em ${chunks.length} partes` });
       fetchKB();
+      onRefresh?.();
     } catch (err: any) {
       setUploadStatus("error");
       toast({ title: "Erro no envio", description: err.message, variant: "destructive" });
@@ -227,6 +229,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
       .eq("source_name", sourceName);
     toast({ title: "Documento removido" });
     fetchKB();
+    onRefresh?.();
   };
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Search, ArrowRight, Inbox, MessageSquare, Zap, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -131,54 +131,72 @@ export default function Conversations() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const nav = useNavigate();
   const { user } = useAuth();
+  const isInitialLoad = useRef(true);
+  const tenantIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
+  const fetchConversations = useCallback(async () => {
     if (!user) return;
-    (async () => {
+
+    // Only show loading spinner on initial load
+    if (isInitialLoad.current) setLoading(true);
+
+    // Cache tenant ID after first fetch
+    if (!tenantIdRef.current) {
       const { data: t } = await supabase.from("tenants").select("id").eq("owner_id", user.id).single();
-      if (!t) { setLoading(false); return; }
-      const { data } = await supabase.from("conversations").select("id, contact_name, contact_phone, channel, status, started_at").eq("tenant_id", t.id).order("started_at", { ascending: false });
-      if (data) {
-        const conversationIds = data.map(c => c.id);
+      if (!t) { setLoading(false); isInitialLoad.current = false; return; }
+      tenantIdRef.current = t.id;
+    }
 
-        // Fetch last messages + sentiment data in parallel
-        const [enriched, sentimentResult] = await Promise.all([
-          Promise.all(data.map(async c => {
-            const { data: m } = await supabase.from("messages").select("content").eq("conversation_id", c.id).order("created_at", { ascending: false }).limit(1);
-            return { ...c, last_message: m?.[0]?.content ?? "" };
-          })),
-          // Single query: all attendant messages with sentiment metadata for visible conversations
-          supabase
-            .from("messages")
-            .select("conversation_id, metadata")
-            .in("conversation_id", conversationIds)
-            .eq("role", "attendant")
-            .not("metadata", "is", null),
-        ]);
+    const tid = tenantIdRef.current;
+    const { data } = await supabase.from("conversations").select("id, contact_name, contact_phone, channel, status, started_at").eq("tenant_id", tid).order("started_at", { ascending: false });
+    if (data) {
+      const conversationIds = data.map(c => c.id);
 
-        setRows(enriched);
+      // Fetch last messages + sentiment data in parallel
+      const [enriched, sentimentResult] = await Promise.all([
+        Promise.all(data.map(async c => {
+          const { data: m } = await supabase.from("messages").select("content").eq("conversation_id", c.id).order("created_at", { ascending: false }).limit(1);
+          return { ...c, last_message: m?.[0]?.content ?? "" };
+        })),
+        // Single query: all attendant messages with sentiment metadata for visible conversations
+        supabase
+          .from("messages")
+          .select("conversation_id, metadata")
+          .in("conversation_id", conversationIds)
+          .eq("role", "attendant")
+          .not("metadata", "is", null),
+      ]);
 
-        // Build sentiment score map per conversation
-        const sentimentsByConv = new Map<string, string[]>();
-        if (sentimentResult.data) {
-          for (const msg of sentimentResult.data) {
-            const s = (msg.metadata as any)?.sentiment;
-            if (s && typeof s === "string") {
-              const arr = sentimentsByConv.get(msg.conversation_id) ?? [];
-              arr.push(s.toLowerCase());
-              sentimentsByConv.set(msg.conversation_id, arr);
-            }
+      setRows(enriched);
+
+      // Build sentiment score map per conversation
+      const sentimentsByConv = new Map<string, string[]>();
+      if (sentimentResult.data) {
+        for (const msg of sentimentResult.data) {
+          const s = (msg.metadata as any)?.sentiment;
+          if (s && typeof s === "string") {
+            const arr = sentimentsByConv.get(msg.conversation_id) ?? [];
+            arr.push(s.toLowerCase());
+            sentimentsByConv.set(msg.conversation_id, arr);
           }
         }
-        const scoreMap = new Map<string, number | null>();
-        for (const id of conversationIds) {
-          scoreMap.set(id, computeSentimentScore(sentimentsByConv.get(id) ?? []));
-        }
-        setSentimentMap(scoreMap);
       }
-      setLoading(false);
-    })();
+      const scoreMap = new Map<string, number | null>();
+      for (const id of conversationIds) {
+        scoreMap.set(id, computeSentimentScore(sentimentsByConv.get(id) ?? []));
+      }
+      setSentimentMap(scoreMap);
+    }
+    setLoading(false);
+    isInitialLoad.current = false;
   }, [user]);
+
+  // Initial load + polling every 10s
+  useEffect(() => {
+    fetchConversations();
+    const interval = setInterval(fetchConversations, 10000);
+    return () => clearInterval(interval);
+  }, [fetchConversations]);
 
   // Reset expanded state when filter changes
   useEffect(() => { setExpanded(new Set()); }, [filter]);

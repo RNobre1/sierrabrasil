@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   MessageSquare, CheckCircle2, ArrowRight,
   Zap, BarChart3, Crown, Bot,
@@ -79,60 +79,78 @@ export default function Dashboard() {
   const [hasLeadCapture, setHasLeadCapture] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [totalLeads, setTotalLeads] = useState(0);
+  const isInitialLoad = useRef(true);
+  const tenantIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
+  const fetchDashboardData = useCallback(async () => {
     if (!user) return;
-    (async () => {
+
+    // Only show loading spinner on initial load
+    if (isInitialLoad.current) setLoading(true);
+
+    // Cache tenant info after first fetch
+    if (!tenantIdRef.current) {
       const { data: t } = await supabase.from("tenants").select("id, created_at, plan").eq("owner_id", user.id).single();
-      if (!t) { setLoading(false); return; }
+      if (!t) { setLoading(false); isInitialLoad.current = false; return; }
       setTenantCreatedAt(t.created_at);
       setTenantPlan(t.plan || "starter");
-      const [att, conv, allC, msg] = await Promise.all([
-        supabase.from("attendants").select("id, name, status, channels, model, class, active_skills, icon").eq("tenant_id", t.id),
-        supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", t.id).order("started_at", { ascending: false }).limit(10),
-        supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", t.id),
-        supabase.from("messages").select("id", { count: "exact", head: true }),
+      tenantIdRef.current = t.id;
+    }
+
+    const tid = tenantIdRef.current;
+    const [att, conv, allC, msg] = await Promise.all([
+      supabase.from("attendants").select("id, name, status, channels, model, class, active_skills, icon").eq("tenant_id", tid),
+      supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", tid).order("started_at", { ascending: false }).limit(10),
+      supabase.from("conversations").select("id, contact_name, status, started_at, channel, escalation_count").eq("tenant_id", tid),
+      supabase.from("messages").select("id", { count: "exact", head: true }),
+    ]);
+    const attendantList = att.data ?? [];
+    setAttendants(attendantList);
+    setRecentConvs(conv.data ?? []);
+    setAllConvs(allC.data ?? []);
+    setTotalMsgs(msg.count ?? 0);
+
+    // Check if any attendant has lead-capture skill active
+    const leadCaptureActive = attendantList.some(
+      a => a.active_skills?.includes("lead-capture")
+    );
+    setHasLeadCapture(leadCaptureActive);
+
+    if (leadCaptureActive) {
+      const [recentLeads, leadsCount] = await Promise.all([
+        supabase
+          .from("agent_leads")
+          .select("id, contact_name, contact_email, contact_phone, source, created_at")
+          .eq("tenant_id", tid)
+          .order("created_at", { ascending: false })
+          .limit(8),
+        supabase
+          .from("agent_leads")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", tid),
       ]);
-      const attendantList = att.data ?? [];
-      setAttendants(attendantList);
-      setRecentConvs(conv.data ?? []);
-      setAllConvs(allC.data ?? []);
-      setTotalMsgs(msg.count ?? 0);
+      setLeads(recentLeads.data ?? []);
+      setTotalLeads(leadsCount.count ?? 0);
+    }
 
-      // Check if any attendant has lead-capture skill active
-      const leadCaptureActive = attendantList.some(
-        a => a.active_skills?.includes("lead-capture")
-      );
-      setHasLeadCapture(leadCaptureActive);
+    const { data: wpInstances } = await supabase
+      .from("whatsapp_instances")
+      .select("id, status")
+      .eq("tenant_id", tid)
+      .eq("status", "connected")
+      .limit(1);
+    setHasWhatsApp((wpInstances ?? []).length > 0);
 
-      if (leadCaptureActive) {
-        const [recentLeads, leadsCount] = await Promise.all([
-          supabase
-            .from("agent_leads")
-            .select("id, contact_name, contact_email, contact_phone, source, created_at")
-            .eq("tenant_id", t.id)
-            .order("created_at", { ascending: false })
-            .limit(8),
-          supabase
-            .from("agent_leads")
-            .select("id", { count: "exact", head: true })
-            .eq("tenant_id", t.id),
-        ]);
-        setLeads(recentLeads.data ?? []);
-        setTotalLeads(leadsCount.count ?? 0);
-      }
-
-      const { data: wpInstances } = await supabase
-        .from("whatsapp_instances")
-        .select("id, status")
-        .eq("tenant_id", t.id)
-        .eq("status", "connected")
-        .limit(1);
-      setHasWhatsApp((wpInstances ?? []).length > 0);
-
-      setLoading(false);
-    })();
+    setLoading(false);
+    isInitialLoad.current = false;
   }, [user]);
+
+  // Initial load + polling every 30s
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchDashboardData]);
 
   /* metrics — deduplicate by contact where appropriate */
   const uniqueContacts = new Set(allConvs.map(c => c.contact_name));

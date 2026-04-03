@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Power, PowerOff, Settings, Play, Zap, BookOpen, Brain, Sparkles, Headphones, TrendingUp, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,19 @@ export default function AgentDetail() {
   const [agentCount, setAgentCount] = useState(0);
   const [deleting, setDeleting] = useState(false);
 
+  const loadKnowledgeBase = useCallback(async () => {
+    if (!agentId) return;
+    const { data: kbData } = await supabase
+      .from("knowledge_base")
+      .select("id, source_type, source_name, source_url, content, created_at")
+      .eq("attendant_id", agentId)
+      .eq("is_archived", false);
+    if (kbData) {
+      setKnowledgeBase(kbData);
+    }
+    setKbLoading(false);
+  }, [agentId]);
+
   useEffect(() => {
     if (!user || !agentId) return;
     const load = async () => {
@@ -67,21 +80,19 @@ export default function AgentDetail() {
         .eq("tenant_id", tenant.id);
       setAgentCount(count ?? 0);
 
-      const { data: kbData } = await supabase
-        .from("knowledge_base")
-        .select("id, source_type, source_name, source_url, content, created_at")
-        .eq("attendant_id", agentId)
-        .eq("is_archived", false);
-        
-      if (kbData) {
-        setKnowledgeBase(kbData);
-      }
-      setKbLoading(false);
-      
+      await loadKnowledgeBase();
+
       setLoading(false);
     };
     load();
-  }, [user, agentId]);
+  }, [user, agentId, loadKnowledgeBase]);
+
+  // Poll knowledge base every 30s as a fallback for stale data
+  useEffect(() => {
+    if (!agentId) return;
+    const interval = setInterval(loadKnowledgeBase, 30000);
+    return () => clearInterval(interval);
+  }, [agentId, loadKnowledgeBase]);
 
   const toggleStatus = async () => {
     if (!agent) return;
@@ -234,7 +245,7 @@ export default function AgentDetail() {
           <AgentSkillsTab agentId={agent.id} agentClass={agent.class || "support"} plan={tenantPlan} tenantId={tenantId} />
         </TabsContent>
         <TabsContent value="knowledge">
-          <AgentKnowledgeTab agentId={agent.id} tenantId={tenantId} plan={tenantPlan} />
+          <AgentKnowledgeTab agentId={agent.id} tenantId={tenantId} plan={tenantPlan} onRefresh={loadKnowledgeBase} />
         </TabsContent>
         <TabsContent value="memory">
             <AgentMemoryTab agentId={agent.id} plan={tenantPlan} />
