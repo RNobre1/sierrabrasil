@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useImpersonatedTenant } from "@/hooks/use-tenant";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +71,7 @@ const CONNECTING_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 
 export default function WhatsAppTab({ plan }: { plan: string }) {
   const { user } = useAuth();
+  const impersonatedTenant = useImpersonatedTenant();
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -94,15 +96,14 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
     }
   }, [user]);
 
-  // Fetch attendants for agent binding (scoped to user's tenant)
+  // Fetch attendants for agent binding (scoped to user's tenant or impersonated tenant)
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: tenant } = await supabase
-        .from("tenants")
-        .select("id")
-        .eq("owner_id", user.id)
-        .single();
+      const tenantQuery = impersonatedTenant
+        ? supabase.from("tenants").select("id").eq("id", impersonatedTenant).single()
+        : supabase.from("tenants").select("id").eq("owner_id", user.id).single();
+      const { data: tenant } = await tenantQuery;
       if (!tenant) return;
       const { data } = await supabase
         .from("attendants")
@@ -110,7 +111,7 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
         .eq("tenant_id", tenant.id);
       if (data) setAttendants(data);
     })();
-  }, [user]);
+  }, [user, impersonatedTenant]);
 
   useEffect(() => { fetchInstances(); }, [fetchInstances]);
 

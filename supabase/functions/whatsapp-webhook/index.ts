@@ -592,6 +592,20 @@ Use essas informacoes naturalmente. NAO mencione que esta "lendo memorias". Demo
           escalation_count: currentCount + 1,
         } as any).eq("id", conversationId);
         console.log(`Conversation ${conversationId} ESCALATED by AI (count: ${currentCount + 1})`);
+
+        // Trigger memory summarization on escalation too (agent collected info before escalating)
+        try {
+          fetch(`${SUPABASE_URL}/functions/v1/summarize-conversation`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            },
+            body: JSON.stringify({ conversation_id: conversationId }),
+          }).catch(e => console.warn("Memory summarization on escalate failed (non-fatal):", e));
+        } catch (e) {
+          console.warn("Memory summarization on escalate failed (non-fatal):", e);
+        }
       } else if (hasResolved) {
         await supabase.from("conversations").update({
           status: "resolved",

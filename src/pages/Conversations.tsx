@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useImpersonatedTenant } from "@/hooks/use-tenant";
 import GuidedTour from "@/components/GuidedTour";
 import { CONVERSATIONS_STEPS, CONVERSATIONS_TOUR_KEY } from "@/lib/tour-steps";
 
@@ -133,6 +134,7 @@ export default function Conversations() {
   const { user } = useAuth();
   const isInitialLoad = useRef(true);
   const tenantIdRef = useRef<string | null>(null);
+  const impersonatedTenant = useImpersonatedTenant();
 
   const fetchConversations = useCallback(async () => {
     if (!user) return;
@@ -142,7 +144,10 @@ export default function Conversations() {
 
     // Cache tenant ID after first fetch
     if (!tenantIdRef.current) {
-      const { data: t } = await supabase.from("tenants").select("id").eq("owner_id", user.id).single();
+      const query = impersonatedTenant
+        ? supabase.from("tenants").select("id").eq("id", impersonatedTenant).single()
+        : supabase.from("tenants").select("id").eq("owner_id", user.id).single();
+      const { data: t } = await query;
       if (!t) { setLoading(false); isInitialLoad.current = false; return; }
       tenantIdRef.current = t.id;
     }
@@ -189,7 +194,13 @@ export default function Conversations() {
     }
     setLoading(false);
     isInitialLoad.current = false;
-  }, [user]);
+  }, [user, impersonatedTenant]);
+
+  // Reset cached tenant when impersonation changes
+  useEffect(() => {
+    tenantIdRef.current = null;
+    isInitialLoad.current = true;
+  }, [impersonatedTenant]);
 
   // Initial load + polling every 10s
   useEffect(() => {

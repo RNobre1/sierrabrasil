@@ -1,20 +1,25 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useImpersonatedTenant } from "@/hooks/use-tenant";
 import WhatsAppTab from "@/components/channels/WhatsAppTab";
 import GuidedTour from "@/components/GuidedTour";
 import { CHANNELS_STEPS, CHANNELS_TOUR_KEY } from "@/lib/tour-steps";
 
 export default function Channels() {
   const { user } = useAuth();
+  const impersonatedTenant = useImpersonatedTenant();
   const [plan, setPlan] = useState("starter");
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("tenants").select("plan").eq("owner_id", user.id).single().then(({ data }) => {
+    const query = impersonatedTenant
+      ? supabase.from("tenants").select("plan").eq("id", impersonatedTenant).single()
+      : supabase.from("tenants").select("plan").eq("owner_id", user.id).single();
+    query.then(({ data }) => {
       if (data) setPlan(data.plan);
     });
-  }, [user]);
+  }, [user, impersonatedTenant]);
 
   return (
     <div className="space-y-6">

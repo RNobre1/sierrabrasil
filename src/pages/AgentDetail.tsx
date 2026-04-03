@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useImpersonatedTenant } from "@/hooks/use-tenant";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -39,6 +40,7 @@ const classLabels: Record<string, { label: string; color: string }> = {
 export default function AgentDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const impersonatedTenant = useImpersonatedTenant();
   const [searchParams] = useSearchParams();
   const agentId = searchParams.get("id");
   const [agent, setAgent] = useState<any>(null);
@@ -67,7 +69,10 @@ export default function AgentDetail() {
   useEffect(() => {
     if (!user || !agentId) return;
     const load = async () => {
-      const { data: tenant } = await supabase.from("tenants").select("id, plan").eq("owner_id", user.id).single();
+      const tenantQuery = impersonatedTenant
+        ? supabase.from("tenants").select("id, plan").eq("id", impersonatedTenant).single()
+        : supabase.from("tenants").select("id, plan").eq("owner_id", user.id).single();
+      const { data: tenant } = await tenantQuery;
       if (!tenant) { setLoading(false); return; }
       setTenantPlan(tenant.plan);
       setTenantId(tenant.id);
@@ -85,7 +90,7 @@ export default function AgentDetail() {
       setLoading(false);
     };
     load();
-  }, [user, agentId, loadKnowledgeBase]);
+  }, [user, agentId, loadKnowledgeBase, impersonatedTenant]);
 
   // Poll knowledge base every 30s as a fallback for stale data
   useEffect(() => {

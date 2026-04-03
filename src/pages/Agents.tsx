@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useImpersonatedTenant } from "@/hooks/use-tenant";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import GuidedTour from "@/components/GuidedTour";
@@ -52,6 +53,7 @@ function ChBadge({ ch }: { ch: string }) {
 export default function Agents() {
   const nav = useNavigate();
   const { user } = useAuth();
+  const impersonatedTenant = useImpersonatedTenant();
   const [agents, setAgents] = useState<Attendant[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenantPlan, setTenantPlan] = useState("starter");
@@ -69,7 +71,10 @@ export default function Agents() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: t } = await supabase.from("tenants").select("id, plan").eq("owner_id", user.id).single();
+      const query = impersonatedTenant
+        ? supabase.from("tenants").select("id, plan").eq("id", impersonatedTenant).single()
+        : supabase.from("tenants").select("id, plan").eq("owner_id", user.id).single();
+      const { data: t } = await query;
       if (!t) { setLoading(false); return; }
       setTenantPlan(t.plan);
       setTenantId(t.id);
@@ -77,7 +82,7 @@ export default function Agents() {
       setAgents((data as any) ?? []);
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, impersonatedTenant]);
 
   const maxAgents = tenantPlan === "starter" ? 1 : tenantPlan === "professional" ? 3 : tenantPlan === "enterprise" ? 100 : 10;
   const canCreate = agents.length < maxAgents;
