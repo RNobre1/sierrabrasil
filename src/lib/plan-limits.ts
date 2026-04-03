@@ -7,7 +7,7 @@ export interface PlanLimits {
   max_knowledge_docs: number;
   max_knowledge_mb: number;
   max_whatsapp_numbers: number;
-  features: Record<string, boolean>;
+  features: Record<string, unknown>;
 }
 
 // Fallback limits if DB query fails
@@ -21,7 +21,7 @@ export const FALLBACK_LIMITS: Record<string, PlanLimits> = {
     max_knowledge_docs: 10,
     max_knowledge_mb: 10,
     max_whatsapp_numbers: 1,
-    features: { memory: false },
+    features: { memory: false, channels: ["whatsapp"], reports: "semanal", support: "chat", skills_premium: false, skill_tiers: "base" },
   },
   professional: {
     id: "professional",
@@ -32,7 +32,7 @@ export const FALLBACK_LIMITS: Record<string, PlanLimits> = {
     max_knowledge_docs: 50,
     max_knowledge_mb: 100,
     max_whatsapp_numbers: 3,
-    features: { memory: true },
+    features: { memory: true, channels: ["whatsapp", "instagram"], reports: "diario", support: "prioritario", skills_premium: true, skill_tiers: "avancado" },
   },
   business: {
     id: "business",
@@ -43,7 +43,7 @@ export const FALLBACK_LIMITS: Record<string, PlanLimits> = {
     max_knowledge_docs: 200,
     max_knowledge_mb: 500,
     max_whatsapp_numbers: 10,
-    features: { memory: true },
+    features: { memory: true, channels: ["whatsapp", "instagram", "webchat"], reports: "tempo_real", support: "consultoria_mensal", skills_premium: true, skill_tiers: "premium", dashboard_realtime: true },
   },
   enterprise: {
     id: "enterprise",
@@ -54,7 +54,7 @@ export const FALLBACK_LIMITS: Record<string, PlanLimits> = {
     max_knowledge_docs: 999999,
     max_knowledge_mb: 2048,
     max_whatsapp_numbers: 100,
-    features: { memory: true, custom_support: true },
+    features: { memory: true, channels: ["whatsapp", "instagram", "webchat", "api"], reports: "tempo_real", support: "manager_dedicado", skills_premium: true, skill_tiers: "premium", dashboard_realtime: true, custom_support: true, sla_garantido: true, implementacao_personalizada: true },
   },
 };
 

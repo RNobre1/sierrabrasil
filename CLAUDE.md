@@ -328,14 +328,23 @@ agent_memories (
 - `system_config` — Config global (DONE)
 - `phone_verifications` — OTP WhatsApp (DONE)
 - `profiles.phone_verified` — Flag de verificacao (DONE)
+- `plans` — Planos centralizados (DONE): starter, professional, business, enterprise. Limites (max_agents, max_conversations, max_docs, max_mb, max_wp_numbers) + features JSONB (memory, channels, reports, support, skill_tiers, dashboard_realtime, etc.)
+- `contact_rules` — Whitelist/blacklist de contatos (DONE schema, integracão pendente)
 
-### Tabelas Planejadas (Fase Pagamento)
+### Tabelas Planejadas (Fase Pagamento — pos-MVP)
 
 - `subscriptions` — subscription_id, stripe_customer_id, plan, status, period
 - `addon_subscriptions` — tenant_id, skill_id, stripe_subscription_item_id
-- `plans` — Centralizar limites e precos (tirar hardcoded do frontend)
 - `audit_logs` — Registro de mudancas de plano/assinatura
-- `agent_memories` — Memoria persistente por contato (ultimo item MVP)
+- `agent_memories` — Memoria persistente por contato (proximo item MVP)
+
+### Tiers de Skills por Plano
+
+| Tier | Plano | Skills |
+|------|-------|--------|
+| Base | Essencial | auto-reply, faq, escalation, greeting |
+| Avancado | Profissional | + lead-capture, sentiment, follow-up |
+| Premium | Empresarial/Enterprise | + multi-language, memory (quando implementada) |
 
 ## Decisoes Tecnicas (ADRs)
 
