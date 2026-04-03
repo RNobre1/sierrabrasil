@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck, Send, Mic, Archive, AlertOctagon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -58,27 +58,37 @@ export default function ConversationDetail() {
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const prevMsgCount = useRef(0);
 
-  useEffect(() => {
+  const fetchConversation = useCallback(async (isInitial = false) => {
     if (!id) return;
-
-    const fetch = async () => {
-      const [convRes, msgsRes] = await Promise.all([
-        supabase.from("conversations").select("*").eq("id", id).single(),
-        supabase.from("messages").select("*").eq("conversation_id", id).order("created_at", { ascending: true }),
-      ]);
-      if (convRes.data) {
-        setConversation({
-          ...convRes.data,
-          human_takeover: (convRes.data as any).human_takeover ?? false,
-        });
-      }
-      setMessages(msgsRes.data ?? []);
-      setLoading(false);
-    };
-
-    fetch();
+    if (isInitial) setLoading(true);
+    const [convRes, msgsRes] = await Promise.all([
+      supabase.from("conversations").select("*").eq("id", id).single(),
+      supabase.from("messages").select("*").eq("conversation_id", id).order("created_at", { ascending: true }),
+    ]);
+    if (convRes.data) {
+      setConversation({
+        ...convRes.data,
+        human_takeover: (convRes.data as any).human_takeover ?? false,
+      });
+    }
+    const newMsgs = msgsRes.data ?? [];
+    setMessages(newMsgs);
+    // Auto-scroll only when new messages arrive
+    if (newMsgs.length > prevMsgCount.current) {
+      prevMsgCount.current = newMsgs.length;
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+    if (isInitial) setLoading(false);
   }, [id]);
+
+  // Initial load + polling every 5s for live conversation updates
+  useEffect(() => {
+    fetchConversation(true);
+    const interval = setInterval(() => fetchConversation(false), 5000);
+    return () => clearInterval(interval);
+  }, [fetchConversation]);
 
   const toggleHandover = async () => {
     if (!conversation || !id) return;
