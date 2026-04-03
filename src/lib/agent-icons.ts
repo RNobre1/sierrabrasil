@@ -1,5 +1,38 @@
-import * as LucideIcons from "lucide-react";
-import { type LucideIcon } from "lucide-react";
+import {
+  type LucideIcon,
+  Bot, Brain, Sparkles, Zap, MessageSquare,
+  ShoppingCart, Store, TrendingUp, Receipt, CreditCard, Package,
+  Headphones, LifeBuoy, Shield, HelpCircle,
+  Utensils, Coffee, Pizza, Cake,
+  Stethoscope, HeartPulse, Pill, Baby,
+  GraduationCap, BookOpen, Pencil,
+  Building2, Home, HardHat,
+  Wifi, Monitor, Smartphone, Globe,
+  Scissors, Sparkle, Flower2,
+  Dumbbell, Bike,
+  Scale, Landmark, Banknote,
+  Car, Wrench,
+  PawPrint,
+  Plane, MapPin,
+} from "lucide-react";
+
+/** Map of icon id → component. Avoids `import * as LucideIcons` which breaks production builds. */
+const ICON_MAP: Record<string, LucideIcon> = {
+  bot: Bot, brain: Brain, sparkles: Sparkles, zap: Zap, "message-square": MessageSquare,
+  "shopping-cart": ShoppingCart, store: Store, "trending-up": TrendingUp, receipt: Receipt, "credit-card": CreditCard, package: Package,
+  headphones: Headphones, "life-buoy": LifeBuoy, shield: Shield, "help-circle": HelpCircle,
+  utensils: Utensils, coffee: Coffee, pizza: Pizza, cake: Cake,
+  stethoscope: Stethoscope, "heart-pulse": HeartPulse, pill: Pill, baby: Baby,
+  "graduation-cap": GraduationCap, "book-open": BookOpen, pencil: Pencil,
+  "building-2": Building2, home: Home, "hard-hat": HardHat,
+  wifi: Wifi, monitor: Monitor, smartphone: Smartphone, globe: Globe,
+  scissors: Scissors, sparkle: Sparkle, "flower-2": Flower2,
+  dumbbell: Dumbbell, bike: Bike,
+  scale: Scale, landmark: Landmark, banknote: Banknote,
+  car: Car, wrench: Wrench,
+  "paw-print": PawPrint,
+  plane: Plane, "map-pin": MapPin,
+};
 
 export interface AgentIconDef {
   id: string;
@@ -88,16 +121,6 @@ export const AGENT_ICON_CATEGORIES = [
   ...new Set(AGENT_ICONS.map((i) => i.category)),
 ];
 
-/**
- * Convert kebab-case icon id to PascalCase component name.
- * e.g. "shopping-cart" -> "ShoppingCart"
- */
-function kebabToPascal(str: string): string {
-  return str
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join("");
-}
 
 /**
  * Check if the icon id represents a custom uploaded image.
@@ -119,13 +142,9 @@ export function getCustomIconUrl(iconId: string): string {
  * Returns null for custom icons (the component should render <img> instead).
  */
 export function getAgentIcon(iconId: string | null | undefined): LucideIcon | null {
-  if (!iconId) return LucideIcons.Bot;
+  if (!iconId) return Bot;
   if (isCustomIcon(iconId)) return null;
-  const name = kebabToPascal(iconId);
-  const Icon = (LucideIcons as Record<string, unknown>)[name] as
-    | LucideIcon
-    | undefined;
-  return Icon ?? LucideIcons.Bot;
+  return ICON_MAP[iconId] ?? Bot;
 }
 
 /**
