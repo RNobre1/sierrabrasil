@@ -153,6 +153,24 @@ export default function Conversations() {
   const tenantIdRef = useRef<string | null>(null);
   const impersonatedTenant = useImpersonatedTenant();
 
+  // Declared before fetchConversations because it's called inside it
+  const fetchMemoryPhones = useCallback(async () => {
+    if (!tenantIdRef.current) return;
+    const { data: attendants } = await supabase
+      .from("attendants")
+      .select("id")
+      .eq("tenant_id", tenantIdRef.current);
+    if (!attendants || attendants.length === 0) return;
+    const attendantIds = attendants.map(a => a.id);
+    const { data: mems } = await supabase
+      .from("agent_memories")
+      .select("contact_phone")
+      .in("attendant_id", attendantIds);
+    if (mems) {
+      setMemoryPhones(new Set(mems.map(m => m.contact_phone)));
+    }
+  }, []);
+
   const fetchConversations = useCallback(async () => {
     if (!user) return;
 
@@ -214,24 +232,6 @@ export default function Conversations() {
     // Fetch memory data after tenant is cached
     fetchMemoryPhones();
   }, [user, impersonatedTenant, fetchMemoryPhones]);
-
-  // Fetch memory phones: which contact_phones have agent_memories
-  const fetchMemoryPhones = useCallback(async () => {
-    if (!tenantIdRef.current) return;
-    const { data: attendants } = await supabase
-      .from("attendants")
-      .select("id")
-      .eq("tenant_id", tenantIdRef.current);
-    if (!attendants || attendants.length === 0) return;
-    const attendantIds = attendants.map(a => a.id);
-    const { data: mems } = await supabase
-      .from("agent_memories")
-      .select("contact_phone")
-      .in("attendant_id", attendantIds);
-    if (mems) {
-      setMemoryPhones(new Set(mems.map(m => m.contact_phone)));
-    }
-  }, []);
 
   // Reset cached tenant when impersonation changes
   useEffect(() => {

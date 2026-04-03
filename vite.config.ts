@@ -19,6 +19,6 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },
   build: {
-    minify: false,
+    // esbuild is default minifier — works now that hoisting bug is fixed
   },
 }));
