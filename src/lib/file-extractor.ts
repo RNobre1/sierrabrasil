@@ -9,13 +9,13 @@
  * - DOC   → unsupported (old binary format, ask user to convert)
  */
 
-import * as pdfjsLib from "pdfjs-dist";
-// Dynamic imports to avoid bundler issues with heavy libs
+// All heavy libs loaded via dynamic import to prevent production build crash
+// (import * causes "can't access lexical declaration before initialization" in minified builds)
+const importPdfjs = () => import("pdfjs-dist");
 const importMammoth = () => import("mammoth");
 const importXLSX = () => import("xlsx");
 
-// Configure PDF.js worker from CDN matching the installed version
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+let pdfjsConfigured = false;
 
 /** Result from extraction */
 export interface ExtractionResult {
@@ -35,6 +35,11 @@ function isPlainText(fileName: string): boolean {
 
 /** Extract text from a PDF file using pdfjs-dist */
 async function extractPdfText(file: File): Promise<ExtractionResult> {
+  const pdfjsLib = await importPdfjs();
+  if (!pdfjsConfigured) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+    pdfjsConfigured = true;
+  }
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
 
