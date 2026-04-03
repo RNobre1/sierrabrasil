@@ -183,30 +183,27 @@ serve(async (req) => {
         .single();
 
       if (instance.attendant_id) {
-        // Use the specific agent linked to this WhatsApp number
+        // Use the specific agent linked to this WhatsApp number — must be online
         attendantQuery = supabase
           .from("attendants")
           .select(`id, name, persona, instructions, model, temperature, active_skills,
             agent_templates ( prompt_template )`)
           .eq("id", instance.attendant_id)
+          .eq("status", "online")
           .single();
       } else {
-        // Fallback: first online agent for this tenant
-        attendantQuery = supabase
-          .from("attendants")
-          .select(`id, name, persona, instructions, model, temperature, active_skills,
-            agent_templates ( prompt_template )`)
-          .eq("tenant_id", instance.tenant_id)
-          .eq("status", "online")
-          .limit(1)
-          .single();
+        // No agent linked — don't respond
+        console.log(`Instance ${instanceName} has no linked agent, skipping`);
+        return new Response(JSON.stringify({ ok: true, skipped: "no_agent_linked" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
       const { data: attendant } = await attendantQuery;
 
       if (!attendant) {
-        console.log("No online attendant for tenant:", instance.tenant_id);
-        return new Response(JSON.stringify({ ok: true, skipped: "no online attendant" }), {
+        console.log("Agent linked to instance is offline or not found:", instance.attendant_id);
+        return new Response(JSON.stringify({ ok: true, skipped: "agent_offline" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

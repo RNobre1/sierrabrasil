@@ -245,17 +245,29 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
   };
 
   const handleChangeAgent = async (inst: WhatsAppInstance, attendantId: string) => {
+    // 1. Update instance binding
     const { error } = await supabase
       .from("whatsapp_instances")
       .update({ attendant_id: attendantId })
       .eq("id", inst.id);
     if (error) {
       toast.error("Erro ao vincular agente");
-    } else {
-      const agentName = attendants.find(a => a.id === attendantId)?.name || "Agente";
-      toast.success(`Número vinculado a ${agentName}`);
-      fetchInstances();
+      return;
     }
+
+    // 2. Archive active conversations from the OLD agent (so new messages go to new agent)
+    if (inst.attendant_id && inst.attendant_id !== attendantId) {
+      await supabase
+        .from("conversations")
+        .update({ status: "resolved", ended_at: new Date().toISOString() })
+        .eq("tenant_id", inst.tenant_id)
+        .eq("attendant_id", inst.attendant_id)
+        .eq("status", "active");
+    }
+
+    const agentName = attendants.find(a => a.id === attendantId)?.name || "Agente";
+    toast.success(`Número vinculado a ${agentName}. Conversas ativas do agente anterior foram encerradas.`);
+    fetchInstances();
   };
 
   const handleLogout = async (inst: WhatsAppInstance) => {
