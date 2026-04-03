@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, User, Loader2, Rocket, CheckCircle2, Bot, Play, ArrowLeft, Headphones, TrendingUp, ArrowRight, BookOpen, SkipForward } from "lucide-react";
+import { Send, Sparkles, User, Loader2, Rocket, CheckCircle2, Bot, Play, ArrowLeft, Headphones, TrendingUp, ArrowRight, BookOpen, SkipForward, Pencil } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,42 +18,44 @@ import { normalizeSocialUrl } from "@/lib/url-normalizer";
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 type DisplayMsg = { role: "user" | "assistant"; content: string };
 
-type Phase = "class-select" | "chat" | "saving" | "social-links" | "scraping" | "done";
+type Phase = "class-select" | "chat" | "overview" | "saving" | "social-links" | "scraping" | "done";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
 
 const NEW_AGENT_SYSTEM_PROMPT = `## QUEM VOCE E
 Voce e o assistente de criacao de agentes da plataforma O Agente (Meteora Digital).
-Seu papel: conduzir uma conversa RAPIDA (4-5 mensagens) pra configurar um novo agente virtual.
+Seu papel: conduzir uma conversa natural pra conhecer o negocio do usuario e configurar um agente virtual completo e detalhado.
 
 ## REGRAS
 1. Respostas CURTAS: 2-3 frases no maximo.
 2. UMA pergunta por mensagem. Nunca faca multiplas perguntas de uma vez.
-3. Seja direto e objetivo — o usuario ja conhece a plataforma.
+3. Seja direto mas curioso — extraia o maximo de informacao util.
 4. Use tom casual brasileiro: "pra", "ta", "ne", contracoes naturais.
 5. Emojis com moderacao (0-2 por mensagem).
 
 ## FLUXO (siga nesta ordem)
-1. Pergunte o NOME do agente (ex: "Qual vai ser o nome desse agente?")
-2. Pergunte SOBRE O QUE ele vai atender (negocio, produto, servico)
-3. Pergunte o TOM/PERSONALIDADE (formal, casual, amigavel, tecnico)
-4. Pergunte se tem INSTRUCOES ESPECIFICAS (horarios, politicas, regras, precos)
-5. Quando tiver tudo, gere o JSON de configuracao
+1. Pergunte o NOME do agente
+2. Pergunte SOBRE O NEGOCIO (o que faz, qual o produto/servico principal)
+3. Pergunte os DIFERENCIAIS (o que faz o negocio se destacar da concorrencia)
+4. Pergunte PRECOS ou como funciona a cobranca (se aplicavel — se nao tiver, pergunte como funciona o processo de venda/atendimento)
+5. Pergunte HORARIO DE FUNCIONAMENTO e ENDERECO/CONTATO
+6. Pergunte o TOM/PERSONALIDADE (formal, casual, amigavel, tecnico, insistente)
+7. Pergunte se tem REGRAS ESPECIFICAS (politicas, restricoes, processos, como lidar com objecoes)
+8. Quando tiver tudo, gere as instrucoes completas
 
 ## COMO FINALIZAR
-Quando tiver coletado nome + descricao do negocio + tom + instrucoes (ou o usuario disser que nao tem mais nada), responda com uma mensagem confirmando os dados e INCLUA no final (INVISIVEL pro usuario) o bloco:
+Quando tiver coletado informacoes suficientes (ou o usuario disser que nao tem mais nada), responda com uma mensagem resumindo o que entendeu e INCLUA no final (INVISIVEL pro usuario) o bloco:
 
 \`\`\`agent_config
 {
   "name": "Nome do agente",
-  "persona": "Descricao curta do tom/personalidade",
-  "instructions": "Instrucoes completas compiladas do que foi dito"
+  "persona": "Descricao do tom/personalidade em 1-2 frases",
+  "instructions": "Instrucoes COMPLETAS e DETALHADAS. Deve incluir: objetivo do agente, sobre o negocio, produtos/servicos com detalhes, precos (se informados), horarios, contato/endereco, diferenciais, regras especificas, como conduzir a conversa, como lidar com objecoes. MINIMO 500 caracteres. Compile TUDO que o usuario falou em instrucoes acionaveis como se fosse um manual completo pro agente."
 }
 \`\`\`
 
-IMPORTANTE: O bloco agent_config deve vir DEPOIS do texto visivel. O usuario NAO deve ver o JSON.
-Se o usuario pedir pra finalizar antes de voce ter todas as infos, tente preencher com o que tem.`;
+IMPORTANTE: As instrucoes devem ser RICAS e DETALHADAS como um manual de atendimento. NAO gere instrucoes genericas de 1 linha. O bloco agent_config deve vir DEPOIS do texto visivel.`;
 
 // Recommend model based on agent class
 function recommendModel(agentClass: string): string {
@@ -71,6 +76,10 @@ export default function NewAgentOnboarding() {
   const [saving, setSaving] = useState(false);
   const [createdAgentId, setCreatedAgentId] = useState<string | null>(null);
   const [createdAgentName, setCreatedAgentName] = useState("");
+  const [pendingConfig, setPendingConfig] = useState<{ name: string; persona: string; instructions: string } | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPersona, setEditPersona] = useState("");
+  const [editInstructions, setEditInstructions] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -262,10 +271,14 @@ export default function NewAgentOnboarding() {
         return prev;
       });
 
-      // Check for agent_config marker
+      // Check for agent_config marker — go to overview for review
       const config = parseAgentConfig(fullText);
       if (config) {
-        await saveAgent(config);
+        setPendingConfig(config);
+        setEditName(config.name);
+        setEditPersona(config.persona);
+        setEditInstructions(config.instructions);
+        setPhase("overview");
       }
     } catch (e: unknown) {
       toast({ title: "Erro", description: e instanceof Error ? e.message : "Erro desconhecido", variant: "destructive" });
@@ -409,10 +422,11 @@ export default function NewAgentOnboarding() {
   };
 
   const progressPct = phase === "done" ? 100
-    : phase === "scraping" ? 85
-    : phase === "social-links" ? 70
-    : phase === "saving" ? 60
-    : phase === "chat" ? Math.min(55, 20 + messages.filter(m => m.role === "user").length * 8)
+    : phase === "scraping" ? 90
+    : phase === "social-links" ? 80
+    : phase === "saving" ? 75
+    : phase === "overview" ? 65
+    : phase === "chat" ? Math.min(60, 15 + messages.filter(m => m.role === "user").length * 6)
     : 10;
 
   // Check limit before showing
@@ -572,6 +586,92 @@ export default function NewAgentOnboarding() {
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-xl space-y-6">
             <ScrapingProgress urls={scrapeUrls} results={scrapeResults} isComplete={scrapeComplete} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ========== OVERVIEW PHASE ==========
+  if (phase === "overview" && pendingConfig) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
+        <OnboardingHeader
+          title="Revisar configuração"
+          subtitle="Confira e edite antes de criar o agente"
+          progress={progressPct}
+          onBack={() => setPhase("chat")}
+        />
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center space-y-2"
+            >
+              <Pencil className="h-8 w-8 text-primary mx-auto" />
+              <h2 className="text-xl font-display font-bold text-foreground">Revise as informações</h2>
+              <p className="text-sm text-muted-foreground">Edite o que precisar antes de criar o agente.</p>
+            </motion.div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Nome do agente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Input
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="Nome do agente"
+                  className="text-sm"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Personalidade / Tom</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Input
+                  value={editPersona}
+                  onChange={e => setEditPersona(e.target.value)}
+                  placeholder="Ex: Amigável, profissional e direto"
+                  className="text-sm"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Instruções do agente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={editInstructions}
+                  onChange={e => setEditInstructions(e.target.value)}
+                  placeholder="Instruções detalhadas sobre o negócio, produtos, preços, regras..."
+                  className="text-sm min-h-[200px]"
+                />
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  {editInstructions.length} caracteres — quanto mais detalhado, melhor o agente atende
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="flex gap-3 justify-center pb-8">
+              <Button variant="outline" onClick={() => setPhase("chat")} className="gap-1.5">
+                <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao chat
+              </Button>
+              <Button
+                onClick={() => saveAgent({ name: editName, persona: editPersona, instructions: editInstructions })}
+                disabled={!editName.trim() || saving}
+                className="gap-1.5 bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                Confirmar e continuar
+              </Button>
+            </div>
           </div>
         </div>
       </div>

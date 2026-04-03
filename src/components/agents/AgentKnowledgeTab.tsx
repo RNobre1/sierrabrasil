@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { BookOpen, Upload, FileText, Trash2, AlertCircle, CheckCircle2, Loader2, HardDrive, Info, Lock, Zap, File, FileSpreadsheet, FileType } from "lucide-react";
+import { BookOpen, Upload, FileText, Trash2, AlertCircle, CheckCircle2, Loader2, HardDrive, Info, Lock, Zap, File, FileSpreadsheet, FileType, Globe, Instagram, Hash } from "lucide-react";
 import { extractFileText } from "@/lib/file-extractor";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale/pt-BR";
 
 interface KBItem {
   id: string;
@@ -16,6 +18,15 @@ interface KBItem {
   content: string;
   created_at: string;
   chunk_index: number | null;
+}
+
+interface GroupedDoc {
+  sourceName: string;
+  sourceType: string;
+  chunkCount: number;
+  totalChars: number;
+  latestDate: string;
+  chunks: KBItem[];
 }
 
 const PLAN_LIMITS: Record<string, { maxDocs: number; maxSizeMB: number; label: string }> = {
@@ -27,7 +38,23 @@ const PLAN_LIMITS: Record<string, { maxDocs: number; maxSizeMB: number; label: s
 
 const ACCEPTED_TYPES = ".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.xls";
 
-const fileIcon = (name: string) => {
+const SOURCE_TYPE_CONFIG: Record<string, { label: string; pluralLabel: string; badgeClass: string }> = {
+  document: { label: "Documento", pluralLabel: "Documentos", badgeClass: "bg-cosmos-indigo/10 text-cosmos-indigo" },
+  website: { label: "Site", pluralLabel: "Sites", badgeClass: "bg-cosmos-cyan/10 text-cosmos-cyan" },
+  social: { label: "Rede Social", pluralLabel: "Redes Sociais", badgeClass: "bg-cosmos-violet/10 text-cosmos-violet" },
+  manual: { label: "Manual", pluralLabel: "Manuais", badgeClass: "bg-cosmos-emerald/10 text-cosmos-emerald" },
+};
+
+const sourceTypeIcon = (type: string) => {
+  if (type === "website") return <Globe className="h-4 w-4 text-cosmos-cyan" />;
+  if (type === "social") return <Instagram className="h-4 w-4 text-cosmos-violet" />;
+  if (type === "manual") return <Hash className="h-4 w-4 text-cosmos-emerald" />;
+  return null;
+};
+
+const fileIcon = (name: string, sourceType: string) => {
+  const customIcon = sourceTypeIcon(sourceType);
+  if (customIcon) return customIcon;
   if (!name) return <File className="h-4 w-4" />;
   const ext = name.split(".").pop()?.toLowerCase();
   if (ext === "pdf") return <FileType className="h-4 w-4 text-red-400" />;
@@ -35,6 +62,53 @@ const fileIcon = (name: string) => {
   if (["doc", "docx"].includes(ext || "")) return <FileText className="h-4 w-4 text-blue-400" />;
   return <FileText className="h-4 w-4 text-muted-foreground" />;
 };
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+function groupChunksBySource(items: KBItem[]): GroupedDoc[] {
+  const map = new Map<string, GroupedDoc>();
+  for (const item of items) {
+    const key = item.source_name || "Sem nome";
+    const existing = map.get(key);
+    if (existing) {
+      existing.chunkCount += 1;
+      existing.totalChars += item.content.length;
+      existing.chunks.push(item);
+      if (new Date(item.created_at) > new Date(existing.latestDate)) {
+        existing.latestDate = item.created_at;
+      }
+    } else {
+      map.set(key, {
+        sourceName: key,
+        sourceType: item.source_type,
+        chunkCount: 1,
+        totalChars: item.content.length,
+        latestDate: item.created_at,
+        chunks: [item],
+      });
+    }
+  }
+  return Array.from(map.values()).sort(
+    (a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime()
+  );
+}
+
+function groupDocsBySourceType(docs: GroupedDoc[]): Record<string, GroupedDoc[]> {
+  const groups: Record<string, GroupedDoc[]> = {};
+  for (const doc of docs) {
+    const type = doc.sourceType;
+    if (!groups[type]) groups[type] = [];
+    groups[type].push(doc);
+  }
+  return groups;
+}
+
+// Display order for source type sections
+const SOURCE_TYPE_ORDER = ["document", "manual", "website", "social"];
 
 interface Props {
   agentId: string;
@@ -58,6 +132,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
       .from("knowledge_base")
       .select("id, source_name, source_type, content, created_at, chunk_index")
       .eq("attendant_id", agentId)
+      .eq("is_archived", false)
       .order("created_at", { ascending: false });
     setItems(data ?? []);
     setLoading(false);
@@ -65,16 +140,11 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
 
   useEffect(() => { fetchKB(); }, [agentId]);
 
-  // Group by source_name
-  const grouped = items.reduce<Record<string, KBItem[]>>((acc, item) => {
-    const key = item.source_name || "Sem nome";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
-    return acc;
-  }, {});
-  const docCount = Object.keys(grouped).length;
+  const groupedDocs = groupChunksBySource(items);
+  const docCount = groupedDocs.length;
   const totalChars = items.reduce((sum, i) => sum + i.content.length, 0);
   const atLimit = docCount >= limits.maxDocs;
+  const docsByType = groupDocsBySourceType(groupedDocs);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,11 +152,11 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
 
     const sizeMB = file.size / (1024 * 1024);
     if (sizeMB > limits.maxSizeMB) {
-      toast({ title: "Arquivo muito grande", description: `Máximo ${limits.maxSizeMB}MB no plano ${limits.label}`, variant: "destructive" });
+      toast({ title: "Arquivo muito grande", description: `Maximo ${limits.maxSizeMB}MB no plano ${limits.label}`, variant: "destructive" });
       return;
     }
     if (atLimit) {
-      toast({ title: "Limite atingido", description: `Máximo ${limits.maxDocs} documentos no plano ${limits.label}`, variant: "destructive" });
+      toast({ title: "Limite atingido", description: `Maximo ${limits.maxDocs} documentos no plano ${limits.label}`, variant: "destructive" });
       return;
     }
 
@@ -98,7 +168,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
       // Extract text using browser-side extraction (PDF.js for PDFs, direct read for text files)
       const result = await extractFileText(file);
       if (!result.extracted) {
-        toast({ title: "Extração falhou", description: result.text, variant: "destructive" });
+        toast({ title: "Extracao falhou", description: result.text, variant: "destructive" });
         setUploadStatus("error");
         return;
       }
@@ -150,8 +220,11 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
   };
 
   const deleteDoc = async (sourceName: string) => {
-    const ids = grouped[sourceName].map(i => i.id);
-    await supabase.from("knowledge_base").delete().in("id", ids);
+    await supabase
+      .from("knowledge_base")
+      .delete()
+      .eq("attendant_id", agentId)
+      .eq("source_name", sourceName);
     toast({ title: "Documento removido" });
     fetchKB();
   };
@@ -201,7 +274,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
             <Upload className="h-4 w-4 text-primary" /> Enviar Documento
           </CardTitle>
           <CardDescription className="text-xs">
-            PDF, DOC, DOCX, TXT, MD, CSV, XLSX · Máx {limits.maxSizeMB}MB
+            PDF, DOC, DOCX, TXT, MD, CSV, XLSX · Max {limits.maxSizeMB}MB
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -209,13 +282,13 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
             {/* Guidelines */}
             <div className="rounded-lg bg-muted/30 border border-border/20 p-3 space-y-1.5">
               <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Info className="h-3 w-3" /> Orientações
+                <Info className="h-3 w-3" /> Orientacoes
               </p>
               <ul className="text-[11px] text-muted-foreground space-y-1 list-disc pl-4">
                 <li>Envie documentos <strong>limpos e bem formatados</strong> para melhores resultados</li>
                 <li>Evite PDFs escaneados ou com imagens de texto — prefira texto digital</li>
                 <li>Arquivos grandes podem levar alguns minutos para serem processados</li>
-                <li>O agente usará este conteúdo para responder perguntas dos clientes</li>
+                <li>O agente usara este conteudo para responder perguntas dos clientes</li>
               </ul>
             </div>
 
@@ -235,7 +308,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
                   <>
                     <Upload className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
                     <p className="text-xs text-muted-foreground">
-                      {atLimit ? "Limite atingido — faça upgrade" : "Clique ou arraste um arquivo aqui"}
+                      {atLimit ? "Limite atingido — faca upgrade" : "Clique ou arraste um arquivo aqui"}
                     </p>
                   </>
                 )}
@@ -272,11 +345,8 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
         </CardContent>
       </Card>
 
-      {/* Docs list */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-          Documentos ({docCount})
-        </h3>
+      {/* Docs list grouped by source type */}
+      <div className="space-y-4">
         {loading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -286,42 +356,57 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan }: Props) {
             <CardContent className="py-8 text-center">
               <BookOpen className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-xs text-muted-foreground">Nenhum documento na base de conhecimento</p>
-              <p className="text-[10px] text-muted-foreground/60 mt-1">Envie documentos para o agente aprender sobre seu negócio</p>
+              <p className="text-[10px] text-muted-foreground/60 mt-1">Envie documentos para o agente aprender sobre seu negocio</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2">
-            {Object.entries(grouped).map(([name, chunks], i) => (
-              <motion.div
-                key={name}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="flex items-center justify-between rounded-lg border border-border/30 bg-card/50 px-4 py-3 group hover:border-border/50 transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  {fileIcon(name)}
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{name}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {chunks.length} {chunks.length === 1 ? "parte" : "partes"} · {(chunks.reduce((s, c) => s + c.content.length, 0) / 1000).toFixed(1)}k chars
-                    </p>
+          SOURCE_TYPE_ORDER
+            .filter((type) => docsByType[type] && docsByType[type].length > 0)
+            .map((type) => {
+              const docs = docsByType[type];
+              const config = SOURCE_TYPE_CONFIG[type] || { label: type, pluralLabel: type, badgeClass: "bg-muted text-muted-foreground" };
+              const sectionLabel = docs.length === 1 ? config.label : config.pluralLabel;
+
+              return (
+                <div key={type} className="space-y-2">
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <Badge variant="outline" className={`text-[9px] font-medium border-0 px-1.5 py-0 rounded uppercase tracking-wider ${config.badgeClass}`}>
+                      {sectionLabel}
+                    </Badge>
+                    <span className="text-[10px]">({docs.length})</span>
+                  </h3>
+                  <div className="space-y-2">
+                    {docs.map((doc, i) => (
+                      <motion.div
+                        key={doc.sourceName}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04 }}
+                        className="flex items-center justify-between rounded-lg border border-border/30 bg-card/50 px-4 py-3 group hover:border-border/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {fileIcon(doc.sourceName, doc.sourceType)}
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-foreground truncate">{doc.sourceName}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {doc.chunkCount} {doc.chunkCount === 1 ? "chunk" : "chunks"} · {formatBytes(doc.totalChars)} · Adicionado {formatDistanceToNow(new Date(doc.latestDate), { addSuffix: false, locale: ptBR })}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive"
+                          onClick={() => deleteDoc(doc.sourceName)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[9px] border-border/30">{chunks[0].source_type}</Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive"
-                    onClick={() => deleteDoc(name)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+              );
+            })
         )}
       </div>
     </div>

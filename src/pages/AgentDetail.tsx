@@ -70,7 +70,8 @@ export default function AgentDetail() {
       const { data: kbData } = await supabase
         .from("knowledge_base")
         .select("id, source_type, source_name, source_url, content, created_at")
-        .eq("attendant_id", agentId);
+        .eq("attendant_id", agentId)
+        .eq("is_archived", false);
         
       if (kbData) {
         setKnowledgeBase(kbData);
@@ -251,7 +252,7 @@ export default function AgentDetail() {
                   Base de Conhecimento
                 </CardTitle>
                 <div className="flex items-center gap-1">
-                  <span className="text-xs font-medium text-muted-foreground">{groupedSources.length}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{groupedSources.length} {groupedSources.length === 1 ? "doc" : "docs"}</span>
                 </div>
               </div>
             </CardHeader>

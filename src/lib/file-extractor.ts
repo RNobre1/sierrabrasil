@@ -2,13 +2,16 @@
  * Browser-side text extraction from uploaded files.
  *
  * Supported formats:
- * - PDF  → pdfjs-dist (renders each page and concatenates text)
+ * - PDF   → pdfjs-dist (renders each page and concatenates text)
+ * - DOCX  → mammoth.js (extracts raw text from .docx)
+ * - XLS/XLSX → SheetJS (converts spreadsheet to pipe-delimited text)
  * - TXT / MD / CSV → read as UTF-8 text directly
- * - DOC / DOCX / XLS / XLSX → binary files that need specialised parsers;
- *   for MVP we flag them and return a placeholder so the user is informed.
+ * - DOC   → unsupported (old binary format, ask user to convert)
  */
 
 import * as pdfjsLib from "pdfjs-dist";
+import mammoth from "mammoth";
+import * as XLSX from "xlsx";
 
 // Configure PDF.js worker from CDN matching the installed version
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -24,30 +27,22 @@ export interface ExtractionResult {
 
 const TEXT_EXTENSIONS = [".txt", ".md", ".csv"];
 
-/**
- * Returns true when the file extension indicates a plain-text format that can
- * be read with `file.text()`.
- */
 function isPlainText(fileName: string): boolean {
   const lower = fileName.toLowerCase();
   return TEXT_EXTENSIONS.some((ext) => lower.endsWith(ext));
 }
 
-/**
- * Extract text from a PDF file using pdfjs-dist (runs entirely in the browser).
- */
+/** Extract text from a PDF file using pdfjs-dist */
 async function extractPdfText(file: File): Promise<ExtractionResult> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
 
   const pages: string[] = [];
-
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    // Each item has a `str` property with the text fragment
     const pageText = content.items
-      .map((item: { str?: string }) => item.str ?? "")
+      .map((item: unknown) => (item as { str?: string }).str ?? "")
       .join(" ");
     if (pageText.trim()) {
       pages.push(pageText.trim());
@@ -55,7 +50,6 @@ async function extractPdfText(file: File): Promise<ExtractionResult> {
   }
 
   const fullText = pages.join("\n\n");
-
   if (!fullText.trim()) {
     return {
       text: `[PDF escaneado ou sem texto extraível: "${file.name}" (${(file.size / 1024).toFixed(1)}KB, ${pdf.numPages} páginas). Envie uma versão com texto digital ou cole o conteúdo manualmente.]`,
@@ -63,20 +57,52 @@ async function extractPdfText(file: File): Promise<ExtractionResult> {
       pageCount: pdf.numPages,
     };
   }
+  return { text: fullText, extracted: true, pageCount: pdf.numPages };
+}
 
-  return {
-    text: fullText,
-    extracted: true,
-    pageCount: pdf.numPages,
-  };
+/** Extract text from a DOCX file using mammoth.js */
+async function extractDocxText(file: File): Promise<ExtractionResult> {
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  const text = result.value.trim();
+
+  if (!text) {
+    return {
+      text: `[Documento DOCX vazio ou sem texto extraível: "${file.name}" (${(file.size / 1024).toFixed(1)}KB). Cole o conteúdo manualmente.]`,
+      extracted: false,
+    };
+  }
+  return { text, extracted: true };
+}
+
+/** Extract text from XLS/XLSX using SheetJS, converting to pipe-delimited format */
+async function extractSpreadsheetText(file: File): Promise<ExtractionResult> {
+  const arrayBuffer = await file.arrayBuffer();
+  const workbook = XLSX.read(arrayBuffer, { type: "array" });
+
+  const sheets: string[] = [];
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    const csv = XLSX.utils.sheet_to_csv(sheet, { FS: " | ", RS: "\n" });
+    if (csv.trim()) {
+      sheets.push(`### ${sheetName}\n${csv}`);
+    }
+  }
+
+  const text = sheets.join("\n\n");
+  if (!text.trim()) {
+    return {
+      text: `[Planilha vazia: "${file.name}" (${(file.size / 1024).toFixed(1)}KB).]`,
+      extracted: false,
+    };
+  }
+  return { text, extracted: true };
 }
 
 /**
  * Extract text content from a file.
  *
- * For plain text files, reads directly. For PDFs, uses pdfjs-dist.
- * For unsupported binary formats (DOC, DOCX, XLS, XLSX), returns a
- * descriptive placeholder asking the user to provide text manually.
+ * Routes to the appropriate extractor based on file extension.
  */
 export async function extractFileText(file: File): Promise<ExtractionResult> {
   const name = file.name.toLowerCase();
@@ -92,12 +118,20 @@ export async function extractFileText(file: File): Promise<ExtractionResult> {
     return extractPdfText(file);
   }
 
-  // Binary office formats — not extractable in browser without heavy libs
-  const ext = name.split(".").pop() ?? "";
-  const unsupported = ["doc", "docx", "xls", "xlsx"];
-  if (unsupported.includes(ext)) {
+  // DOCX
+  if (name.endsWith(".docx")) {
+    return extractDocxText(file);
+  }
+
+  // XLS / XLSX
+  if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+    return extractSpreadsheetText(file);
+  }
+
+  // DOC (old binary format — mammoth doesn't support it reliably)
+  if (name.endsWith(".doc")) {
     return {
-      text: `[Formato .${ext} não suportado para extração automática: "${file.name}" (${(file.size / 1024).toFixed(1)}KB). Converta para PDF ou TXT, ou cole o conteúdo manualmente.]`,
+      text: `[Formato .doc não suportado: "${file.name}" (${(file.size / 1024).toFixed(1)}KB). Converta para .docx ou PDF.]`,
       extracted: false,
     };
   }

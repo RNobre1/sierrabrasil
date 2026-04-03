@@ -212,8 +212,8 @@ RLS (Row-Level Security) habilitado em todas as tabelas. Usuarios so acessam dad
 ## Origem e Evolucao do Projeto
 
 O MVP foi construido na plataforma Lovable (Lovable Cloud + Lovable AI) em uma sessao intensiva. Documentos de referencia originais estao em `docs/` (git-ignored):
-- `docs/plano-inicial-lovablemd` — Sprint 1: fundacao visual, auth, dashboard, conversas
-- `docs/historico-lovable.md` — Log cronologico de todas as decisoes e sprints no Lovable
+- `docs/historico/plano-inicial-lovablemd` — Sprint 1: fundacao visual, auth, dashboard, conversas
+- `docs/historico/historico-lovable.md` — Log cronologico de todas as decisoes e sprints no Lovable
 
 ### Jornada do Cliente (Fluxo Completo — Revisado)
 
@@ -249,7 +249,7 @@ O banco possui 6 tenants realistas de setores distintos (saude, imobiliario, foo
 - **Human takeover:** Quando escalado, agente para de responder; operador pode enviar mensagens pelo dashboard
 - **Payload v2.3.6:** `sendText` usa `{ number, text }` (simples); webhook/set usa `{ webhook: { enabled, url, byEvents, base64, events } }`
 - Canvas no Slack `#the-agent` com dados de acesso completos
-- Plano de escalabilidade em `docs/plano-escalabilidade.md`
+- Plano de escalabilidade em `docs/planos/plano-escalabilidade.md`
 
 ### Modelos de IA e OpenRouter
 
@@ -288,7 +288,7 @@ Cada modelo tem trade-offs de custo, velocidade e qualidade. A logica de recomen
 
 **Anti-alucinacao:** Instrucao explicita + exemplos negativos + resposta padrao "Vou verificar com a equipe". Temperature 0.3-0.5 (fatico) / 0.6-0.7 (vendas).
 
-Ver pesquisa completa em `docs/pesquisa-prompts.md`.
+Ver pesquisa completa em `docs/pesquisas/pesquisa-prompts.md`.
 
 ### Memoria do Agente (Add-on Premium)
 
@@ -374,9 +374,9 @@ agent_memories (
 24. **Knowledge base limites revisados** — Starter: 10 docs/10MB (era 5/5). Professional: 50/100MB. Business: 200/500MB. Enterprise: ilimitado/2GB.
 25. **Cobranca por conversa, nao por mensagem** — 100 (Essencial), 900 (Profissional), 1.800 (Empresarial), custom (Scale — definido caso a caso). Uma conversa = todo o atendimento com 1 contato.
 26. **Skills backlog marcados "Em breve"** — Agendamento, Analytics, Email, Acoes Custom com badge `comingSoon` no frontend. Ativacao/desativacao funcional no banco para skills implementados.
-27. **Filtro de Contatos (Whitelist/Blacklist) no MVP** — Tabela relacional `contact_rules` (nao JSONB, 3x mais rapido para exact match). Funcao SQL `should_respond_to_contact` STABLE para cache. Tres modos: `open` (blacklist), `closed` (whitelist), `whitelist_only` (lead capture). Numeros normalizados para E.164. Pesquisa completa em `docs/Implementacao de Modo Assistente Pessoal...md`. Plano detalhado em `docs/plano-filtro-contatos.md`.
+27. **Filtro de Contatos (Whitelist/Blacklist) no MVP** — Tabela relacional `contact_rules` (nao JSONB, 3x mais rapido para exact match). Funcao SQL `should_respond_to_contact` STABLE para cache. Tres modos: `open` (blacklist), `closed` (whitelist), `whitelist_only` (lead capture). Numeros normalizados para E.164. Pesquisa completa em `docs/pesquisas/Implementacao de Modo Assistente Pessoal...md`. Plano detalhado em `docs/planos/plano-filtro-contatos.md`.
 28. **Assistente Pessoal (Self-Chat) pos-MVP** — Viavel via Baileys (`fromMe` + deduplicacao por message ID), mas complexo: exige tabela `processed_messages`, cleanup cron, e UX dedicada. Risco de loop infinito mitigavel mas nao trivial. Reservado para pos-MVP.
-29. **Pipeline RAG com tsvector (substituiu brute-force)** — Retrieval via funcao SQL `search_knowledge()` com `websearch_to_tsquery + ts_rank + source_priority`. Fallback para chunks recentes de alta prioridade. Coluna `source_priority` (document=100, manual=90, website=70, social=10) + `is_archived`. Curadoria do scraper filtra posts de baixo valor. Chunking semantico com overlap 150 chars, tabelas preservadas ate 2000 chars. Progresso em `docs/progresso-rag-mvp.md`.
+29. **Pipeline RAG com tsvector (substituiu brute-force)** — Retrieval via funcao SQL `search_knowledge()` com `websearch_to_tsquery + ts_rank + source_priority`. Fallback para chunks recentes de alta prioridade. Coluna `source_priority` (document=100, manual=90, website=70, social=10) + `is_archived`. Curadoria do scraper filtra posts de baixo valor. Chunking semantico com overlap 150 chars, tabelas preservadas ate 2000 chars. Progresso em `docs/progresso/progresso-rag-mvp.md`.
 30. **Grounding check via Haiku** — Apos resposta do modelo principal, regex detecta mencoes a preco/plano/valor. Se detecta, Haiku verifica se a resposta esta suportada pelos chunks de KB. Se "FALHA", substitui por mensagem segura. Non-fatal: se o check der erro, envia resposta original. Custo ~0.1-0.3 centavos por verificacao.
 31. **Extracao de PDF client-side** — `pdfjs-dist` no browser extrai texto pagina por pagina. Edge function `process-knowledge` rejeita referencias de arquivo (bug antigo). DOC/DOCX/XLS/XLSX pendente (pede conversao por enquanto).
 32. **Skills condicionais no prompt** — [ESCALATE], saudacao personalizada e nome do contato so sao injetados no prompt quando a skill correspondente esta ativa. [RESOLVED] permanece sempre ativo. Corrigiu bug onde skills desativadas continuavam funcionando porque as instrucoes estavam hardcoded na Layer 1.
@@ -394,7 +394,7 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [x] Knowledge base limites revisados (5→10 Starter, etc.)
 - [x] Landing page atualizada (conversas, docs, agentes por plano)
 - [x] Skills backlog marcados "Em breve" no frontend
-- [x] Analise completa do sistema (`docs/analise-sistema-completa.md`)
+- [x] Analise completa do sistema (`docs/historico/analise-sistema-completa.md`)
 
 ### DONE (Dia 4 — Skills)
 - [x] Utility `buildSkillInstructions` com testes (src/lib/skills.ts)
@@ -417,10 +417,10 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [x] 158 testes passando
 
 ### TODO (Ordem de Execucao)
-1. **Pipeline RAG (Excelencia em Respostas)** — DONE (Sprint 1 + grounding). Progresso em `docs/progresso-rag-mvp.md`. Pendente: suporte DOC/DOCX/XLS/XLSX, integracao observabilidade.
+1. **Pipeline RAG (Excelencia em Respostas)** — DONE (Sprint 1 + grounding). Progresso em `docs/progresso/progresso-rag-mvp.md`. Pendente: suporte DOC/DOCX/XLS/XLSX, integracao observabilidade.
 2. **Suporte DOC/DOCX/XLS/XLSX** — Adicionar mammoth.js (DOCX) e SheetJS (XLSX) no frontend para extracao client-side. Hoje aceita no input mas pede conversao.
-3. **Memoria do agente** — Tabela `agent_memories`, sumarizacao automatica ao final de conversas, injecao no prompt, TTL configuravel. Aba "Memoria" no AgentDetail ja existe (placeholder). Prompt de pesquisa em `docs/prompt-pesquisa-memoria-agente.md`.
-4. **Filtro de Contatos (Whitelist/Blacklist)** — Tabela `contact_rules`, funcao SQL `should_respond_to_contact`, integracao webhook, UI de configuracao. Detalhes em `docs/plano-filtro-contatos.md`
+3. **Memoria do agente** — Tabela `agent_memories`, sumarizacao automatica ao final de conversas, injecao no prompt, TTL configuravel. Aba "Memoria" no AgentDetail ja existe (placeholder). Prompt de pesquisa em `docs/pesquisas/prompt-pesquisa-memoria-agente.md`.
+4. **Filtro de Contatos (Whitelist/Blacklist)** — Tabela `contact_rules`, funcao SQL `should_respond_to_contact`, integracao webhook, UI de configuracao. Detalhes em `docs/planos/plano-filtro-contatos.md`
 5. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
 
 ## Backlog (Pos-MVP — "Coming Soon" no Frontend)
@@ -446,7 +446,7 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [ ] Previews de redes sociais no onboarding
 - [ ] Envio de imagens/audio pelo agente
 - [ ] Schema multi-usuario por tenant (`tenant_members`)
-- [ ] **Modo Assistente Pessoal (Self-Chat)** — Agente responde no proprio numero do usuario. Requer: tabela `processed_messages` para deduplicacao, logica especial no webhook para nao skipar `fromMe` em self-chat, cleanup cron diario, toggle no dashboard. Prevencao de loop via message ID + fromMe + rate limiting. Pesquisa: `docs/Implementacao de Modo Assistente Pessoal...md` secao 1.
+- [ ] **Modo Assistente Pessoal (Self-Chat)** — Agente responde no proprio numero do usuario. Requer: tabela `processed_messages` para deduplicacao, logica especial no webhook para nao skipar `fromMe` em self-chat, cleanup cron diario, toggle no dashboard. Prevencao de loop via message ID + fromMe + rate limiting. Pesquisa: `docs/pesquisas/Implementacao de Modo Assistente Pessoal...md` secao 1.
 - [ ] **Filtro de Contatos avancado** — Suporte a LID (`lid` column em `contact_rules`), modo "Aprendizado" (agente pergunta se e cliente ou pessoal), import CSV, cache Redis para regras frequentes, quick actions (bloquear/permitir) na lista de conversas, export de lista, metricas de filtragem.
 - [ ] **Sync Google Contacts** — Importar contatos do Google para popular whitelist/blacklist automaticamente.
 - [ ] **Versionamento de configuracao dos agentes** — Historico de alteracoes em instrucoes, persona, skills, modelo. Rollback para versao anterior. Diff visual entre versoes.
@@ -465,16 +465,16 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 | Recurso | Onde encontrar |
 |---|---|
 | Credenciais Evolution API (IP, API Key, PostgreSQL, Redis) | Canvas "Evolution API v2.3.6" no Slack `#the-agent` |
-| Plano de escalabilidade de infraestrutura | `docs/plano-escalabilidade.md` |
-| Pesquisa problema LID | `docs/problema-lid-whatsapp.md` + `docs/LID (@lid) no Baileys...md` |
-| Pesquisa migracao Evolution v2.3.x | `docs/pesquisa-migracao-evolution-v2.3.md` |
-| Pesquisa de prompt engineering | `docs/pesquisa-prompts.md` |
-| Plano de arquitetura v2 e cronograma | `docs/plano-arquitetura-v2.md` |
-| Anotacoes da reuniao de planejamento | `docs/Projeto novo.txt` |
-| Plano inicial (Sprint 1 Lovable) | `docs/plano-inicial-lovablemd` |
-| Historico completo de decisoes (Lovable) | `docs/historico-lovable.md` |
+| Plano de escalabilidade de infraestrutura | `docs/planos/plano-escalabilidade.md` |
+| Pesquisa problema LID | `docs/pesquisas/problema-lid-whatsapp.md` + `docs/pesquisas/LID (@lid) no Baileys...md` |
+| Pesquisa migracao Evolution v2.3.x | `docs/pesquisas/pesquisa-migracao-evolution-v2.3.md` |
+| Pesquisa de prompt engineering | `docs/pesquisas/pesquisa-prompts.md` |
+| Plano de arquitetura v2 e cronograma | `docs/planos/plano-arquitetura-v2.md` |
+| Anotacoes da reuniao de planejamento | `docs/historico/Projeto novo.txt` |
+| Plano inicial (Sprint 1 Lovable) | `docs/historico/plano-inicial-lovablemd` |
+| Historico completo de decisoes (Lovable) | `docs/historico/historico-lovable.md` |
 | Workspace Slack (Meteora Digital) | `meteoradigital-io.slack.com` |
-| Analise completa do sistema (dia 3) | `docs/analise-sistema-completa.md` |
+| Analise completa do sistema (dia 3) | `docs/historico/analise-sistema-completa.md` |
 | Cronograma MVP detalhado | `docs/cronograma-mvp.md` |
 
 ## Licoes Aprendidas
