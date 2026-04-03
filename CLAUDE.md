@@ -294,20 +294,26 @@ Ver pesquisa completa em `docs/pesquisas/pesquisa-prompts.md`.
 
 Os agentes devem manter **persistencia de contexto** entre conversas com o mesmo contato. Mesmo em conversas longas ou retomadas dias depois, o agente deve lembrar do historico e preferencias do cliente.
 
-**Modelo de negocio:** Add-on pago — quem assina pode pagar a mais para habilitar memoria persistente nos agentes.
+**Modelo de negocio:** Incluso nos planos Empresarial e Enterprise. Profissional com limite de 2K tokens.
 
-**Implementacao tecnica (a definir):**
-- Tabela `agent_memories` — key-value por contato (contact_phone + attendant_id)
-- O agente gera um resumo estruturado ao final de cada conversa (nome, preferencias, ultima compra, problemas anteriores)
-- Na proxima conversa, o resumo e injetado no prompt como contexto
-- Limite de tokens de memoria por plano (starter: sem memoria, premium: 2k tokens, enterprise: 8k tokens)
-- Limpeza/expiracao configuravel pelo tenant
+**Implementacao tecnica (definida — pesquisa em `docs/pesquisas/resultado-pesquisa-memória.md`):**
+- Tabela `agent_memories` com summary TEXT + key_facts JSONB + timeline + consent_given + retention_until
+- Sumarizacao via GPT-4.1-Mini ao resolver conversa (assincrono, ~$0.001 por sumarizacao)
+- Formato hibrido: texto livre (summary) + fatos estruturados (key_facts JSONB) + timeline
+- Incremental append com consolidacao periodica (regenera do zero apos 5 conversas)
+- Injecao na Layer 2 do prompt (entre identidade e KB), formatacao natural
+- Compressao progressiva quando excede token limit do plano
+- LGPD: opt-out via chat ("esquecer meus dados") + UI de gerenciamento + TTL por plano
+- Token limits: Essencial=0, Profissional=2K, Empresarial=8K, Enterprise=32K
+- TTL: Profissional=90 dias, Empresarial=180 dias, Enterprise=indefinido
 
 **Tabela planejada:**
 ```sql
 agent_memories (
   id, attendant_id, contact_phone, summary TEXT, 
-  key_facts JSONB, last_interaction_at, token_count INT
+  key_facts JSONB, first_interaction_at, last_interaction_at,
+  conversations_count INT, token_count INT,
+  consent_given BOOLEAN, retention_until TIMESTAMPTZ
 )
 ```
 

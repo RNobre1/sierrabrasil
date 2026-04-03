@@ -5,7 +5,9 @@ import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { isImpersonating, useImpersonatedTenant } from "@/hooks/use-tenant";
 import UserMenu from "@/components/UserMenu";
+import AdminBanner from "@/components/AdminBanner";
 import meteoraLogoBranca from "@/assets/meteora-branca.png";
 import meteoraLogoPreta from "@/assets/meteora-preta.png";
 import { MeteoraSeal } from "@/components/MeteoraBrand";
@@ -100,24 +102,32 @@ export default function ClientLayout() {
   const [tenantPlan, setTenantPlan] = useState("starter");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
+  const impersonatedTenant = useImpersonatedTenant();
+
   useEffect(() => {
     if (!user) return;
-    supabase.from("tenants").select("plan").eq("owner_id", user.id).single().then(({ data }) => {
+    const query = impersonatedTenant
+      ? supabase.from("tenants").select("plan").eq("id", impersonatedTenant).single()
+      : supabase.from("tenants").select("plan").eq("owner_id", user.id).single();
+    query.then(({ data }) => {
       if (data) setTenantPlan(data.plan || "starter");
     });
-  }, [user]);
+  }, [user, impersonatedTenant]);
 
   const isLightMode = typeof document !== "undefined" && document.documentElement.classList.contains("light");
   const logo = isLightMode ? meteoraLogoPreta : meteoraLogoBranca;
 
   const initials = (profile?.full_name || "U").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
 
+  const impersonating = isImpersonating();
+
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className={`flex min-h-screen w-full bg-background ${impersonating ? "pt-10" : ""}`}>
+      <AdminBanner />
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside
-          className="fixed inset-y-0 left-0 z-30 flex w-[240px] flex-col border-r border-white/[0.06] bg-sidebar"
+          className={`fixed left-0 z-30 flex w-[240px] flex-col border-r border-white/[0.06] bg-sidebar ${impersonating ? "top-10 bottom-0" : "inset-y-0"}`}
           style={{ backgroundImage: "linear-gradient(180deg, rgba(99, 102, 241, 0.03) 0%, transparent 40%)" }}
         >
           {/* Logo */}

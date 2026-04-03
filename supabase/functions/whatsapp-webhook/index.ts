@@ -302,6 +302,34 @@ serve(async (req) => {
         .order("created_at", { ascending: true })
         .limit(20);
 
+      // 6b. Memory: load persistent context for this contact
+      let memoryContext = "";
+      const { data: memory } = await supabase
+        .from("agent_memories")
+        .select("summary, key_facts, last_interaction_at, conversations_count")
+        .eq("attendant_id", attendant.id)
+        .eq("contact_phone", contactPhone)
+        .single();
+
+      if (memory) {
+        const daysSince = Math.floor((Date.now() - new Date(memory.last_interaction_at).getTime()) / (1000 * 60 * 60 * 24));
+        const facts = memory.key_facts || {};
+
+        memoryContext = `\n\n## MEMORIA DO CONTATO (voce ja conversou com esta pessoa antes)
+Voce ja conversou com ${facts.nome || contactName} ${memory.conversations_count} vez(es). Ultima interacao: ${daysSince === 0 ? "hoje" : `${daysSince} dia(s) atras`}.
+
+${facts.nome ? `Nome: ${facts.nome}` : ""}
+${facts.empresa ? `Empresa: ${facts.empresa}` : ""}
+${facts.necessidade ? `Necessidade: ${facts.necessidade}` : ""}
+${facts.preferencias?.length ? `Preferencias: ${facts.preferencias.join(", ")}` : ""}
+${facts.pain_points?.length ? `Problemas mencionados: ${facts.pain_points.join(", ")}` : ""}
+${facts.proximos_passos ? `Pendencias: ${facts.proximos_passos}` : ""}
+
+Historico resumido: ${memory.summary || "Sem resumo disponivel."}
+
+Use essas informacoes naturalmente. NAO mencione que esta "lendo memorias". Demonstre continuidade.`.trim();
+      }
+
       // 7. Build 4-layer system prompt
       // --- Layer 1: Identity ---
       const layer1 = getLayer1(attendant.name);
@@ -402,7 +430,7 @@ serve(async (req) => {
         layer4 += `\n\n## HABILIDADES ATIVAS\n${skillLines.map(s => `- ${s}`).join("\n")}`;
       }
 
-      const systemPrompt = `${layer1}${layer2}${layer3}${layer4}`;
+      const systemPrompt = `${layer1}${memoryContext}${layer2}${layer3}${layer4}`;
 
       // 8. Call AI
       if (!OPENROUTER_API_KEY) {
@@ -570,6 +598,20 @@ serve(async (req) => {
           ended_at: new Date().toISOString(),
         }).eq("id", conversationId);
         console.log(`Conversation ${conversationId} RESOLVED by AI`);
+
+        // Trigger memory summarization (fire-and-forget)
+        try {
+          fetch(`${SUPABASE_URL}/functions/v1/summarize-conversation`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            },
+            body: JSON.stringify({ conversation_id: conversationId }),
+          }).catch(e => console.warn("Memory summarization trigger failed (non-fatal):", e));
+        } catch (e) {
+          console.warn("Memory summarization trigger failed (non-fatal):", e);
+        }
       }
 
       // 12. Send reply with message splitting on [BREAK]

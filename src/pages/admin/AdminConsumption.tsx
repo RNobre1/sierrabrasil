@@ -56,6 +56,7 @@ export default function AdminConsumption() {
   const [sortField, setSortField] = useState<"messages" | "conversations" | "cost" | "name">("messages");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // TODO: Move to server-side aggregation for large datasets (>10K conversations)
   const fetchData = async () => {
     const [tenantsRes, convsRes, msgsRes] = await Promise.all([
       supabase.from("tenants").select("id, name"),

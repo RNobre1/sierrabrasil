@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Search, Users, Eye, Filter, Download, ArrowUpDown, X, UserCheck, UserX, DollarSign } from "lucide-react";
+import { Search, Users, Eye, Filter, Download, ArrowUpDown, X, UserCheck, UserX, DollarSign, LogIn } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { startImpersonation } from "@/hooks/use-tenant";
+import { toast } from "sonner";
 
 interface Tenant {
   id: string;
@@ -24,8 +28,6 @@ interface TenantDetail extends Tenant {
   owner_email?: string;
 }
 
-const planPrices: Record<string, number> = { starter: 97, professional: 497, business: 997, enterprise: 997 };
-
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
   return (
     <div className="bg-card rounded-lg border border-border p-4 flex flex-col gap-1">
@@ -39,19 +41,48 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 }
 
 export default function AdminTenants() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [planPrices, setPlanPrices] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<TenantDetail | null>(null);
   const [sortField, setSortField] = useState<"created_at" | "name" | "plan">("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  const enterTenant = async (tenant: Tenant) => {
+    if (!user) return;
+    // Audit log in system_config
+    await supabase.from("system_config").insert({
+      key: `admin_access_${Date.now()}`,
+      value: {
+        admin_id: user.id,
+        tenant_id: tenant.id,
+        tenant_name: tenant.name,
+        accessed_at: new Date().toISOString(),
+      } as any,
+    });
+    startImpersonation(tenant.id, user.id);
+    toast.success(`Acessando dashboard de ${tenant.name}`);
+    navigate("/dashboard");
+  };
+
   useEffect(() => {
     const fetchTenants = async () => {
-      const { data } = await supabase.from("tenants").select("*").order("created_at", { ascending: false });
-      setTenants(data ?? []);
+      const [tenantsRes, plansRes] = await Promise.all([
+        supabase.from("tenants").select("*").order("created_at", { ascending: false }),
+        supabase.from("plans").select("id, price_monthly"),
+      ]);
+      setTenants(tenantsRes.data ?? []);
+
+      // Build plan prices from DB (price_monthly is in cents, convert to BRL)
+      const prices: Record<string, number> = {};
+      plansRes.data?.forEach(p => { prices[p.id] = (p.price_monthly || 0) / 100; });
+      setPlanPrices(prices);
+
       setLoading(false);
     };
     fetchTenants();
@@ -93,8 +124,8 @@ export default function AdminTenants() {
     total: tenants.length,
     active: tenants.filter(t => t.status === "active").length,
     trial: tenants.filter(t => t.status === "trial").length,
-    mrr: tenants.reduce((s, t) => s + (planPrices[t.plan] || 97), 0),
-  }), [tenants]);
+    mrr: tenants.reduce((s, t) => s + (planPrices[t.plan] || 0), 0),
+  }), [tenants, planPrices]);
 
   const uniquePlans = [...new Set(tenants.map(t => t.plan))];
   const hasActiveFilters = search || planFilter !== "all" || statusFilter !== "all";
@@ -222,12 +253,17 @@ export default function AdminTenants() {
                         <span className="text-[10px] capitalize">{t.status === "active" ? "Ativo" : t.status}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-xs">R$ {(planPrices[t.plan] || 97).toLocaleString("pt-BR")}</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-xs">R$ {(planPrices[t.plan] || 0).toLocaleString("pt-BR")}</td>
                     <td className="px-4 py-2.5 text-right text-[10px] text-muted-foreground font-mono">{timeAgo(t.created_at)}</td>
                     <td className="px-4 py-2.5 text-center">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDetail(t)}>
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDetail(t)} title="Ver detalhes">
+                          <Eye className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10" onClick={() => enterTenant(t)} title="Acessar dashboard do cliente">
+                          <LogIn className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

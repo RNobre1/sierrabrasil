@@ -18,6 +18,7 @@ import {
 import { MeteoraWatermark } from "@/components/MeteoraBrand";
 import GuidedTour from "@/components/GuidedTour";
 import WhatsAppConnectBanner from "@/components/WhatsAppConnectBanner";
+import { useImpersonatedTenant } from "@/hooks/use-tenant";
 
 /* ═══ Types ═══ */
 interface Attendant { id: string; name: string; status: string; channels: string[] | null; model: string | null; class?: string | null; active_skills?: string[] | null; icon?: string | null; }
@@ -81,6 +82,7 @@ export default function Dashboard() {
   const [totalLeads, setTotalLeads] = useState(0);
   const isInitialLoad = useRef(true);
   const tenantIdRef = useRef<string | null>(null);
+  const impersonatedTenant = useImpersonatedTenant();
 
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
@@ -90,7 +92,11 @@ export default function Dashboard() {
 
     // Cache tenant info after first fetch
     if (!tenantIdRef.current) {
-      const { data: t } = await supabase.from("tenants").select("id, created_at, plan").eq("owner_id", user.id).single();
+      // When impersonating, fetch by tenant ID directly; otherwise by owner_id
+      const query = impersonatedTenant
+        ? supabase.from("tenants").select("id, created_at, plan").eq("id", impersonatedTenant).single()
+        : supabase.from("tenants").select("id, created_at, plan").eq("owner_id", user.id).single();
+      const { data: t } = await query;
       if (!t) { setLoading(false); isInitialLoad.current = false; return; }
       setTenantCreatedAt(t.created_at);
       setTenantPlan(t.plan || "starter");
@@ -143,7 +149,13 @@ export default function Dashboard() {
 
     setLoading(false);
     isInitialLoad.current = false;
-  }, [user]);
+  }, [user, impersonatedTenant]);
+
+  // Reset cached tenant when impersonation changes
+  useEffect(() => {
+    tenantIdRef.current = null;
+    isInitialLoad.current = true;
+  }, [impersonatedTenant]);
 
   // Initial load + polling every 30s
   useEffect(() => {

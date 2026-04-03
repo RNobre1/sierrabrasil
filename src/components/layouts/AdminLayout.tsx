@@ -3,13 +3,17 @@ import { LayoutDashboard, Users, Bot, Cpu, Puzzle, ArrowLeftRight, LogOut } from
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const adminNavItems = [
   { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/admin/tenants", icon: Users, label: "Clientes" },
   { to: "/admin/attendants", icon: Bot, label: "Agentes" },
   { to: "/admin/consumption", icon: Cpu, label: "Consumo IA" },
-  { to: "/admin/integrations", icon: Puzzle, label: "Integrações" },
+];
+
+const comingSoonNavItems = [
+  { icon: Puzzle, label: "Integrações" },
 ];
 
 export default function AdminLayout() {
@@ -40,6 +44,16 @@ export default function AdminLayout() {
               <item.icon className="h-5 w-5" />
               <span>{item.label}</span>
             </NavLink>
+          ))}
+          {comingSoonNavItems.map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground/50 cursor-not-allowed"
+            >
+              <item.icon className="h-5 w-5" />
+              <span>{item.label}</span>
+              <Badge variant="secondary" className="ml-auto text-[9px] h-4 px-1.5">Em breve</Badge>
+            </div>
           ))}
         </nav>
         <div className="border-t border-border p-3 space-y-1">

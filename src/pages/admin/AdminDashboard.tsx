@@ -101,28 +101,35 @@ export default function AdminDashboard() {
   const [attendants, setAttendants] = useState<AttendantRow[]>([]);
   const [conversationCount, setConversationCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
+  const [planPrices, setPlanPrices] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   const fetchData = async () => {
-    const [tenantsRes, attendantsRes, convsRes, msgsRes] = await Promise.all([
+    const [tenantsRes, attendantsRes, convsRes, msgsRes, plansRes] = await Promise.all([
       supabase.from("tenants").select("id, name, plan, status, created_at").order("created_at", { ascending: false }),
       supabase.from("attendants").select("id, name, status, tenant_id"),
       supabase.from("conversations").select("id", { count: "exact", head: true }),
       supabase.from("messages").select("id", { count: "exact", head: true }),
+      supabase.from("plans").select("id, price_monthly"),
     ]);
     setTenants(tenantsRes.data ?? []);
     setAttendants(attendantsRes.data ?? []);
     setConversationCount(convsRes.count ?? 0);
     setMessageCount(msgsRes.count ?? 0);
+
+    // Build plan prices from DB (price_monthly is in cents, convert to BRL)
+    const prices: Record<string, number> = {};
+    plansRes.data?.forEach(p => { prices[p.id] = (p.price_monthly || 0) / 100; });
+    setPlanPrices(prices);
+
     setLastUpdate(new Date());
     setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const planPrices: Record<string, number> = { starter: 197, professional: 497, enterprise: 997 };
-  const mrr = tenants.reduce((sum, t) => sum + (planPrices[t.plan] || 197), 0);
+  const mrr = tenants.reduce((sum, t) => sum + (planPrices[t.plan] || 0), 0);
   const activeTenants = tenants.filter(t => t.status === "active").length;
   const trialTenants = tenants.filter(t => t.status === "trial").length;
   const onlineAgents = attendants.filter(a => a.status === "online").length;
@@ -141,10 +148,10 @@ export default function AdminDashboard() {
     tenants.forEach(t => {
       if (!plans[t.plan]) plans[t.plan] = { count: 0, revenue: 0 };
       plans[t.plan].count++;
-      plans[t.plan].revenue += planPrices[t.plan] || 197;
+      plans[t.plan].revenue += planPrices[t.plan] || 0;
     });
     return Object.entries(plans).map(([plan, d]) => ({ plan: plan.charAt(0).toUpperCase() + plan.slice(1), ...d }));
-  }, [tenants]);
+  }, [tenants, planPrices]);
 
   // Growth chart
   const growthData = useMemo(() => {
@@ -421,7 +428,7 @@ export default function AdminDashboard() {
                       </div>
                     </td>
                     <td className="py-2.5 text-right font-mono text-xs font-medium">
-                      R$ {(planPrices[t.plan] || 197).toLocaleString("pt-BR")}
+                      R$ {(planPrices[t.plan] || 0).toLocaleString("pt-BR")}
                     </td>
                     <td className="py-2.5 text-right text-[10px] text-muted-foreground font-mono">
                       {timeAgo(t.created_at)}
