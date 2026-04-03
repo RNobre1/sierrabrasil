@@ -689,7 +689,7 @@ export default function NewAgentOnboarding() {
   if (phase === "saving") {
     return (
       <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
-        <OnboardingHeader title="Criando agente..." subtitle="Salvando configuracao" progress={90} />
+        <OnboardingHeader title="Criando agente..." subtitle="Salvando configuracao" progress={progressPct} />
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center space-y-4">
             <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
