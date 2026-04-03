@@ -547,12 +547,31 @@ Use essas informacoes naturalmente. NAO mencione que esta "lendo memorias". Demo
         .replace(/\s*\[SENTIMENT:\s*[^\]]*\]\s*/g, "")
         .trim();
 
-      // 10. Save cleaned AI response (with sentiment metadata if detected)
+      // 10. Save cleaned AI response with RAG observability metadata
+      const ragMetadata: Record<string, unknown> = {};
+      if (knowledge && knowledge.length > 0) {
+        ragMetadata.chunks_used = knowledge.length;
+        ragMetadata.top_source_type = knowledge[0]?.source_type || null;
+        ragMetadata.max_relevance = Math.max(...knowledge.map((k: any) => k.relevance || 0));
+        ragMetadata.fallback_used = ragFallbackUsed;
+      } else {
+        ragMetadata.chunks_used = 0;
+        ragMetadata.top_source_type = null;
+        ragMetadata.max_relevance = 0;
+        ragMetadata.fallback_used = ragFallbackUsed;
+      }
+      ragMetadata.has_memory = !!memory;
+      ragMetadata.grounding_check = mentionsFactual ? (finalReply === aiReply ? "OK" : "BLOCKED") : "SKIPPED";
+      ragMetadata.query_length = messageContent.length;
+
       await supabase.from("messages").insert({
         conversation_id: conversationId,
         role: "attendant",
         content: cleanReply,
-        ...(sentiment ? { metadata: { sentiment } } : {}),
+        metadata: {
+          ...(sentiment ? { sentiment } : {}),
+          ...ragMetadata,
+        },
       } as any);
 
       // 10b. Save lead data if captured
