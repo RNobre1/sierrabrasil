@@ -10,8 +10,9 @@
  */
 
 import * as pdfjsLib from "pdfjs-dist";
-import mammoth from "mammoth";
-import * as XLSX from "xlsx";
+// Dynamic imports to avoid bundler issues with heavy libs
+const importMammoth = () => import("mammoth");
+const importXLSX = () => import("xlsx");
 
 // Configure PDF.js worker from CDN matching the installed version
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -62,6 +63,7 @@ async function extractPdfText(file: File): Promise<ExtractionResult> {
 
 /** Extract text from a DOCX file using mammoth.js */
 async function extractDocxText(file: File): Promise<ExtractionResult> {
+  const mammoth = await importMammoth();
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.extractRawText({ arrayBuffer });
   const text = result.value.trim();
@@ -77,6 +79,7 @@ async function extractDocxText(file: File): Promise<ExtractionResult> {
 
 /** Extract text from XLS/XLSX using SheetJS, converting to pipe-delimited format */
 async function extractSpreadsheetText(file: File): Promise<ExtractionResult> {
+  const XLSX = await importXLSX();
   const arrayBuffer = await file.arrayBuffer();
   const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
