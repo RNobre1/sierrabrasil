@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Sparkles, User, Loader2, Rocket, CheckCircle2, Bot, Play, ArrowLeft, Headphones, TrendingUp, ArrowRight, BookOpen } from "lucide-react";
+import { Send, Sparkles, User, Loader2, Rocket, CheckCircle2, Bot, Play, ArrowLeft, Headphones, TrendingUp, ArrowRight, BookOpen, SkipForward } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -8,13 +8,17 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import SocialLinksSelector from "@/components/onboarding/SocialLinksSelector";
+import ScrapingProgress from "@/components/onboarding/ScrapingProgress";
+import { normalizeSocialUrl } from "@/lib/url-normalizer";
 
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 type DisplayMsg = { role: "user" | "assistant"; content: string };
 
-type Phase = "class-select" | "chat" | "saving" | "done";
+type Phase = "class-select" | "chat" | "saving" | "social-links" | "scraping" | "done";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
 
 const NEW_AGENT_SYSTEM_PROMPT = `## QUEM VOCE E
 Voce e o assistente de criacao de agentes da plataforma O Agente (Meteora Digital).
@@ -73,6 +77,11 @@ export default function NewAgentOnboarding() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantPlan, setTenantPlan] = useState("starter");
   const [agentCount, setAgentCount] = useState(0);
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
+  const [scrapeUrls, setScrapeUrls] = useState<string[]>([]);
+  const [scrapeResults, setScrapeResults] = useState<any[]>([]);
+  const [scrapeComplete, setScrapeComplete] = useState(false);
+  const scrapeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     requestAnimationFrame(() => {
@@ -266,7 +275,7 @@ export default function NewAgentOnboarding() {
     inputRef.current?.focus();
   };
 
-  // Save agent to database
+  // Save agent to database, then go to social-links phase
   const saveAgent = async (config: { name: string; persona: string; instructions: string }) => {
     if (!user || !tenantId || !selectedClass) return;
     setSaving(true);
@@ -304,9 +313,9 @@ export default function NewAgentOnboarding() {
 
       setCreatedAgentId(newAgent.id);
       setCreatedAgentName(config.name);
-      setPhase("done");
+      setPhase("social-links");
 
-      toast({ title: "Agente criado!", description: `${config.name} esta pronto para ser configurado.` });
+      toast({ title: "Agente criado!", description: `Agora adicione redes sociais para turbinar ${config.name}.` });
     } catch (e: unknown) {
       toast({ title: "Erro ao criar agente", description: e instanceof Error ? e.message : "Erro desconhecido", variant: "destructive" });
       setPhase("chat");
@@ -314,6 +323,83 @@ export default function NewAgentOnboarding() {
       setSaving(false);
     }
   };
+
+  // Handle social links submission — normalize URLs and start scraping
+  const handleSocialLinksSubmit = (links: Record<string, string>) => {
+    setSocialLinks(links);
+    setScrapeResults([]);
+    setScrapeComplete(false);
+
+    const urls: string[] = [];
+    Object.entries(links).forEach(([platform, val]) => {
+      if (!val) return;
+      const url = normalizeSocialUrl(platform, val);
+      if (url) urls.push(url);
+    });
+
+    if (urls.length === 0) {
+      setPhase("done");
+      return;
+    }
+
+    setScrapeUrls(urls);
+    setPhase("scraping");
+    startScraping(urls);
+  };
+
+  // Start scraping in background
+  const startScraping = async (urls: string[]) => {
+    // Auto-transition after 30s regardless
+    scrapeTimerRef.current = setTimeout(() => {
+      setScrapeComplete(true);
+      setPhase("done");
+    }, 30000);
+
+    try {
+      const resp = await fetch(SCRAPE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          urls,
+          tenantId,
+          attendantId: createdAgentId,
+        }),
+      });
+
+      const data = await resp.json().catch(() => ({}));
+
+      if (scrapeTimerRef.current) {
+        clearTimeout(scrapeTimerRef.current);
+        scrapeTimerRef.current = null;
+      }
+
+      setScrapeResults(data.results || []);
+      setScrapeComplete(true);
+
+      // Brief delay to show the completed state before transitioning
+      setTimeout(() => {
+        setPhase("done");
+      }, 1500);
+    } catch (e) {
+      console.error("Scraping error:", e);
+      if (scrapeTimerRef.current) {
+        clearTimeout(scrapeTimerRef.current);
+        scrapeTimerRef.current = null;
+      }
+      setScrapeComplete(true);
+      setPhase("done");
+    }
+  };
+
+  // Cleanup scrape timer on unmount
+  useEffect(() => {
+    return () => {
+      if (scrapeTimerRef.current) clearTimeout(scrapeTimerRef.current);
+    };
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -323,9 +409,11 @@ export default function NewAgentOnboarding() {
   };
 
   const progressPct = phase === "done" ? 100
-    : phase === "saving" ? 90
-    : phase === "chat" ? Math.min(80, 30 + messages.filter(m => m.role === "user").length * 12)
-    : 15;
+    : phase === "scraping" ? 85
+    : phase === "social-links" ? 70
+    : phase === "saving" ? 60
+    : phase === "chat" ? Math.min(55, 20 + messages.filter(m => m.role === "user").length * 8)
+    : 10;
 
   // Check limit before showing
   if (!canCreate && phase === "class-select") {
@@ -431,12 +519,75 @@ export default function NewAgentOnboarding() {
     );
   }
 
+  // ========== SOCIAL LINKS PHASE ==========
+  if (phase === "social-links") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
+        <OnboardingHeader
+          title="Redes sociais do novo agente"
+          subtitle="Adicione as redes sociais para turbinar a base de conhecimento deste agente"
+          progress={progressPct}
+        />
+        <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
+          <div className="w-full max-w-lg space-y-6 py-4">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="rounded-2xl border border-border bg-card/50 p-5"
+            >
+              <SocialLinksSelector onSubmit={handleSocialLinksSubmit} />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex justify-center"
+            >
+              <Button
+                variant="ghost"
+                onClick={() => setPhase("done")}
+                className="text-muted-foreground hover:text-foreground gap-2 text-sm"
+              >
+                <SkipForward className="h-4 w-4" />
+                Pular — adicionar depois
+              </Button>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ========== SCRAPING PHASE ==========
+  if (phase === "scraping") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
+        <OnboardingHeader
+          title="Vasculhando a web..."
+          subtitle="Nossos robos estao trabalhando — relaxe e aproveite o show"
+          progress={progressPct}
+        />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-xl space-y-6">
+            <ScrapingProgress urls={scrapeUrls} results={scrapeResults} isComplete={scrapeComplete} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ========== DONE PHASE ==========
   if (phase === "done" && createdAgentId) {
     const agentType = selectedClass === "sales" ? "vendas" : "suporte";
+    const hasSocialLinks = Object.keys(socialLinks).length > 0;
     const achievements = [
       { icon: <CheckCircle2 className="h-4 w-4" />, text: `Agente de ${agentType} criado e configurado` },
       { icon: <Sparkles className="h-4 w-4" />, text: "Persona e instrucoes definidas pela conversa" },
+      ...(hasSocialLinks
+        ? [{ icon: <CheckCircle2 className="h-4 w-4" />, text: "Redes sociais processadas na base de conhecimento" }]
+        : []),
       { icon: <Bot className="h-4 w-4" />, text: "Pronto para ser ativado e atender" },
     ];
 
@@ -508,7 +659,7 @@ export default function NewAgentOnboarding() {
                 onClick={() => navigate(`/agents/detail?id=${createdAgentId}&tab=knowledge`)}
                 className="w-full h-10 rounded-xl text-xs gap-1.5 active:scale-[0.97] transition-all duration-150"
               >
-                <BookOpen className="h-3.5 w-3.5" /> Adicionar redes sociais e documentos
+                <BookOpen className="h-3.5 w-3.5" /> Adicionar documentos a base de conhecimento
               </Button>
 
               <div className="flex gap-2">
