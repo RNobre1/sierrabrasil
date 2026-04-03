@@ -5,6 +5,8 @@ import {
   X, ArrowRight, ArrowLeft, Bot, Play, Wifi, MessageSquare,
   BarChart3, Percent, CheckCircle2, Radio, Zap
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface TourStep {
   title: string;
@@ -82,6 +84,7 @@ export default function GuidedTour({
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const [highlight, setHighlight] = useState<HighlightRect | null>(null);
+  const { user } = useAuth();
 
   const updateHighlight = useCallback(() => {
     const current = steps[step];
@@ -103,12 +106,31 @@ export default function GuidedTour({
   }, [step, steps]);
 
   useEffect(() => {
-    const done = localStorage.getItem(tourKey);
-    if (!done) {
+    // Fast check: localStorage first
+    if (localStorage.getItem(tourKey)) return;
+
+    // DB check for logged-in users
+    if (user) {
+      supabase
+        .from("profiles")
+        .select("completed_tours")
+        .eq("user_id", user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.completed_tours?.includes(tourKey)) {
+            // Sync to localStorage for future fast reads
+            localStorage.setItem(tourKey, "true");
+          } else {
+            // Not completed in DB either — show the tour
+            setTimeout(() => setVisible(true), delay);
+          }
+        });
+    } else {
+      // No user (unlikely on protected routes) — fall back to showing
       const t = setTimeout(() => setVisible(true), delay);
       return () => clearTimeout(t);
     }
-  }, [tourKey, delay]);
+  }, [tourKey, delay, user]);
 
   useEffect(() => {
     if (!visible) return;
@@ -119,7 +141,14 @@ export default function GuidedTour({
 
   const dismiss = () => {
     setVisible(false);
+    // Dual-write: localStorage (fast) + DB (persistent)
     localStorage.setItem(tourKey, "true");
+    if (user) {
+      supabase.rpc("append_completed_tour", {
+        p_user_id: user.id,
+        p_tour_key: tourKey,
+      });
+    }
   };
 
   const next = () => {

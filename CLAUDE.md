@@ -447,7 +447,7 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [ ] CI/CD pipeline (GitHub Actions → DigitalOcean)
 - [ ] Monitoramento (Sentry, logs)
 - [ ] Supabase Realtime (substituir polling)
-- [ ] pgvector para RAG semantico
+- [ ] Busca hibrida tsvector + pgvector (ou banco vetorial dedicado) para RAG semantico
 - [ ] Roteamento condicional multi-modelo
 - [ ] n8n para automacoes
 

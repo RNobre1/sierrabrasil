@@ -304,9 +304,11 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_archived: boolean | null
           metadata: Json | null
           search_vector: unknown
           source_name: string | null
+          source_priority: number | null
           source_type: string
           source_url: string | null
           tenant_id: string
@@ -317,9 +319,11 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          is_archived?: boolean | null
           metadata?: Json | null
           search_vector?: unknown
           source_name?: string | null
+          source_priority?: number | null
           source_type?: string
           source_url?: string | null
           tenant_id: string
@@ -330,9 +334,11 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          is_archived?: boolean | null
           metadata?: Json | null
           search_vector?: unknown
           source_name?: string | null
+          source_priority?: number | null
           source_type?: string
           source_url?: string | null
           tenant_id?: string
@@ -413,6 +419,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          completed_tours: string[] | null
           created_at: string
           full_name: string | null
           id: string
@@ -425,6 +432,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          completed_tours?: string[] | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -437,6 +445,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          completed_tours?: string[] | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -583,6 +592,7 @@ export type Database = {
       }
       whatsapp_instances: {
         Row: {
+          attendant_id: string | null
           connected_at: string | null
           created_at: string
           display_name: string | null
@@ -597,6 +607,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attendant_id?: string | null
           connected_at?: string | null
           created_at?: string
           display_name?: string | null
@@ -611,6 +622,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attendant_id?: string | null
           connected_at?: string | null
           created_at?: string
           display_name?: string | null
@@ -626,6 +638,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "whatsapp_instances_attendant_id_fkey"
+            columns: ["attendant_id"]
+            isOneToOne: false
+            referencedRelation: "attendants"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "whatsapp_instances_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -639,6 +658,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      append_completed_tour: {
+        Args: { p_tour_key: string; p_user_id: string }
+        Returns: undefined
+      }
       get_attendant_knowledge: {
         Args: { p_attendant_id: string; p_limit?: number }
         Returns: {
@@ -653,6 +676,17 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      search_knowledge: {
+        Args: { p_attendant_id: string; p_limit?: number; p_query: string }
+        Returns: {
+          content: string
+          id: string
+          relevance: number
+          source_name: string
+          source_priority: number
+          source_type: string
+        }[]
       }
     }
     Enums: {

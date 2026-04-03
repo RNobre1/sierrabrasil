@@ -1,10 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, Plus, Play, Settings, Headphones, TrendingUp, Zap, ChevronRight, Wifi, WifiOff, Shield, Activity, Search, X, Lock, ArrowRight } from "lucide-react";
+import { Bot, Plus, Play, Settings, Headphones, TrendingUp, Zap, ChevronRight, Wifi, WifiOff, Shield, Activity, Search, X, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import GuidedTour from "@/components/GuidedTour";
 import { AGENTS_STEPS, AGENTS_TOUR_KEY } from "@/lib/tour-steps";
 
@@ -23,6 +26,18 @@ const CLASS_CFG: Record<string, { short: string; dot: string; text: string; acce
   sales:   { short: "Vendas",  dot: "bg-emerald-400", text: "text-emerald-400", accent: "from-emerald-500/15 to-emerald-500/5 border-emerald-500/10" },
 };
 
+const MODEL_OPTIONS = [
+  { value: "anthropic/claude-sonnet-4-6", label: "Claude Sonnet", desc: "Humanizacao, empatia" },
+  { value: "anthropic/claude-haiku-4-5", label: "Claude Haiku", desc: "Velocidade + custo" },
+  { value: "openai/gpt-4.1", label: "GPT-4.1", desc: "Versatilidade" },
+  { value: "openai/gpt-4.1-mini", label: "GPT-4.1 Mini", desc: "Custo-beneficio" },
+] as const;
+
+const CLASS_OPTIONS = [
+  { value: "sales", label: "Vendas", icon: TrendingUp, dot: "bg-emerald-400", text: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/10" },
+  { value: "support", label: "Suporte", icon: Headphones, dot: "bg-blue-400", text: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-500/10" },
+] as const;
+
 function ChBadge({ ch }: { ch: string }) {
   // Only show WhatsApp for now (web and instagram are coming soon)
   if (ch !== "whatsapp") return null;
@@ -38,9 +53,16 @@ export default function Agents() {
   const [agents, setAgents] = useState<Attendant[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenantPlan, setTenantPlan] = useState("starter");
+  const [tenantId, setTenantId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [classFilters, setClassFilters] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newClass, setNewClass] = useState<"sales" | "support">("sales");
+  const [newModel, setNewModel] = useState("openai/gpt-4.1-mini");
+  const [creating, setCreating] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) return;
@@ -48,6 +70,7 @@ export default function Agents() {
       const { data: t } = await supabase.from("tenants").select("id, plan").eq("owner_id", user.id).single();
       if (!t) { setLoading(false); return; }
       setTenantPlan(t.plan);
+      setTenantId(t.id);
       const { data } = await supabase.from("attendants").select("id, name, status, channels, model, persona, class").eq("tenant_id", t.id);
       setAgents((data as any) ?? []);
       setLoading(false);
@@ -61,9 +84,56 @@ export default function Agents() {
 
   const handleCreateAgent = () => {
     if (canCreate) {
-      nav("/onboarding?newAgent=true");
+      setNewName("");
+      setNewClass("sales");
+      setNewModel("openai/gpt-4.1-mini");
+      setShowCreateModal(true);
     } else {
       setShowLimitModal(true);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!newName.trim()) {
+      toast({ title: "Nome obrigatorio", description: "Informe um nome para o agente.", variant: "destructive" });
+      return;
+    }
+    if (!tenantId) return;
+    setCreating(true);
+    try {
+      // Look up template_id based on class
+      const { data: tpl } = await supabase
+        .from("agent_templates")
+        .select("id")
+        .eq("class", newClass)
+        .limit(1)
+        .single();
+
+      const { error } = await supabase.from("attendants").insert({
+        tenant_id: tenantId,
+        name: newName.trim(),
+        class: newClass,
+        model: newModel,
+        status: "online",
+        active_skills: ["greeting", "escalation"],
+        template_id: tpl?.id ?? null,
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Agente criado!", description: `${newName.trim()} esta pronto para ser configurado.` });
+      setShowCreateModal(false);
+
+      // Refresh agents list
+      const { data } = await supabase
+        .from("attendants")
+        .select("id, name, status, channels, model, persona, class")
+        .eq("tenant_id", tenantId);
+      setAgents((data as any) ?? []);
+    } catch (e: any) {
+      toast({ title: "Erro ao criar agente", description: e.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -141,6 +211,81 @@ export default function Agents() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Create agent modal ── */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-display font-semibold text-foreground">Criar novo agente</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">Configure o basico agora. Voce pode ajustar instrucoes, persona e skills depois.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 pt-2">
+            {/* Name */}
+            <div className="space-y-2">
+              <label className="text-[12px] font-medium text-white/60">Nome do agente</label>
+              <Input
+                placeholder="Ex: Assistente de Vendas"
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                maxLength={60}
+                className="bg-white/[0.03] border-white/[0.08] text-sm"
+              />
+            </div>
+
+            {/* Class selector */}
+            <div className="space-y-2">
+              <label className="text-[12px] font-medium text-white/60">Tipo do agente</label>
+              <div className="grid grid-cols-2 gap-3">
+                {CLASS_OPTIONS.map(opt => {
+                  const Icon = opt.icon;
+                  const selected = newClass === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setNewClass(opt.value)}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        selected
+                          ? `${opt.bg} ${opt.border} ${opt.text}`
+                          : "bg-white/[0.02] border-white/[0.06] text-white/40 hover:bg-white/[0.04] hover:border-white/[0.1]"
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="text-[12px] font-semibold">{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Model selector */}
+            <div className="space-y-2">
+              <label className="text-[12px] font-medium text-white/60">Modelo de IA</label>
+              <Select value={newModel} onValueChange={setNewModel}>
+                <SelectTrigger className="bg-white/[0.03] border-white/[0.08] text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MODEL_OPTIONS.map(m => (
+                    <SelectItem key={m.value} value={m.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{m.label}</span>
+                        <span className="text-[10px] text-muted-foreground">{m.desc}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Create button */}
+            <Button onClick={handleCreate} disabled={creating || !newName.trim()} className="w-full gap-2">
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {creating ? "Criando..." : "Criar agente"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Filter bar ── */}
       <div className="flex flex-wrap items-center gap-2" data-tour="agents-filters">

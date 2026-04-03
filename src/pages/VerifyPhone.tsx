@@ -110,9 +110,20 @@ export default function VerifyPhone() {
       .select("phone_verified")
       .eq("user_id", user.id)
       .single()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (data?.phone_verified) {
-          navigate("/onboarding");
+          // Check if user already completed onboarding (has a configured attendant)
+          const { data: att } = await supabase
+            .from("attendants")
+            .select("id, status")
+            .eq("status", "online")
+            .limit(1)
+            .maybeSingle();
+          if (att) {
+            navigate("/dashboard");
+          } else {
+            navigate("/onboarding");
+          }
         } else {
           sendOtp();
         }
@@ -205,8 +216,21 @@ export default function VerifyPhone() {
     }
 
     if (data?.success) {
-      toast({ title: "Número verificado!", description: "Vamos configurar seu agente." });
-      navigate("/onboarding");
+      // Check if user already completed onboarding (returning user on new device)
+      const { data: att } = await supabase
+        .from("attendants")
+        .select("id, status")
+        .eq("status", "online")
+        .limit(1)
+        .maybeSingle();
+
+      if (att) {
+        toast({ title: "Número verificado!", description: "Bem-vindo de volta!" });
+        navigate("/dashboard");
+      } else {
+        toast({ title: "Número verificado!", description: "Vamos configurar seu agente." });
+        navigate("/onboarding");
+      }
     }
   };
 

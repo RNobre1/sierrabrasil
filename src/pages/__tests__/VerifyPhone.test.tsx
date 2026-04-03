@@ -22,10 +22,12 @@ vi.mock("@/hooks/use-toast", () => ({
   useToast: () => ({ toast: mockToast }),
 }));
 
-// Mock supabase functions invoke + from (for phone_verified check)
+// Mock supabase functions invoke + from (for phone_verified check + attendant check)
 const mockInvoke = vi.fn();
+const mockMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null }); // no online attendant = new user
+const mockLimit = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
 const mockSingle = vi.fn().mockResolvedValue({ data: { phone_verified: false }, error: null });
-const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
+const mockEq = vi.fn().mockImplementation(() => ({ single: mockSingle, limit: mockLimit, eq: mockEq }));
 const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
 const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
 vi.mock("@/integrations/supabase/client", () => ({

@@ -174,6 +174,27 @@ export default function Onboarding() {
     return () => { cancelled = true; };
   }, [user]);
 
+  // Guard: redirect to dashboard if user already completed onboarding (has a configured attendant)
+  // Skip this guard when explicitly creating a new agent via ?newAgent=true
+  useEffect(() => {
+    if (!user || isNewAgent) return;
+    let cancelled = false;
+    const checkOnboardingCompleted = async () => {
+      const { data: att } = await supabase
+        .from("attendants")
+        .select("id, status")
+        .eq("status", "online")
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (att) {
+        navigate("/dashboard", { replace: true });
+      }
+    };
+    checkOnboardingCompleted();
+    return () => { cancelled = true; };
+  }, [user, isNewAgent]);
+
   // Fetch agent templates from Supabase
   useEffect(() => {
     supabase.from("agent_templates").select("id, name, class, description, icon").then(({ data }) => {
