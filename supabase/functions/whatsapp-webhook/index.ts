@@ -162,7 +162,7 @@ serve(async (req) => {
       // 1. Find instance and tenant
       const { data: instance } = await supabase
         .from("whatsapp_instances")
-        .select("id, tenant_id")
+        .select("id, tenant_id, attendant_id")
         .eq("instance_name", instanceName)
         .single();
 
@@ -173,15 +173,36 @@ serve(async (req) => {
         });
       }
 
-      // 2. Find active attendant (with template JOIN)
-      const { data: attendant } = await supabase
+      // 2. Find the attendant linked to this instance (or fallback to first online)
+      let attendantQuery = supabase
         .from("attendants")
         .select(`id, name, persona, instructions, model, temperature, active_skills,
           agent_templates ( prompt_template )`)
-        .eq("tenant_id", instance.tenant_id)
         .eq("status", "online")
         .limit(1)
         .single();
+
+      if (instance.attendant_id) {
+        // Use the specific agent linked to this WhatsApp number
+        attendantQuery = supabase
+          .from("attendants")
+          .select(`id, name, persona, instructions, model, temperature, active_skills,
+            agent_templates ( prompt_template )`)
+          .eq("id", instance.attendant_id)
+          .single();
+      } else {
+        // Fallback: first online agent for this tenant
+        attendantQuery = supabase
+          .from("attendants")
+          .select(`id, name, persona, instructions, model, temperature, active_skills,
+            agent_templates ( prompt_template )`)
+          .eq("tenant_id", instance.tenant_id)
+          .eq("status", "online")
+          .limit(1)
+          .single();
+      }
+
+      const { data: attendant } = await attendantQuery;
 
       if (!attendant) {
         console.log("No online attendant for tenant:", instance.tenant_id);
