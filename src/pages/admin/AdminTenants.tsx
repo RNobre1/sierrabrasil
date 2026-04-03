@@ -55,12 +55,37 @@ export default function AdminTenants() {
 
   const enterTenant = async (tenant: Tenant) => {
     if (!user) return;
+
+    // Log the impersonation in audit_logs
     await supabase.from("audit_logs").insert({
       admin_user_id: user.id,
       tenant_id: tenant.id,
       action: "impersonation_start",
       details: { tenant_name: tenant.name },
     });
+
+    // Fetch admin profile name for the notification message
+    const { data: adminProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .single();
+
+    // Notify the tenant owner about the access (transparency)
+    await supabase.from("notifications").insert({
+      user_id: tenant.owner_id,
+      type: "admin_access_request",
+      title: "Acesso administrativo solicitado",
+      message: `A equipe de suporte da Meteora Digital (${adminProfile?.full_name || "Admin"}) está acessando sua conta para verificação/suporte.`,
+      action_type: "approve_deny",
+      action_data: {
+        admin_user_id: user.id,
+        admin_name: adminProfile?.full_name || "Admin",
+        tenant_id: tenant.id,
+      },
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    });
+
     startImpersonation(tenant.id, user.id);
     toast.success(`Acessando dashboard de ${tenant.name}`);
     navigate("/dashboard");

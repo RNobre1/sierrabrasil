@@ -126,6 +126,65 @@ export type Database = {
           },
         ]
       }
+      agent_memories: {
+        Row: {
+          attendant_id: string
+          consent_given: boolean | null
+          contact_phone: string
+          conversations_count: number | null
+          created_at: string | null
+          first_interaction_at: string
+          id: string
+          key_facts: Json
+          last_interaction_at: string
+          retention_until: string | null
+          search_vector: unknown
+          summary: string | null
+          token_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          attendant_id: string
+          consent_given?: boolean | null
+          contact_phone: string
+          conversations_count?: number | null
+          created_at?: string | null
+          first_interaction_at?: string
+          id?: string
+          key_facts?: Json
+          last_interaction_at?: string
+          retention_until?: string | null
+          search_vector?: unknown
+          summary?: string | null
+          token_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          attendant_id?: string
+          consent_given?: boolean | null
+          contact_phone?: string
+          conversations_count?: number | null
+          created_at?: string | null
+          first_interaction_at?: string
+          id?: string
+          key_facts?: Json
+          last_interaction_at?: string
+          retention_until?: string | null
+          search_vector?: unknown
+          summary?: string | null
+          token_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_memories_attendant_id_fkey"
+            columns: ["attendant_id"]
+            isOneToOne: false
+            referencedRelation: "attendants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_templates: {
         Row: {
           class: string
@@ -233,6 +292,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          tenant_id?: string
+        }
+        Relationships: []
       }
       conversations: {
         Row: {
@@ -383,6 +469,54 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_data: Json | null
+          action_resolved_at: string | null
+          action_result: string | null
+          action_type: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_data?: Json | null
+          action_resolved_at?: string | null
+          action_result?: string | null
+          action_type?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_data?: Json | null
+          action_resolved_at?: string | null
+          action_result?: string | null
+          action_type?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       phone_verifications: {
         Row: {
           attempts: number
@@ -416,6 +550,48 @@ export type Database = {
           phone?: string
           user_id?: string
           verified_at?: string | null
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          created_at: string | null
+          display_name: string
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_agents: number
+          max_conversations_month: number
+          max_knowledge_docs: number
+          max_knowledge_mb: number
+          max_whatsapp_numbers: number
+          price_monthly: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name: string
+          features?: Json | null
+          id: string
+          is_active?: boolean | null
+          max_agents?: number
+          max_conversations_month?: number
+          max_knowledge_docs?: number
+          max_knowledge_mb?: number
+          max_whatsapp_numbers?: number
+          price_monthly?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_agents?: number
+          max_conversations_month?: number
+          max_knowledge_docs?: number
+          max_knowledge_mb?: number
+          max_whatsapp_numbers?: number
+          price_monthly?: number | null
         }
         Relationships: []
       }
@@ -673,6 +849,7 @@ export type Database = {
           source_type: string
         }[]
       }
+      get_memory_token_limit: { Args: { p_tenant_id: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

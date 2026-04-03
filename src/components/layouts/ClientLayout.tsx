@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isImpersonating, useImpersonatedTenant } from "@/hooks/use-tenant";
 import UserMenu from "@/components/UserMenu";
+import NotificationBell from "@/components/NotificationBell";
 import AdminBanner from "@/components/AdminBanner";
 import meteoraLogoBranca from "@/assets/meteora-branca.png";
 import meteoraLogoPreta from "@/assets/meteora-preta.png";
@@ -296,6 +297,7 @@ export default function ClientLayout() {
                 <p className="text-xs font-medium truncate text-white/80">{profile?.full_name || "Usuário"}</p>
                 <p className="text-[10px] text-white/30 font-mono capitalize">{tenantPlan}</p>
               </div>
+              <NotificationBell />
               <UserMenu />
             </div>
             <div className="flex justify-center pt-1 pb-0.5">
@@ -326,6 +328,10 @@ export default function ClientLayout() {
               <span className="text-[10px] font-medium">{item.label}</span>
             </NavLink>
           ))}
+          <div className="flex flex-col items-center gap-1">
+            <NotificationBell />
+            <span className="text-[10px] font-medium text-white/40">Alertas</span>
+          </div>
           <div className="flex flex-col items-center gap-1">
             <UserMenu />
             <span className="text-[10px] font-medium text-white/40">Conta</span>
