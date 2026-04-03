@@ -17,7 +17,7 @@ type Phase = "class-select" | "chat" | "saving" | "done";
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 const NEW_AGENT_SYSTEM_PROMPT = `## QUEM VOCE E
-Voce e o assistente de criacao de agentes da plataforma The Agent (Meteora Digital).
+Voce e o assistente de criacao de agentes da plataforma O Agente (Meteora Digital).
 Seu papel: conduzir uma conversa RAPIDA (4-5 mensagens) pra configurar um novo agente virtual.
 
 ## REGRAS

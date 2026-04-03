@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 // Logica extraida do onboarding-chat/index.ts
 
 const LAYER_1_IDENTITY = `## QUEM VOCE E
-Voce e o assistente de onboarding da plataforma The Agent (Meteora Digital).`;
+Voce e o assistente de onboarding da plataforma O Agente (Meteora Digital).`;
 
 const LAYER_2_ONBOARDING = `## FLUXO DA CONVERSA
 Conduza a conversa nesta ordem, de forma ORGANICA.`;
@@ -48,7 +48,7 @@ describe("buildOnboardingPrompt", () => {
   it("contem camada 1 (identidade)", () => {
     const prompt = buildOnboardingPrompt();
     expect(prompt).toContain("QUEM VOCE E");
-    expect(prompt).toContain("The Agent");
+    expect(prompt).toContain("O Agente");
   });
 
   it("contem camada 2 (fluxo de onboarding)", () => {

@@ -54,7 +54,7 @@ export default function Index() {
             <img src={meteoraLogo} alt="Meteora Digital" className="h-7 dark:block hidden" />
             <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-7 dark:hidden block" />
             <span className="text-muted-foreground/40 text-sm">|</span>
-            <span className="text-sm font-semibold text-foreground">The Agent</span>
+            <span className="text-sm font-semibold text-foreground">O Agente</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Entrar</Button></Link>
@@ -81,7 +81,7 @@ export default function Index() {
             <span className="text-gradient">Vende, atende e resolve</span>.
           </h1>
           <p className="mt-8 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            The Agent entrega um atendente autônomo para o seu negócio. Ele não é chatbot — ele conversa com seus clientes no WhatsApp, agenda, cobra, faz follow-up e escala para humano quando precisa. Você descreve seu negócio e em minutos ele está operando.
+            O Agente entrega um atendente autônomo para o seu negócio. Ele não é chatbot — ele conversa com seus clientes no WhatsApp, agenda, cobra, faz follow-up e escala para humano quando precisa. Você descreve seu negócio e em minutos ele está operando.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/signup">
@@ -119,7 +119,7 @@ export default function Index() {
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">O que o The Agent faz pelo seu negócio</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">O que o O Agente faz pelo seu negócio</h2>
             <p className="mt-4 text-muted-foreground">Não é chatbot. Não é menu "digite 1, 2, 3". É um atendente completo que opera como uma pessoa treinada.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -221,7 +221,7 @@ export default function Index() {
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-5xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Negócios reais usando o The Agent</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Negócios reais usando o O Agente</h2>
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             {testimonials.map((t, i) => (
@@ -264,7 +264,7 @@ export default function Index() {
           <div className="flex items-center gap-3">
             <img src={meteoraLogo} alt="Meteora Digital" className="h-5 dark:block hidden" />
             <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-5 dark:hidden block" />
-            <span className="text-[10px] sm:text-xs text-muted-foreground">© 2026 The Agent · Powered by Meteora Digital</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">© 2026 O Agente · Powered by Meteora Digital</span>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <MeteoraSeal size="small" />
