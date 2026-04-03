@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import VerifyPhone from "./pages/VerifyPhone";
 import Onboarding from "./pages/Onboarding";
+import NewAgentOnboarding from "./pages/NewAgentOnboarding";
 import NotFound from "./pages/NotFound";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/verify-phone" element={<VerifyPhone />} />
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/onboarding/new-agent" element={<ProtectedRoute><NewAgentOnboarding /></ProtectedRoute>} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacidade" element={<Privacy />} />
             <Route path="/termos" element={<Terms />} />

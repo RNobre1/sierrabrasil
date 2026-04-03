@@ -84,10 +84,7 @@ export default function Agents() {
 
   const handleCreateAgent = () => {
     if (canCreate) {
-      setNewName("");
-      setNewClass("sales");
-      setNewModel("openai/gpt-4.1-mini");
-      setShowCreateModal(true);
+      nav("/onboarding/new-agent");
     } else {
       setShowLimitModal(true);
     }
