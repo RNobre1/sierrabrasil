@@ -341,7 +341,7 @@ agent_memories (
 
 - `subscriptions` — subscription_id, stripe_customer_id, plan, status, period
 - `addon_subscriptions` — tenant_id, skill_id, stripe_subscription_item_id
-- `audit_logs` — Registro de mudancas de plano/assinatura
+- `audit_logs` — Log de impersonation admin (DONE) + registro de mudancas de plano (pos-MVP Stripe)
 - `agent_memories` — Memoria persistente por contato (proximo item MVP)
 
 ### Tiers de Skills por Plano
@@ -423,8 +423,7 @@ Ver cronograma detalhado em `docs/cronograma-mvp.md`.
 - [x] 158 testes passando
 
 ### TODO (Ordem de Execucao)
-1. **Pipeline RAG (Excelencia em Respostas)** — DONE (Sprint 1 + grounding). Progresso em `docs/progresso/progresso-rag-mvp.md`. Pendente: suporte DOC/DOCX/XLS/XLSX, integracao observabilidade.
-2. **Suporte DOC/DOCX/XLS/XLSX** — Adicionar mammoth.js (DOCX) e SheetJS (XLSX) no frontend para extracao client-side. Hoje aceita no input mas pede conversao.
+1. **Pipeline RAG (Excelencia em Respostas)** — DONE. Inclui: tsvector retrieval, source_priority, curadoria scraper, grounding check, DOCX/XLSX extraction, observabilidade em messages.metadata.
 3. **Memoria do agente** — Tabela `agent_memories`, sumarizacao automatica ao final de conversas, injecao no prompt, TTL configuravel. Aba "Memoria" no AgentDetail ja existe (placeholder). Prompt de pesquisa em `docs/pesquisas/prompt-pesquisa-memoria-agente.md`.
 4. **Filtro de Contatos (Whitelist/Blacklist)** — Tabela `contact_rules`, funcao SQL `should_respond_to_contact`, integracao webhook, UI de configuracao. Detalhes em `docs/planos/plano-filtro-contatos.md`
 5. **Audit de seguranca completa** — Pesquisa + pentest + correcoes (prompt Perplexity em `docs/cronograma-mvp.md`)
