@@ -52,6 +52,14 @@ function mergeMemories(
     ]),
   ];
 
+  // For identity fields (nome, empresa), preserve the FIRST value (client-given name is more reliable)
+  const preserveFields = ["nome", "empresa"];
+  for (const field of preserveFields) {
+    if (existingFacts[field] && filteredNewFacts[field]) {
+      delete filteredNewFacts[field]; // keep original
+    }
+  }
+
   return {
     summary: `${existing.summary}\n\n[${new Date().toLocaleDateString("pt-BR")}] ${newData.summary}`,
     key_facts: {
@@ -85,11 +93,12 @@ Analise a conversa abaixo e extraia:
 7. Proximos passos: Follow-ups acordados, pendencias
 
 REGRAS:
-- Extraia APENAS fatos explicitamente mencionados
+- Extraia APENAS fatos explicitamente mencionados na conversa
 - NAO invente ou infira informacoes
 - Se algo nao foi mencionado, deixe vazio
 - Use texto conciso e objetivo
 - Priorize informacoes uteis para conversas futuras
+- NOME: Se o cliente se apresentou com um nome na conversa (ex: "meu nome e Carlos"), use ESSE nome, mesmo que o nome do contato no sistema seja diferente. O nome que o cliente deu tem prioridade sobre o nome do perfil do WhatsApp.
 
 Conversa:
 {MENSAGENS}

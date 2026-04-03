@@ -3,8 +3,10 @@ import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { isImpersonating, stopImpersonation, useImpersonatedTenant } from "@/hooks/use-tenant";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AdminBanner() {
+  const { user } = useAuth();
   const tenantId = useImpersonatedTenant();
   const [tenantName, setTenantName] = useState("");
 
@@ -20,7 +22,15 @@ export default function AdminBanner() {
 
   if (!isImpersonating()) return null;
 
-  const exitImpersonation = () => {
+  const exitImpersonation = async () => {
+    if (tenantId && user) {
+      await supabase.from("audit_logs").insert({
+        admin_user_id: user.id,
+        tenant_id: tenantId,
+        action: "impersonation_end",
+        details: {},
+      });
+    }
     stopImpersonation();
     window.location.href = "/admin/tenants";
   };

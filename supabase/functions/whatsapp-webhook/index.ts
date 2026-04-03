@@ -368,6 +368,7 @@ Use essas informacoes naturalmente. NAO mencione que esta "lendo memorias". Demo
 
       // Knowledge base — tsvector-based RAG retrieval
       let knowledge: any[] = [];
+      let ragFallbackUsed = false;
       if (messageContent) {
         const { data: relevant } = await supabase.rpc('search_knowledge', {
           p_attendant_id: attendant.id,
@@ -390,6 +391,7 @@ Use essas informacoes naturalmente. NAO mencione que esta "lendo memorias". Demo
           .order("created_at", { ascending: false })
           .limit(8);
         knowledge = fallback || [];
+        ragFallbackUsed = true;
       }
 
       if (knowledge.length > 0) {
@@ -479,7 +481,8 @@ Use essas informacoes naturalmente. NAO mencione que esta "lendo memorias". Demo
 
       // 8b. Grounding check — verify factual claims against knowledge base
       let finalReply = aiReply;
-      const mentionsFactual = /R\$|reais|plano|mega|instalação|instalacao|fidelidade|preco|preço|valor/i.test(aiReply);
+      // Only trigger grounding check when the AI response contains SPECIFIC factual claims (prices, plan details with numbers)
+      const mentionsFactual = /R\$\s*\d|reais|(\d+\s*(mega|mb|gb))|instalação.*grát|fidelidade.*\d|preco.*\d|preço.*\d|\d+[.,]\d{2}/i.test(aiReply);
       if (mentionsFactual && knowledge.length > 0 && OPENROUTER_API_KEY) {
         try {
           const kbContext = knowledge.map((k: any) => k.content).join("\n---\n").slice(0, 4000);

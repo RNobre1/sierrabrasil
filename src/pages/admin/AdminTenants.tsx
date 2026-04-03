@@ -55,15 +55,11 @@ export default function AdminTenants() {
 
   const enterTenant = async (tenant: Tenant) => {
     if (!user) return;
-    // Audit log in system_config
-    await supabase.from("system_config").insert({
-      key: `admin_access_${Date.now()}`,
-      value: {
-        admin_id: user.id,
-        tenant_id: tenant.id,
-        tenant_name: tenant.name,
-        accessed_at: new Date().toISOString(),
-      } as any,
+    await supabase.from("audit_logs").insert({
+      admin_user_id: user.id,
+      tenant_id: tenant.id,
+      action: "impersonation_start",
+      details: { tenant_name: tenant.name },
     });
     startImpersonation(tenant.id, user.id);
     toast.success(`Acessando dashboard de ${tenant.name}`);

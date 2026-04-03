@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell
@@ -68,7 +69,8 @@ function StBadge({ st }: { st: string }) {
 /* ═══════════════════════════════════════ */
 export default function Dashboard() {
   const nav = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const { toast } = useToast();
   const [attendants, setAttendants] = useState<Attendant[]>([]);
   const [recentConvs, setRecentConvs] = useState<Conversation[]>([]);
   const [allConvs, setAllConvs] = useState<Conversation[]>([]);
@@ -163,6 +165,34 @@ export default function Dashboard() {
     const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
+
+  // Check for recent admin access (only for non-admin users)
+  useEffect(() => {
+    if (!user || isAdmin) return;
+    (async () => {
+      const { data: tenant } = await supabase
+        .from("tenants")
+        .select("id")
+        .eq("owner_id", user.id)
+        .single();
+      if (!tenant) return;
+      const { data: recentAccess } = await supabase
+        .from("audit_logs")
+        .select("admin_user_id, created_at, details")
+        .eq("tenant_id", tenant.id)
+        .eq("action", "impersonation_start")
+        .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (recentAccess && recentAccess.length > 0) {
+        toast({
+          title: "Acesso administrativo",
+          description: `A equipe de suporte da Meteora acessou sua conta em ${new Date(recentAccess[0].created_at).toLocaleDateString("pt-BR")} para verificação/suporte.`,
+        });
+      }
+    })();
+  }, [user, isAdmin]);
 
   /* metrics — deduplicate by contact where appropriate */
   const uniqueContacts = new Set(allConvs.map(c => c.contact_name));

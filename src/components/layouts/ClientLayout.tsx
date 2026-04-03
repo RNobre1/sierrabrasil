@@ -103,6 +103,7 @@ export default function ClientLayout() {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   const impersonatedTenant = useImpersonatedTenant();
+  const impersonating = isImpersonating();
 
   useEffect(() => {
     if (!user) return;
@@ -114,12 +115,24 @@ export default function ClientLayout() {
     });
   }, [user, impersonatedTenant]);
 
+  // Log page views when admin is impersonating a tenant
+  useEffect(() => {
+    if (!impersonating || !user) return;
+    const tenantId = localStorage.getItem("admin_impersonating_tenant");
+    if (!tenantId) return;
+
+    supabase.from("audit_logs").insert({
+      admin_user_id: user.id,
+      tenant_id: tenantId,
+      action: "impersonation_page_view",
+      details: { page: location.pathname },
+    }).then(() => {});
+  }, [location.pathname, impersonating, user]);
+
   const isLightMode = typeof document !== "undefined" && document.documentElement.classList.contains("light");
   const logo = isLightMode ? meteoraLogoPreta : meteoraLogoBranca;
 
   const initials = (profile?.full_name || "U").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
-
-  const impersonating = isImpersonating();
 
   return (
     <div className={`flex min-h-screen w-full bg-background ${impersonating ? "pt-10" : ""}`}>
