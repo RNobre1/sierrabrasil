@@ -133,6 +133,8 @@ export default function Account() {
   const isGoogleUser = user?.app_metadata?.provider === "google" || false;
   const hasPassword = !isGoogleUser; // Mock
 
+  const [planInfo, setPlanInfo] = useState<{ id: string; display_name: string; max_agents: number; max_conversations_month: number } | null>(null);
+
   const [initialValues, setInitialValues] = useState({ fullName: "", phone: "" });
   const isDirty = useMemo(
     () => fullName !== initialValues.fullName,
@@ -176,6 +178,17 @@ export default function Account() {
       setUsernameChangedAt((profile as any).username_changed_at ?? null);
     }
   }, [profile, user]);
+
+  // Fetch plan info from plans table
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: tenant } = await supabase.from("tenants").select("plan").eq("owner_id", user.id).single();
+      if (!tenant?.plan) return;
+      const { data: plan } = await supabase.from("plans").select("id, display_name, max_agents, max_conversations_month").eq("id", tenant.plan).single();
+      if (plan) setPlanInfo(plan as any);
+    })();
+  }, [user]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -502,22 +515,13 @@ export default function Account() {
         <CardContent>
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
             <div>
-              <p className="text-sm font-semibold capitalize">Professional</p>
-              <p className="text-xs text-muted-foreground">Gerenciamento de planos em breve</p>
+              <p className="text-sm font-semibold">{planInfo?.display_name || "Carregando..."}</p>
+              <p className="text-xs text-muted-foreground">
+                {planInfo ? `Até ${planInfo.max_agents} agente${planInfo.max_agents > 1 ? "s" : ""} · ${planInfo.max_conversations_month >= 999999 ? "Conversas ilimitadas" : `${planInfo.max_conversations_month} conversas/mês`}` : ""}
+              </p>
             </div>
-            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">Em breve</span>
+            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">Gerenciamento em breve</span>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-destructive/20">
-        <CardHeader>
-          <CardTitle className="text-base font-display text-destructive">Zona de perigo</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button variant="destructive" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" /> Sair da conta
-          </Button>
         </CardContent>
       </Card>
 

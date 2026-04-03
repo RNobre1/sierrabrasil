@@ -95,7 +95,7 @@ export default function UserMenu() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => navigate("/account")} className="gap-2.5 cursor-pointer px-3 py-2">
+        <DropdownMenuItem onClick={() => { navigate("/account"); setTimeout(() => document.querySelector('[data-tour="account-plan"]')?.scrollIntoView({ behavior: "smooth" }), 100); }} className="gap-2.5 cursor-pointer px-3 py-2">
           <CreditCard className="h-4 w-4 text-muted-foreground" /> Meu Plano
         </DropdownMenuItem>
         <DropdownMenuItem className="gap-2.5 cursor-pointer px-3 py-2" disabled>
