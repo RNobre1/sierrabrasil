@@ -68,9 +68,6 @@ export default function UserMenu() {
         <DropdownMenuItem onClick={() => navigate("/account")} className="gap-2.5 cursor-pointer px-3 py-2">
           <User className="h-4 w-4 text-muted-foreground" /> Perfil
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/attendant/config")} className="gap-2.5 cursor-pointer px-3 py-2">
-          <Settings className="h-4 w-4 text-muted-foreground" /> Configurações
-        </DropdownMenuItem>
 
         {isAdmin && (
           <DropdownMenuItem onClick={() => navigate("/admin/dashboard")} className="gap-2.5 cursor-pointer px-3 py-2">

@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Power, PowerOff, Settings, Play, Zap, BookOpen, Brain, Sparkles, Headphones, TrendingUp } from "lucide-react";
+import { ArrowLeft, Power, PowerOff, Settings, Play, Zap, BookOpen, Brain, Sparkles, Headphones, TrendingUp, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import AgentSkillsTab from "@/components/agents/AgentSkillsTab";
 import AgentKnowledgeTab from "@/components/agents/AgentKnowledgeTab";
 import AgentMemoryTab from "@/components/agents/AgentMemoryTab";
@@ -35,6 +48,8 @@ export default function AgentDetail() {
   const [activeTab, setActiveTab] = useState("config");
   const [knowledgeBase, setKnowledgeBase] = useState<any[]>([]);
   const [kbLoading, setKbLoading] = useState(true);
+  const [agentCount, setAgentCount] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!user || !agentId) return;
@@ -45,6 +60,12 @@ export default function AgentDetail() {
       setTenantId(tenant.id);
       const { data } = await supabase.from("attendants").select("*").eq("id", agentId).single();
       if (data) setAgent(data);
+
+      const { count } = await supabase
+        .from("attendants")
+        .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenant.id);
+      setAgentCount(count ?? 0);
 
       const { data: kbData } = await supabase
         .from("knowledge_base")
@@ -72,6 +93,36 @@ export default function AgentDetail() {
     if (!agent) return;
     await supabase.from("attendants").update({ icon: iconId }).eq("id", agent.id);
     setAgent({ ...agent, icon: iconId });
+  };
+
+  const isLastAgent = agentCount <= 1;
+
+  const handleDeleteAgent = async () => {
+    if (!agent || isLastAgent) return;
+    setDeleting(true);
+    try {
+      // Unlink whatsapp instances tied to this agent
+      await supabase
+        .from("whatsapp_instances")
+        .update({ attendant_id: null })
+        .eq("attendant_id", agent.id);
+
+      // Delete the agent (CASCADE handles conversations, messages, knowledge_base, agent_faqs, agent_leads)
+      const { error } = await supabase
+        .from("attendants")
+        .delete()
+        .eq("id", agent.id);
+
+      if (error) throw error;
+
+      toast.success("Agente excluído com sucesso.");
+      navigate("/agents");
+    } catch (err: any) {
+      console.error("Erro ao excluir agente:", err);
+      toast.error("Erro ao excluir agente. Tente novamente.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) {
@@ -256,6 +307,89 @@ export default function AgentDetail() {
           </Card>
         </div>
       </div>
+
+      {/* Danger Zone */}
+      <Card className="border-destructive/20 bg-destructive/[0.02] shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold text-destructive flex items-center gap-2">
+            <Trash2 className="h-4 w-4" />
+            Zona de perigo
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-sm text-foreground font-medium">Excluir este agente</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Essa ação é irreversível e removerá todos os dados associados.
+            </p>
+          </div>
+
+          {isLastAgent ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0} className="inline-flex">
+                    <Button variant="destructive" size="sm" className="gap-1.5 text-xs" disabled>
+                      <Trash2 className="h-3.5 w-3.5" /> Excluir agente
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Você precisa ter pelo menos um agente.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="gap-1.5 text-xs">
+                  <Trash2 className="h-3.5 w-3.5" /> Excluir agente
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-destructive">
+                    Excluir agente permanentemente
+                  </AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-3">
+                      <p>Ao excluir este agente, você perderá permanentemente:</p>
+                      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                        <li>Todas as conversas e mensagens deste agente</li>
+                        <li>A base de conhecimento (documentos, redes sociais)</li>
+                        <li>As configurações, instruções e personalidade</li>
+                        <li>O número de WhatsApp vinculado será desconectado</li>
+                        <li>Os leads capturados por este agente</li>
+                        <li>As perguntas frequentes (FAQ) configuradas</li>
+                      </ul>
+                      <p className="font-medium text-foreground">Esta ação não pode ser desfeita.</p>
+                      <p className="text-xs text-muted-foreground/80">
+                        Você pode criar um novo agente a qualquer momento clicando em "Novo Agente" na página de Agentes.
+                      </p>
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAgent}
+                    disabled={deleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5"
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Excluindo...
+                      </>
+                    ) : (
+                      "Excluir permanentemente"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </CardContent>
+      </Card>
 
       <GuidedTour steps={AGENT_DETAIL_STEPS} tourKey={AGENT_DETAIL_TOUR_KEY} />
     </div>

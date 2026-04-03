@@ -252,7 +252,7 @@ export default function Integrations() {
         </div>
       )}
 
-      <GuidedTour steps={INTEGRATIONS_STEPS} tourKey={INTEGRATIONS_TOUR_KEY} />
+      {/* Tour disabled while page is "coming soon" */}
     </div>
   );
 }

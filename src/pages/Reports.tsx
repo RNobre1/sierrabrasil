@@ -212,8 +212,11 @@ export default function Reports() {
         </div>
       </div>
 
+      {/* All content blurred behind overlay */}
+      <div className="blur-[2px] opacity-60 pointer-events-none space-y-8">
+
       {/* Header + Agent Filter */}
-      <div className="flex flex-col gap-4 blur-[2px] opacity-60 pointer-events-none">
+      <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-display font-semibold">Relatórios</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">Métricas, análises e relatórios automáticos</p>
@@ -581,7 +584,7 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      <GuidedTour steps={REPORTS_STEPS} tourKey={REPORTS_TOUR_KEY} />
+      </div>{/* end blur wrapper */}
     </div>
   );
 }
