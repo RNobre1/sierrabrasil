@@ -132,7 +132,7 @@ export default function AttendantPlayground() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] max-w-3xl">
+    <div className="flex flex-col h-[calc(100vh-180px)] sm:h-[calc(100vh-120px)] max-w-3xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>

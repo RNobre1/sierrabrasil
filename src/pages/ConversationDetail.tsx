@@ -259,32 +259,35 @@ export default function ConversationDetail() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-4" data-tour="conv-detail-header">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/conversations")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-display font-semibold">{conversation.contact_name}</h1>
-            <Badge variant={st.variant}>{st.label}</Badge>
-            {hasMemory && (
-              <Badge variant="outline" className="gap-1 pr-2.5 text-[11px] font-medium border-cosmos-violet/30 text-cosmos-violet bg-cosmos-violet/10">
-                <Brain className="h-3 w-3" /> Agente lembra deste contato
-              </Badge>
-            )}
-            {!isReadOnly && (
-              <Badge variant="outline" className={`gap-1 pr-3 text-[11px] font-medium border ${isHuman ? "border-amber-500/30 text-amber-500 bg-amber-500/10 dark:text-amber-400 dark:bg-amber-500/10" : "border-emerald-500/30 text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 dark:bg-emerald-500/10"}`}>
-                {isHuman ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
-                {isHuman ? "Atendimento Humano" : "IA Ativa"}
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-            {conversation.contact_phone && (
-              <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {formatPhoneDisplay(conversation.contact_phone)}</span>
-            )}
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {duration()}</span>
-            <span className="flex items-center gap-1"><Hash className="h-3 w-3 capitalize" /> {conversation.channel}</span>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4" data-tour="conv-detail-header">
+        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/conversations")} className="shrink-0">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h1 className="text-base sm:text-lg font-display font-semibold truncate">{conversation.contact_name}</h1>
+              <Badge variant={st.variant}>{st.label}</Badge>
+              {hasMemory && (
+                <Badge variant="outline" className="gap-1 pr-2.5 text-[10px] sm:text-[11px] font-medium border-cosmos-violet/30 text-cosmos-violet bg-cosmos-violet/10">
+                  <Brain className="h-3 w-3" /> <span className="hidden sm:inline">Agente lembra deste contato</span><span className="sm:hidden">Lembra</span>
+                </Badge>
+              )}
+              {!isReadOnly && (
+                <Badge variant="outline" className={`gap-1 pr-2 sm:pr-3 text-[10px] sm:text-[11px] font-medium border ${isHuman ? "border-amber-500/30 text-amber-500 bg-amber-500/10 dark:text-amber-400 dark:bg-amber-500/10" : "border-emerald-500/30 text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 dark:bg-emerald-500/10"}`}>
+                  {isHuman ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+                  <span className="hidden sm:inline">{isHuman ? "Atendimento Humano" : "IA Ativa"}</span>
+                  <span className="sm:hidden">{isHuman ? "Humano" : "IA"}</span>
+                </Badge>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground mt-1">
+              {conversation.contact_phone && (
+                <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {formatPhoneDisplay(conversation.contact_phone)}</span>
+              )}
+              <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {duration()}</span>
+              <span className="flex items-center gap-1"><Hash className="h-3 w-3 capitalize" /> {conversation.channel}</span>
+            </div>
           </div>
         </div>
         {!isReadOnly && (
@@ -294,7 +297,7 @@ export default function ConversationDetail() {
             size="sm"
             onClick={toggleHandover}
             disabled={toggling}
-            className={`gap-1.5 text-xs transition-colors ${
+            className={`gap-1.5 text-xs transition-colors shrink-0 self-end sm:self-auto ${
               !isHuman ? "bg-cosmos-indigo hover:bg-cosmos-indigo/90 text-white shadow-cosmos-sm hover:shadow-glow-indigo border-transparent" : "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
             }`}
           >
@@ -322,8 +325,8 @@ export default function ConversationDetail() {
       )}
 
       {/* Chat */}
-      <Card className="p-4" data-tour="conv-detail-messages">
-        <div className="space-y-4 max-h-[calc(100vh-220px)] overflow-y-auto">
+      <Card className="p-3 sm:p-4" data-tour="conv-detail-messages">
+        <div className="space-y-4 max-h-[calc(100vh-300px)] sm:max-h-[calc(100vh-220px)] overflow-y-auto">
           {messages.map((msg) => {
             if (msg.role === "system") {
               return (
@@ -339,7 +342,7 @@ export default function ConversationDetail() {
             const sentiment = isContact && msg.metadata?.sentiment ? sentimentConfig[msg.metadata.sentiment] : null;
             return (
               <div key={msg.id} className={`flex ${isContact ? "justify-start" : "justify-end"}`}>
-                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2.5 ${
                   isContact
                     ? "bg-muted text-foreground rounded-bl-md"
                     : "bg-primary text-primary-foreground rounded-br-md"

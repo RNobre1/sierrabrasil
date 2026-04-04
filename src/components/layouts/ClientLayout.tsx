@@ -309,7 +309,7 @@ export default function ClientLayout() {
 
       {/* Main content */}
       <main className={`flex-1 cosmos-glow ${!isMobile ? "ml-[240px]" : ""} ${isMobile ? "pb-20" : ""}`}>
-        <div className="mx-auto max-w-[1100px] p-4 md:p-6 page-enter">
+        <div className="mx-auto max-w-[1100px] px-3 py-4 sm:p-4 md:p-6 page-enter">
           <Outlet />
         </div>
       </main>

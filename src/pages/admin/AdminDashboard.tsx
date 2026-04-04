@@ -197,7 +197,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-5 max-w-[1600px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-xl font-display font-bold tracking-tight">Mission Control</h1>
           <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider mt-0.5">Meteora Digital — Painel Administrativo</p>
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Secondary KPIs */}
-      <div className="grid grid-cols-3 gap-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:grid-cols-6">
         <StatCard icon={Activity} label="Online" value={String(onlineAgents)} color="hsl(152, 69%, 41%)" sub="agentes ativos" />
         <StatCard icon={Zap} label="Msg/Conv" value={avgMsgPerConv} color="hsl(217, 91%, 60%)" sub="média geral" />
         <StatCard icon={DollarSign} label="Custo IA" value={estimatedCost} color="hsl(38, 92%, 55%)" sub="estimado" />
@@ -255,7 +255,7 @@ export default function AdminDashboard() {
       <DashDivider label="Análises" icon={BarChart3} />
 
       {/* Charts Row */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
         {/* Growth */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
@@ -317,7 +317,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Revenue + Status Row */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">

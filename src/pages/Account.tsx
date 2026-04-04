@@ -372,20 +372,22 @@ export default function Account() {
               </Badge>
             </Label>
             {editingEmail ? (
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input value={newEmail} onChange={e => setNewEmail(e.target.value)} type="email" className="flex-1" />
-                <Button size="sm" className="h-10" onClick={() => {
-                  if (!hasPassword && isGoogleUser) { setShowCreatePassword(true); setEditingEmail(false); return; }
-                  setShowEmailOTP(true);
-                }}>
-                  Verificar
-                </Button>
-                <Button size="sm" variant="ghost" className="h-10" onClick={() => setEditingEmail(false)}>Cancelar</Button>
+                <div className="flex gap-2">
+                  <Button size="sm" className="h-10 flex-1 sm:flex-initial" onClick={() => {
+                    if (!hasPassword && isGoogleUser) { setShowCreatePassword(true); setEditingEmail(false); return; }
+                    setShowEmailOTP(true);
+                  }}>
+                    Verificar
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-10 flex-1 sm:flex-initial" onClick={() => setEditingEmail(false)}>Cancelar</Button>
+                </div>
               </div>
             ) : (
               <div className="flex gap-2">
                 <Input value={user?.email ?? ""} disabled className="flex-1 bg-muted" />
-                <Button size="sm" variant="outline" className="h-10" onClick={() => setEditingEmail(true)}>
+                <Button size="sm" variant="outline" className="h-10 shrink-0" onClick={() => setEditingEmail(true)}>
                   Alterar
                 </Button>
               </div>
@@ -405,15 +407,17 @@ export default function Account() {
             </Label>
             {editingPhone && !showPhoneOTP ? (
               <div className="space-y-2">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">+55</span>
                     <PhoneInput value={newPhone} onAccept={(val, unmasked) => { setNewPhone(val); setNewPhoneDigits(unmasked); }} className="pl-10" />
                   </div>
-                  <Button size="sm" className="h-10" onClick={() => setShowPhoneOTP(true)} disabled={newPhoneDigits.length < 10}>
-                    Verificar
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-10" onClick={() => { setEditingPhone(false); setNewPhone(""); setNewPhoneDigits(""); }}>Cancelar</Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="h-10 flex-1 sm:flex-initial" onClick={() => setShowPhoneOTP(true)} disabled={newPhoneDigits.length < 10}>
+                      Verificar
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-10 flex-1 sm:flex-initial" onClick={() => { setEditingPhone(false); setNewPhone(""); setNewPhoneDigits(""); }}>Cancelar</Button>
+                  </div>
                 </div>
               </div>
             ) : showPhoneOTP ? (
@@ -472,9 +476,9 @@ export default function Account() {
             <CardDescription>Gerencie sua conexão com o Google</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between rounded-lg border border-border p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-border p-4">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
                   <svg className="h-4 w-4" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -482,15 +486,15 @@ export default function Account() {
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-medium">Google conectado</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                 </div>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs gap-1.5"
+                className="text-xs gap-1.5 shrink-0"
                 disabled={!hasPassword}
                 onClick={() => toast({ title: "Em breve", description: "Desconexão do Google será ativada em breve." })}
               >
@@ -509,14 +513,14 @@ export default function Account() {
           <CardTitle className="text-base font-display">Plano atual</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between rounded-lg border border-border p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 rounded-lg border border-border p-4">
             <div>
               <p className="text-sm font-semibold">{planInfo?.display_name || "Carregando..."}</p>
               <p className="text-xs text-muted-foreground">
                 {planInfo ? `Até ${planInfo.max_agents} agente${planInfo.max_agents > 1 ? "s" : ""} · ${planInfo.max_conversations_month >= 999999 ? "Conversas ilimitadas" : `${planInfo.max_conversations_month} conversas/mês`}` : ""}
               </p>
             </div>
-            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">Gerenciamento em breve</span>
+            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full whitespace-nowrap shrink-0">Gerenciamento em breve</span>
           </div>
         </CardContent>
       </Card>

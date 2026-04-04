@@ -130,12 +130,12 @@ export default function AdminConsumption() {
 
   return (
     <div className="space-y-5 max-w-[1600px] mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-xl font-display font-bold tracking-tight">Consumo de IA</h1>
           <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider mt-0.5">Monitoramento de uso por tenant</p>
         </div>
-        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => { setLoading(true); fetchData(); }}>
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 self-end sm:self-auto" onClick={() => { setLoading(true); fetchData(); }}>
           <RefreshCw className="w-3.5 h-3.5" /> Atualizar
         </Button>
       </div>
@@ -150,7 +150,7 @@ export default function AdminConsumption() {
 
       <DashDivider label="Visualizações" icon={BarChart3} />
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
         {/* Bar chart */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">

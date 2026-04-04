@@ -238,9 +238,9 @@ export default function Dashboard() {
   if (loading) return (
     <div className="space-y-3">
       <div className="h-6 w-36 skeleton-cosmos rounded" />
-      <div className="grid grid-cols-4 gap-2.5">{[...Array(4)].map((_, i) => <div key={i} className="h-[88px] skeleton-cosmos rounded-xl" />)}</div>
-      <div className="grid grid-cols-5 gap-2.5"><div className="col-span-3 h-[260px] skeleton-cosmos rounded-xl" /><div className="col-span-2 h-[260px] skeleton-cosmos rounded-xl" /></div>
-      <div className="grid grid-cols-3 gap-2.5">{[...Array(3)].map((_, i) => <div key={i} className="h-[160px] skeleton-cosmos rounded-xl" />)}</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">{[...Array(4)].map((_, i) => <div key={i} className="h-[88px] skeleton-cosmos rounded-xl" />)}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2.5"><div className="lg:col-span-3 h-[260px] skeleton-cosmos rounded-xl" /><div className="lg:col-span-2 h-[260px] skeleton-cosmos rounded-xl" /></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">{[...Array(3)].map((_, i) => <div key={i} className="h-[160px] skeleton-cosmos rounded-xl" />)}</div>
     </div>
   );
 
@@ -321,7 +321,7 @@ export default function Dashboard() {
             </button>
           </div>
           <div className="px-3 pb-3">
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
               {attendants.slice(0, 12).map(a => {
                 const isCustom = isCustomIcon(a.icon);
                 const AIcon = isCustom ? null : getAgentIcon(a.icon);
@@ -499,21 +499,22 @@ export default function Dashboard() {
               </div>
               <div className="divide-y divide-white/[0.02]">
                 {leads.map(l => (
-                  <div key={l.id} className="grid grid-cols-[1fr_130px_130px_60px_70px] items-center gap-3 px-4 py-2.5 hover:bg-white/[0.01] transition-all">
+                  <div key={l.id} className="flex flex-col gap-1.5 px-4 py-2.5 hover:bg-white/[0.01] transition-all sm:grid sm:grid-cols-[1fr_130px_130px_60px_70px] sm:items-center sm:gap-3">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className={`h-6 w-6 shrink-0 rounded-md flex items-center justify-center text-white font-display font-bold text-[7px] ${pick(l.contact_name || "?")}`}>
                         {ini(l.contact_name || "?")}
                       </div>
                       <span className="text-[11px] font-medium text-white/70 truncate">{l.contact_name || "Sem nome"}</span>
+                      <span className="sm:hidden text-[8px] text-white/12 font-mono tabular-nums ml-auto">{ago(l.created_at)}</span>
                     </div>
-                    <span className="text-[10px] text-white/30 font-mono flex items-center gap-1 truncate">
+                    <span className="text-[10px] text-white/30 font-mono flex items-center gap-1 truncate pl-8 sm:pl-0">
                       {l.contact_phone ? <><Phone className="h-2.5 w-2.5 shrink-0 text-white/15" /><a href={`https://wa.me/${l.contact_phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary hover:underline transition-colors">{l.contact_phone}</a></> : <span className="text-white/10">—</span>}
                     </span>
-                    <span className="text-[10px] text-white/30 font-mono flex items-center gap-1 truncate">
+                    <span className="text-[10px] text-white/30 font-mono flex items-center gap-1 truncate pl-8 sm:pl-0">
                       {l.contact_email ? <><Mail className="h-2.5 w-2.5 shrink-0 text-white/15" /><a href={`mailto:${l.contact_email}`} className="hover:text-primary hover:underline transition-colors">{l.contact_email}</a></> : <span className="text-white/10">—</span>}
                     </span>
-                    <span className="text-[8px] text-white/15 font-mono uppercase">{l.source}</span>
-                    <span className="text-[8px] text-white/12 font-mono tabular-nums text-right">{ago(l.created_at)}</span>
+                    <span className="hidden sm:block text-[8px] text-white/15 font-mono uppercase">{l.source}</span>
+                    <span className="hidden sm:block text-[8px] text-white/12 font-mono tabular-nums text-right">{ago(l.created_at)}</span>
                   </div>
                 ))}
               </div>

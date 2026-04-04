@@ -1218,21 +1218,21 @@ export default function Onboarding() {
                 <Send className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <p className="text-[10px] text-muted-foreground">PDF, DOC, DOCX, XLS, CSV, MD, TXT aceitos</p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={skipDocs}
-                  className="text-xs h-9 px-5 rounded-xl border-border/60 text-muted-foreground hover:text-foreground hover:border-border active:scale-[0.94] active:shadow-none transition-all duration-150"
+                  className="text-xs h-9 px-5 rounded-xl border-border/60 text-muted-foreground hover:text-foreground hover:border-border active:scale-[0.94] active:shadow-none transition-all duration-150 flex-1 sm:flex-initial"
                 >
                   Pular
                 </Button>
                 <Button
                   size="sm"
                   onClick={finishDocsAndContinue}
-                  className="text-xs h-9 px-6 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.94] active:shadow-md active:shadow-primary/20 transition-all duration-150 font-medium"
+                  className="text-xs h-9 px-4 sm:px-6 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.94] active:shadow-md active:shadow-primary/20 transition-all duration-150 font-medium flex-1 sm:flex-initial"
                 >
                   <Rocket className="h-3.5 w-3.5 mr-1.5" /> Finalizar setup
                 </Button>

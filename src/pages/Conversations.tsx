@@ -358,7 +358,7 @@ export default function Conversations() {
   if (loading) return (
     <div className="space-y-5 pt-2">
       <div className="h-7 w-40 skeleton-cosmos rounded-lg" />
-      <div className="grid grid-cols-4 gap-2">{[...Array(4)].map((_, i) => <div key={i} className="h-11 skeleton-cosmos rounded-[10px]" />)}</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">{[...Array(4)].map((_, i) => <div key={i} className="h-11 skeleton-cosmos rounded-[10px]" />)}</div>
       <div className="cosmos-card p-0 divide-y divide-white/[0.03]">
         {[...Array(6)].map((_, i) => (
           <div key={i} className="flex items-center gap-4 px-4 py-3.5">
@@ -386,12 +386,12 @@ export default function Conversations() {
       </div>
 
       <div data-tour="conversations-filters" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-1 p-1 rounded-xl bg-white/[0.025] border border-white/[0.06]">
+        <div className="flex gap-1 p-1 rounded-xl bg-white/[0.025] border border-white/[0.06] overflow-x-auto">
           {(["all", "active", "resolved", "escalated"] as FilterKey[]).map(k => {
             const on = filter === k;
             const lbl = k === "all" ? "Todas" : k === "active" ? "Ativa" : k === "resolved" ? "Resolvida" : "Escalada";
             return (
-              <button key={k} onClick={() => setFilter(k)} className={`px-3.5 py-[5px] rounded-[9px] text-[11.5px] font-semibold transition-all duration-150 ${on ? "bg-white/[0.07] text-white shadow-[0_1px_2px_rgba(0,0,0,.4),inset_0_1px_0_rgba(255,255,255,.04)]" : "text-white/30 hover:text-white/50 hover:bg-white/[0.02]"}`}>
+              <button key={k} onClick={() => setFilter(k)} className={`px-3.5 py-[5px] rounded-[9px] text-[11.5px] font-semibold transition-all duration-150 whitespace-nowrap shrink-0 ${on ? "bg-white/[0.07] text-white shadow-[0_1px_2px_rgba(0,0,0,.4),inset_0_1px_0_rgba(255,255,255,.04)]" : "text-white/30 hover:text-white/50 hover:bg-white/[0.02]"}`}>
                 {lbl}
                 {cnt[k] > 0 && <span className={`ml-1.5 text-[9px] font-mono tabular-nums px-[5px] py-[1px] rounded-full ${on ? "bg-indigo-500/20 text-indigo-400" : "bg-white/[0.04] text-white/20"}`}>{cnt[k]}</span>}
               </button>

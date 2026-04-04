@@ -128,13 +128,13 @@ export default function AdminAttendants() {
             </button>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <div className="relative flex-1 min-w-[220px]">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+          <div className="relative flex-1 min-w-0 sm:min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input placeholder="Nome do agente ou tenant..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-background border-border text-xs h-8" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[130px] bg-background border-border h-8 text-[11px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[130px] bg-background border-border h-8 text-[11px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Status: Todos</SelectItem>
               <SelectItem value="online">Online</SelectItem>

@@ -318,7 +318,7 @@ export default function VerifyPhone() {
                   maxLength={1}
                   inputMode="numeric"
                   aria-label={`Dígito ${i + 1}`}
-                  className={`w-11 h-13 text-center text-lg font-semibold rounded-xl border-border/60 bg-secondary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                  className={`w-10 h-12 sm:w-11 sm:h-13 text-center text-lg font-semibold rounded-xl border-border/60 bg-secondary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
                     error ? "border-destructive/50" : ""
                   }`}
                 />
