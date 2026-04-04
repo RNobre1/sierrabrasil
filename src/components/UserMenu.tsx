@@ -20,20 +20,11 @@ function getTheme(): Theme {
   return (localStorage.getItem("theme") as Theme) || "system";
 }
 
-function applyTheme(t: Theme) {
-  localStorage.setItem("theme", t);
+function applyTheme() {
+  // Dark mode only — no light mode for now
   const root = document.documentElement;
-  root.classList.remove("light", "dark");
-  if (t === "light") {
-    root.classList.add("light");
-  } else if (t === "dark") {
-    root.classList.add("dark");
-  } else {
-    // System — default is dark-first, so only add light if prefers light
-    if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-      root.classList.add("light");
-    }
-  }
+  root.classList.remove("light");
+  root.classList.add("dark");
 }
 
 export default function UserMenu() {
@@ -75,23 +66,6 @@ export default function UserMenu() {
           </DropdownMenuItem>
         )}
 
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="gap-2.5 px-3 py-2">
-            {theme === "dark" ? <Moon className="h-4 w-4 text-muted-foreground" /> : theme === "light" ? <Sun className="h-4 w-4 text-muted-foreground" /> : <Monitor className="h-4 w-4 text-muted-foreground" />}
-            Aparência
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2 cursor-pointer">
-              <Sun className="h-4 w-4" /> Claro {theme === "light" && "✓"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2 cursor-pointer">
-              <Moon className="h-4 w-4" /> Escuro {theme === "dark" && "✓"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2 cursor-pointer">
-              <Monitor className="h-4 w-4" /> Sistema {theme === "system" && "✓"}
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
 
         <DropdownMenuSeparator />
 
