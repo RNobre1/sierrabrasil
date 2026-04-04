@@ -40,8 +40,8 @@ async function callEvolutionApi(action: string, body?: Record<string, unknown>, 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error("Sessão expirada");
 
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const url = new URL(`https://${projectId}.supabase.co/functions/v1/evolution-api`);
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const url = new URL(`${baseUrl}/functions/v1/evolution-api`);
   url.searchParams.set("action", action);
   if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 

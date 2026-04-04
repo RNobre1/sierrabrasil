@@ -171,8 +171,8 @@ export default function ConversationDetail() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Sessão expirada");
 
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const url = `https://${projectId}.supabase.co/functions/v1/evolution-api?action=send_message`;
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const url = `${baseUrl}/functions/v1/evolution-api?action=send_message`;
 
       // Get instance name from whatsapp_instances
       const { data: tenant } = await supabase.from("tenants").select("id").eq("owner_id", user?.id).single();
