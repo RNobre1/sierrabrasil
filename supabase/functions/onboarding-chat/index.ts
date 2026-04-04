@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { requireAuth } from "../_shared/auth.ts";
 import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 // === CAMADA 1: Identidade e Seguranca (fixo) ===
@@ -59,14 +58,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return handleCors(req);
 
   try {
-    // Verify authentication (accepts user JWT, service role, or anon key with warning)
-    const caller = await requireAuth(req, "onboarding-chat");
-    if (!caller) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
-
     const { messages, userName, companyName } = await req.json();
     const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
     if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY is not configured");

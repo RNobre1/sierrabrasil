@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { requireAuth } from "../_shared/auth.ts";
 import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 // Apify actors — using the fastest/cheapest tiers available
@@ -474,14 +473,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return handleCors(req);
 
   try {
-    // Verify authentication (accepts user JWT, service role, or anon key with warning)
-    const caller = await requireAuth(req, "scrape-urls");
-    if (!caller) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
-
     const { urls, tenantId, attendantId, pastedText } = await req.json();
     if (!urls || !Array.isArray(urls) || urls.length === 0 || !tenantId) {
       return new Response(JSON.stringify({ error: "urls array and tenantId required" }), {

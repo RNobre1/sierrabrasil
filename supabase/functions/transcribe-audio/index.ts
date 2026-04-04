@@ -1,19 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { requireAuth } from "../_shared/auth.ts";
 import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return handleCors(req);
 
   try {
-    // Verify authentication (accepts user JWT, service role, or anon key with warning)
-    const caller = await requireAuth(req, "transcribe-audio");
-    if (!caller) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
-
     const ASSEMBLYAI_API_KEY = Deno.env.get("ASSEMBLYAI_API_KEY");
     if (!ASSEMBLYAI_API_KEY) throw new Error("ASSEMBLYAI_API_KEY is not configured");
 
