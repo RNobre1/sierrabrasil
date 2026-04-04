@@ -24,6 +24,11 @@ type Phase = "class-select" | "chat" | "overview" | "saving" | "social-links" | 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
 
+async function getAuthToken(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+}
+
 const NEW_AGENT_SYSTEM_PROMPT = `## QUEM VOCE E
 Voce e o assistente de criacao de agentes da plataforma O Agente (Meteora Digital).
 Seu papel: conduzir uma conversa natural pra conhecer o negocio do usuario e configurar um agente virtual completo e detalhado.
@@ -142,7 +147,7 @@ export default function NewAgentOnboarding() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${await getAuthToken()}`,
         },
         body: JSON.stringify({ messages: allMessages }),
         signal: controller.signal,
@@ -375,7 +380,7 @@ export default function NewAgentOnboarding() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${await getAuthToken()}`,
         },
         body: JSON.stringify({
           urls,

@@ -16,16 +16,15 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-
-  // Auth — create client with the caller's Authorization header
+  // Auth — verify user JWT
   const authHeader = req.headers.get("authorization");
   if (!authHeader) return json({ error: "Nao autorizado" }, 401);
+  const token = authHeader.replace("Bearer ", "");
 
-  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
+  const userClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const { data: { user }, error: authError } = await userClient.auth.getUser();
+  const { data: { user }, error: authError } = await userClient.auth.getUser(token);
   if (authError || !user) {
     console.error("Auth error in verify-otp:", authError?.message);
     return json({ error: "Nao autorizado" }, 401);

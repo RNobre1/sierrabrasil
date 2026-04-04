@@ -1,8 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Mic, Square, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const TRANSCRIBE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`;
+
+async function getAuthToken(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+}
 
 export default function AudioRecorder({
   onTranscribed,
@@ -86,7 +92,7 @@ export default function AudioRecorder({
       formData.append("audio", blob, "recording.webm");
       const resp = await fetch(TRANSCRIBE_URL, {
         method: "POST",
-        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: { Authorization: `Bearer ${await getAuthToken()}` },
         body: formData,
       });
       if (!resp.ok) throw new Error("Transcription failed");

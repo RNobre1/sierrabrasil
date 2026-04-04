@@ -473,6 +473,26 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return handleCors(req);
 
   try {
+    // Auth: verify user JWT
+    const authHeader = req.headers.get("authorization") ?? "";
+    const token = authHeader.replace("Bearer ", "");
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+    const _supaAuth = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } },
+    );
+    const { data: { user: _caller }, error: _authErr } = await _supaAuth.auth.getUser(token);
+    if (_authErr || !_caller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     const { urls, tenantId, attendantId, pastedText } = await req.json();
     if (!urls || !Array.isArray(urls) || urls.length === 0 || !tenantId) {
       return new Response(JSON.stringify({ error: "urls array and tenantId required" }), {

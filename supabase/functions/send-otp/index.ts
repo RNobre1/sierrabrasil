@@ -16,7 +16,6 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
   const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL");
   const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
   const OTP_INSTANCE = Deno.env.get("EVOLUTION_OTP_INSTANCE");
@@ -25,14 +24,15 @@ serve(async (req) => {
     return json({ error: "OTP service not configured" }, 500);
   }
 
-  // Auth — create client with the caller's Authorization header
+  // Auth — verify user JWT
   const authHeader = req.headers.get("authorization");
   if (!authHeader) return json({ error: "Nao autorizado" }, 401);
+  const token = authHeader.replace("Bearer ", "");
 
-  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
+  const userClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const { data: { user }, error: authError } = await userClient.auth.getUser();
+  const { data: { user }, error: authError } = await userClient.auth.getUser(token);
   if (authError || !user) {
     console.error("Auth error in send-otp:", authError?.message, "header present:", !!authHeader);
     return json({ error: "Nao autorizado" }, 401);

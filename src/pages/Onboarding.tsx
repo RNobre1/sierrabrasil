@@ -25,6 +25,11 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/onboarding-c
 const PROCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-knowledge`;
 const SCRAPE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-urls`;
 
+async function getAuthToken(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+}
+
 type OnboardingPhase =
   | "class-select"
   | "chat"
@@ -263,7 +268,7 @@ export default function Onboarding() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${await getAuthToken()}`,
         },
         body: JSON.stringify({ messages: allMessages, userName: profile?.full_name || userName, companyName }),
         signal: controller.signal,
@@ -724,7 +729,7 @@ export default function Onboarding() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${await getAuthToken()}`,
         },
         body: JSON.stringify({
           urls,
@@ -904,7 +909,7 @@ export default function Onboarding() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${await getAuthToken()}`,
           },
           body: JSON.stringify({ sector: overviewData.sector || "", agentClass: selectedAgentClass || "" }),
         });
@@ -937,7 +942,7 @@ export default function Onboarding() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${await getAuthToken()}`,
           },
           body: JSON.stringify({
             tenantId: tenant.id,
@@ -956,7 +961,7 @@ export default function Onboarding() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${await getAuthToken()}`,
           },
           body: JSON.stringify({
             tenantId: tenant.id,

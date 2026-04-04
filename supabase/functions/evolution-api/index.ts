@@ -23,11 +23,13 @@ serve(async (req) => {
 
   // Auth: get user from JWT
   const authHeader = req.headers.get("authorization") ?? "";
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  const anonClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!);
-  
   const token = authHeader.replace("Bearer ", "");
-  const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const userClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const { data: { user }, error: authError } = await userClient.auth.getUser(token);
   if (authError || !user) return json({ error: "Não autorizado" }, 401);
 
   // Get tenant for this user
