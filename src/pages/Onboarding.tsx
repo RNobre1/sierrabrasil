@@ -140,7 +140,7 @@ export default function Onboarding() {
     if (!didRestore.current) return;
     try {
       localStorage.setItem(persistKey, JSON.stringify({
-        messages, phase, passwordPhase, selectedAgentClass, selectedTemplateId,
+        userId: user?.id, messages, phase, passwordPhase, selectedAgentClass, selectedTemplateId,
         overviewData, attendantNameFromChat, personaFromChat,
       }));
     } catch {}
@@ -211,12 +211,12 @@ export default function Onboarding() {
     if (hasStarted.current) return;
     hasStarted.current = true;
 
-    // Tentar restaurar estado persistido
+    // Tentar restaurar estado persistido (somente se é do mesmo usuario)
     try {
       const raw = localStorage.getItem(persistKey);
       if (raw) {
         const p = JSON.parse(raw);
-        if (p && p.messages && p.messages.length > 0) {
+        if (p && p.messages && p.messages.length > 0 && p.userId === user?.id) {
           setMessages(p.messages);
           if (p.phase) setPhase(p.phase);
           if (p.passwordPhase) setPasswordPhase(p.passwordPhase);
@@ -228,6 +228,8 @@ export default function Onboarding() {
           didRestore.current = true;
           return;
         }
+        // Dados de outro usuario ou invalidos — limpar
+        localStorage.removeItem(persistKey);
       }
     } catch {}
     didRestore.current = true;
