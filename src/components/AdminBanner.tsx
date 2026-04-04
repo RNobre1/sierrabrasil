@@ -24,12 +24,32 @@ export default function AdminBanner() {
 
   const exitImpersonation = async () => {
     if (tenantId && user) {
+      // Log end of session
       await supabase.from("audit_logs").insert({
         admin_user_id: user.id,
         tenant_id: tenantId,
         action: "impersonation_end",
         details: {},
       });
+
+      // Invalidate the approval so next access requires new approval
+      // Mark all approved notifications for this admin+tenant as "used"
+      const { data: approvals } = await supabase
+        .from("notifications")
+        .select("id, action_data")
+        .eq("type", "admin_access_request")
+        .eq("action_result", "approved");
+
+      if (approvals) {
+        for (const n of approvals) {
+          const ad = n.action_data as Record<string, string> | null;
+          if (ad?.admin_user_id === user.id && ad?.tenant_id === tenantId) {
+            await supabase.from("notifications").update({
+              action_result: "used",
+            }).eq("id", n.id);
+          }
+        }
+      }
     }
     stopImpersonation();
     window.location.href = "/admin/tenants";
