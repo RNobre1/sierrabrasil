@@ -109,7 +109,7 @@ export default function AgentFaqManager({ agentId, tenantId }: Props) {
       </p>
 
       {/* Add form */}
-      <div className="space-y-2 p-3 rounded-lg border border-border/30 bg-muted/20">
+      <form onSubmit={(e) => { e.preventDefault(); addFaq(); }} className="space-y-2 p-3 rounded-lg border border-border/30 bg-muted/20">
         <Input
           placeholder="Pergunta (ex: Qual o horário de funcionamento?)"
           value={newQuestion}
@@ -123,15 +123,15 @@ export default function AgentFaqManager({ agentId, tenantId }: Props) {
           className="text-xs min-h-[60px] resize-none"
         />
         <Button
+          type="submit"
           size="sm"
-          onClick={addFaq}
           disabled={!canAdd || adding}
           className="gap-1.5 text-xs h-7"
         >
           <Plus className="h-3 w-3" />
           {adding ? "Adicionando..." : "Adicionar"}
         </Button>
-      </div>
+      </form>
 
       {/* FAQ list */}
       {loading ? (

@@ -47,12 +47,12 @@ function EmailOTPDialog({ open, onClose, email, onVerified }: { open: boolean; o
           <DialogTitle className="flex items-center gap-2"><Mail className="h-4 w-4" /> Verificação de e-mail</DialogTitle>
           <DialogDescription>Enviamos um código para <strong>{email}</strong></DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <form onSubmit={(e) => { e.preventDefault(); handleVerify(); }} className="space-y-4 py-2">
           <Input value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" maxLength={6} inputMode="numeric" className="text-center text-lg font-mono tracking-[0.5em] h-12 rounded-xl" />
-          <Button onClick={handleVerify} disabled={verifying || otp.length < 6} className="w-full h-11 rounded-xl">
+          <Button type="submit" disabled={verifying || otp.length < 6} className="w-full h-11 rounded-xl">
             {verifying ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : "Verificar"}
           </Button>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
@@ -83,7 +83,7 @@ function CreatePasswordDialog({ open, onClose }: { open: boolean; onClose: () =>
           <DialogTitle className="flex items-center gap-2"><Lock className="h-4 w-4" /> Criar senha</DialogTitle>
           <DialogDescription>Crie uma senha para poder alterar seu e-mail ou desconectar do Google</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <form onSubmit={(e) => { e.preventDefault(); handleCreate(); }} className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label className="text-xs">Nova senha</Label>
             <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" className="h-11 rounded-xl" />
@@ -92,10 +92,10 @@ function CreatePasswordDialog({ open, onClose }: { open: boolean; onClose: () =>
             <Label className="text-xs">Confirmar senha</Label>
             <Input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Repita a senha" className="h-11 rounded-xl" />
           </div>
-          <Button onClick={handleCreate} disabled={saving} className="w-full h-11 rounded-xl">
+          <Button type="submit" disabled={saving} className="w-full h-11 rounded-xl">
             {saving ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : "Criar senha"}
           </Button>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -171,6 +171,10 @@ export default function VerifyPhone() {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleVerify();
+    }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {

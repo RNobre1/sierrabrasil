@@ -377,7 +377,12 @@ export default function ConversationDetail() {
               placeholder="Digite sua mensagem..."
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendReply()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendReply();
+                }
+              }}
               disabled={sending}
               className="flex-1"
             />
