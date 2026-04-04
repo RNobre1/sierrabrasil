@@ -116,19 +116,6 @@ export default function Login() {
           <p className="mt-6 text-white/60 leading-relaxed">
             Agente inteligente que conversa, vende, agenda e resolve pelo WhatsApp e Instagram. 24h por dia, 7 dias por semana.
           </p>
-          <div className="mt-12 flex items-center gap-8">
-            {[
-              { value: "150+", label: "Empresas ativas" },
-              { value: "50K+", label: "Conversas/mês" },
-              { value: "3s", label: "Tempo resposta" },
-            ].map((s, i) => (
-              <div key={i} className="flex-1">
-                <p className="text-2xl font-bold text-white">{s.value}</p>
-                <p className="text-xs text-white/40 mt-0.5">{s.label}</p>
-                {i < 2 && <div className="hidden" />}
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
