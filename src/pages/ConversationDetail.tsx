@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck, Send, Mic, Archive, AlertOctagon, Brain } from "lucide-react";
+import { ArrowLeft, Phone, Clock, Hash, Bot, User, UserCheck, Send, Archive, AlertOctagon, Brain } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -386,15 +386,6 @@ export default function ConversationDetail() {
               disabled={sending}
               className="flex-1"
             />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-              disabled
-              title="Áudio em breve"
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
             <Button
               size="icon"
               onClick={sendReply}

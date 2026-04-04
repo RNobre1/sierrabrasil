@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import AudioRecorder from "@/components/onboarding/AudioRecorder";
+
 import FileUploader from "@/components/onboarding/FileUploader";
 import ScrapingProgress from "@/components/onboarding/ScrapingProgress";
 import SocialLinksSelector from "@/components/onboarding/SocialLinksSelector";
@@ -558,10 +558,6 @@ export default function Onboarding() {
         setIsLoading(false);
       }
     }, 300);
-  };
-
-  const handleAudioTranscribed = (text: string) => {
-    sendToChat(`🎤 ${text}`);
   };
 
   const handleFileContent = (content: string, fileName: string, extracted: boolean) => {
@@ -1199,7 +1195,6 @@ export default function Onboarding() {
         <div className="border-t border-border bg-card/80 backdrop-blur-sm sticky bottom-0">
           <div className="max-w-3xl mx-auto px-4 py-3 space-y-2">
             <div className="flex gap-2 items-center">
-              <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />
               <FileUploader onFileContent={handleFileContent} disabled={isLoading} />
               <Button variant="outline" size="icon" onClick={() => setTextPasteOpen(true)} className="h-11 w-11 rounded-xl shrink-0" title="Colar texto">
                 <FileText className="h-4 w-4" />
@@ -1257,7 +1252,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-background flex flex-col touch-pan-x" style={{ overscrollBehavior: "none" }}>
       <OnboardingHeader
         title={isPostScrape ? "Conhecendo seu negócio" : "Configuração do seu Agente"}
-        subtitle={isPostScrape ? "Mais algumas perguntas enquanto analisamos seus dados" : "Conte sobre seu negócio — por texto ou áudio"}
+        subtitle={isPostScrape ? "Mais algumas perguntas enquanto analisamos seus dados" : "Conte sobre seu negócio"}
         progress={Number(progressPct)}
       />
 
@@ -1321,7 +1316,6 @@ export default function Onboarding() {
       <div className="border-t border-border bg-card/80 backdrop-blur-sm sticky bottom-0">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex gap-2 items-center">
-            <AudioRecorder onTranscribed={handleAudioTranscribed} disabled={isLoading} />
             <Textarea
               ref={inputRef}
               value={input}
@@ -1342,7 +1336,7 @@ export default function Onboarding() {
             </Button>
           </div>
           <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            🎤 Áudio · ⌨️ Texto — Shift+Enter para nova linha
+            Shift+Enter para nova linha
           </p>
         </div>
       </div>
