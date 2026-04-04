@@ -106,10 +106,62 @@ export default function AdminTenants() {
     });
   }, []);
 
+  const checkDenied = useCallback(async (adminId: string, tenantId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from("notifications")
+      .select("id, action_result, action_data")
+      .eq("type", "admin_access_request")
+      .eq("action_result", "denied")
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(50);
+    if (!data || data.length === 0) return false;
+    return data.some((n) => {
+      const ad = n.action_data as Record<string, string> | null;
+      return ad?.admin_user_id === adminId && ad?.tenant_id === tenantId;
+    });
+  }, []);
+
+  const checkPendingRequest = useCallback(async (adminId: string, tenantId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from("notifications")
+      .select("id, action_result, action_data")
+      .eq("type", "admin_access_request")
+      .is("action_result", null)
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(50);
+    if (!data || data.length === 0) return false;
+    return data.some((n) => {
+      const ad = n.action_data as Record<string, string> | null;
+      return ad?.admin_user_id === adminId && ad?.tenant_id === tenantId;
+    });
+  }, []);
+
   const startApprovalPolling = useCallback((tenant: Tenant, adminId: string) => {
     if (approvalPollRef.current) clearInterval(approvalPollRef.current);
+    let pollCount = 0;
 
     approvalPollRef.current = setInterval(async () => {
+      pollCount++;
+
+      // Timeout after 10 minutes (60 polls * 10s)
+      if (pollCount > 60) {
+        if (approvalPollRef.current) clearInterval(approvalPollRef.current);
+        approvalPollRef.current = null;
+        setWaitingApprovalTenant(null);
+        toast.error("Tempo esgotado. O cliente não respondeu à solicitação.");
+        return;
+      }
+
+      // Check for denial
+      const denied = await checkDenied(adminId, tenant.id);
+      if (denied) {
+        if (approvalPollRef.current) clearInterval(approvalPollRef.current);
+        approvalPollRef.current = null;
+        setWaitingApprovalTenant(null);
+        toast.error(`Acesso negado pelo cliente de ${tenant.name}`);
+        return;
+      }
+
       const approved = await checkExistingApproval(adminId, tenant.id);
       if (approved) {
         if (approvalPollRef.current) clearInterval(approvalPollRef.current);
@@ -129,7 +181,7 @@ export default function AdminTenants() {
         navigate("/dashboard");
       }
     }, 10_000); // Poll every 10 seconds
-  }, [checkExistingApproval, navigate]);
+  }, [checkExistingApproval, checkDenied, navigate]);
 
   const forceAccess = async (tenant: Tenant) => {
     if (!user) return;
@@ -173,15 +225,18 @@ export default function AdminTenants() {
         toast.success(`Acessando dashboard de ${tenant.name}`);
         navigate("/dashboard");
       } else {
-        // Need approval — send notification and show waiting dialog
-        await supabase.from("audit_logs").insert({
-          admin_user_id: user.id,
-          tenant_id: tenant.id,
-          action: "impersonation_request",
-          details: { tenant_name: tenant.name },
-        });
+        // Need approval — check if there's already a pending request (avoid spam)
+        const pendingExists = await checkPendingRequest(user.id, tenant.id);
 
-        await sendAccessRequest(tenant, user.id);
+        if (!pendingExists) {
+          await supabase.from("audit_logs").insert({
+            admin_user_id: user.id,
+            tenant_id: tenant.id,
+            action: "impersonation_request",
+            details: { tenant_name: tenant.name },
+          });
+          await sendAccessRequest(tenant, user.id);
+        }
         setWaitingApprovalTenant(tenant);
         startApprovalPolling(tenant, user.id);
       }

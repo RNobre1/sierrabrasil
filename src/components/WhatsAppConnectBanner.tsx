@@ -1,48 +1,45 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageSquare, X, ArrowRight } from "lucide-react";
+import { Wifi, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface WhatsAppConnectBannerProps {
   isConnected: boolean;
+  hasAgents?: boolean;
 }
 
-export default function WhatsAppConnectBanner({ isConnected }: WhatsAppConnectBannerProps) {
+export default function WhatsAppConnectBanner({ isConnected, hasAgents = true }: WhatsAppConnectBannerProps) {
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(false);
 
-  if (isConnected || dismissed) return null;
+  if (isConnected || dismissed || !hasAgents) return null;
 
   return (
-    <div className="relative rounded-xl border border-cosmos-emerald/30 bg-gradient-to-r from-cosmos-emerald/5 to-cosmos-cyan/5 p-4 sm:p-5">
+    <div className="flex items-center gap-3 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200">
+      <Wifi className="h-5 w-5 text-amber-400 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-display font-semibold">
+          Nenhum numero WhatsApp conectado
+        </p>
+        <p className="text-xs text-amber-200/70 mt-0.5">
+          Seus agentes nao podem receber mensagens sem um numero conectado.
+        </p>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate("/channels")}
+        className="border-amber-500/50 text-amber-300 hover:bg-amber-500/20 shrink-0"
+      >
+        Conectar WhatsApp
+      </Button>
       <button
         onClick={() => setDismissed(true)}
         aria-label="Fechar"
-        className="absolute top-3 right-3 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+        className="text-amber-400/40 hover:text-amber-400/80 transition-colors shrink-0"
       >
         <X className="h-4 w-4" />
       </button>
-
-      <div className="flex items-start gap-4">
-        <div className="h-10 w-10 rounded-xl bg-cosmos-emerald/10 flex items-center justify-center shrink-0">
-          <MessageSquare className="h-5 w-5 text-cosmos-emerald" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-display font-semibold text-foreground">
-            Conecte seu WhatsApp
-          </h3>
-          <p className="text-xs text-muted-foreground mt-1">
-            Seu agente esta pronto! Conecte o WhatsApp pra ele comecar a atender seus clientes.
-          </p>
-          <Button
-            size="sm"
-            onClick={() => navigate("/channels")}
-            className="mt-3 gap-1.5 bg-cosmos-emerald hover:bg-cosmos-emerald/90 text-white"
-          >
-            Conectar <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

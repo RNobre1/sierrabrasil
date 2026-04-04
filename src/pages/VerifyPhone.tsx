@@ -244,7 +244,7 @@ export default function VerifyPhone() {
         <Particles />
         <div className="relative z-10 max-w-md">
           <img src={meteoraLogo} alt="Meteora Digital" className="h-8 mb-12" />
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white">
+          <h1 className="text-4xl font-display font-bold leading-tight tracking-tight text-white">
             Quase lá! Só falta{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-cyan-300">
               verificar seu número
@@ -292,7 +292,7 @@ export default function VerifyPhone() {
               <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-4">
                 <Phone className="h-6 w-6 text-emerald-500" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">Verificação WhatsApp</h3>
+              <h3 className="text-lg font-display font-bold text-foreground">Verificação WhatsApp</h3>
               <p className="text-sm text-muted-foreground">
                 Enviamos um código de 6 dígitos para<br />
                 <span className="font-medium text-foreground">+55 {maskPhoneForOtp(phone)}</span>

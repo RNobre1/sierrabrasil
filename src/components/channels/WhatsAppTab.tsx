@@ -372,7 +372,7 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="py-6 flex flex-col items-center gap-4">
             <div className="text-center">
-              <h3 className="text-sm font-semibold">
+              <h3 className="text-sm font-display font-semibold">
                 {qrSecondsLeft > 0 ? "Escaneie o QR Code" : "QR Code expirado"}
               </h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm">
@@ -483,7 +483,7 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground truncate">
+                        <h3 className="text-sm font-display font-semibold text-foreground truncate">
                           {inst.display_name || inst.instance_name}
                         </h3>
                         {inst.phone_number && (

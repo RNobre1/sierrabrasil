@@ -168,7 +168,7 @@ export default function AgentIconPicker({
         sideOffset={8}
       >
         <div className="px-3 pt-3 pb-2">
-          <h4 className="text-xs font-semibold text-foreground">Escolher icone</h4>
+          <h4 className="text-xs font-display font-semibold text-foreground">Escolher icone</h4>
           <p className="text-[10px] text-muted-foreground mt-0.5">Selecione um icone para o agente</p>
           <div className="flex items-start gap-1.5 mt-2 px-2 py-1.5 rounded-md bg-muted/40 border border-border/50">
             <Info className="h-3 w-3 text-muted-foreground shrink-0 mt-px" />

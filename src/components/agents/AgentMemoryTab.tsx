@@ -208,7 +208,7 @@ export default function AgentMemoryTab({ agentId, plan }: Props) {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" /> Memoria do Agente
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -238,7 +238,7 @@ export default function AgentMemoryTab({ agentId, plan }: Props) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" /> Memoria do Agente
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">

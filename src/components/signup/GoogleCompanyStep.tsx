@@ -29,7 +29,7 @@ export default function GoogleCompanyStep({ userName, onSubmit }: GoogleCompanyS
       className="space-y-6"
     >
       <div className="space-y-1.5">
-        <h2 className="text-xl font-bold tracking-tight text-foreground">
+        <h2 className="text-xl font-display font-bold tracking-tight text-foreground">
           Olá, {userName?.split(" ")[0]}! 👋
         </h2>
         <p className="text-sm text-muted-foreground">

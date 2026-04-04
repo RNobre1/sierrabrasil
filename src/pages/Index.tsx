@@ -75,7 +75,7 @@ export default function Index() {
             <span className="h-1.5 w-1.5 rounded-full bg-meteora-lime animate-pulse" />
             ATENDENTES INTELIGENTES PARA NEGÓCIOS BRASILEIROS
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-foreground">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold leading-[1.1] tracking-tight text-foreground">
             Seu melhor funcionário.{" "}
             <span className="text-gradient">Trabalha 24h</span>. Nunca falta.{" "}
             <span className="text-gradient">Vende, atende e resolve</span>.
@@ -119,7 +119,7 @@ export default function Index() {
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">O que o O Agente faz pelo seu negócio</h2>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold text-foreground tracking-tight">O que o O Agente faz pelo seu negócio</h2>
             <p className="mt-4 text-muted-foreground">Não é chatbot. Não é menu "digite 1, 2, 3". É um atendente completo que opera como uma pessoa treinada.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -128,7 +128,7 @@ export default function Index() {
                 <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <f.icon className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="font-semibold text-foreground">{f.title}</h3>
+                <h3 className="font-display font-semibold text-foreground">{f.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
@@ -140,7 +140,7 @@ export default function Index() {
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Planos que cabem no seu bolso e escalam com você</h2>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold text-foreground tracking-tight">Planos que cabem no seu bolso e escalam com você</h2>
             <p className="mt-4 text-muted-foreground">30 dias grátis. Sem fidelidade. Cancele quando quiser.</p>
           </div>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -165,7 +165,7 @@ export default function Index() {
                   </div>
                 )}
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground">{plan.name}</h3>
+                  <h3 className="font-display font-semibold text-foreground">{plan.name}</h3>
                   {(plan as any).enterprise && <Crown className="h-4 w-4 text-[hsl(var(--meteora-cyan))]" />}
                 </div>
                 <div className="mt-4 flex items-baseline gap-1">
@@ -204,7 +204,7 @@ export default function Index() {
 
           {/* Custom Plan CTA */}
           <div className="mt-12 rounded-2xl border border-border/30 bg-card/30 p-8 text-center backdrop-blur-sm">
-            <h3 className="text-lg font-semibold text-foreground">Quer que a Meteora implemente para você?</h3>
+            <h3 className="text-lg font-display font-semibold text-foreground">Quer que a Meteora implemente para você?</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-lg mx-auto">
               Para empresas que precisam de implementação customizada, consultoria estratégica e acompanhamento contínuo. Projetos a partir de R$30.000.
             </p>
@@ -221,7 +221,7 @@ export default function Index() {
       <section className="py-24 px-6 relative z-10">
         <div className="mx-auto max-w-5xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Negócios reais usando o O Agente</h2>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold text-foreground tracking-tight">Negócios reais usando o O Agente</h2>
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             {testimonials.map((t, i) => (
@@ -244,7 +244,7 @@ export default function Index() {
       <MeteorTrail>
         <section className="py-24 px-6 relative z-10">
           <div className="mx-auto max-w-3xl text-center rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-12 surface-glow">
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">Em 10 minutos seu agente está no ar.</h2>
+            <h2 className="text-3xl font-display font-bold text-foreground tracking-tight">Em 10 minutos seu agente está no ar.</h2>
             <p className="mt-4 text-muted-foreground">Descreva seu negócio. A plataforma cria o agente. Conecte seu WhatsApp. Publique. Pronto — ele já está atendendo.</p>
             <Link to="/signup">
               <Button size="lg" className="mt-8 text-base px-8 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25">

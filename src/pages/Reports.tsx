@@ -329,7 +329,7 @@ export default function Reports() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-sm font-medium text-foreground truncate">{template.name}</h3>
+                      <h3 className="text-sm font-display font-medium text-foreground truncate">{template.name}</h3>
                       <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 shrink-0 font-mono border-border/30 text-muted-foreground/60">
                         {template.category}
                       </Badge>

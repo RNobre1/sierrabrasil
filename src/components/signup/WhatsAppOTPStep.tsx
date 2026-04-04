@@ -82,7 +82,7 @@ export default function WhatsAppOTPStep({ phone, onVerified, onBack }: WhatsAppO
         <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-4">
           <Phone className="h-6 w-6 text-emerald-500" />
         </div>
-        <h3 className="text-lg font-bold text-foreground">Verificação WhatsApp</h3>
+        <h3 className="text-lg font-display font-bold text-foreground">Verificação WhatsApp</h3>
         <p className="text-sm text-muted-foreground">
           Enviamos um código de 6 dígitos para<br />
           <span className="font-medium text-foreground">+55 {maskedPhone}</span>

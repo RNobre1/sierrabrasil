@@ -98,7 +98,7 @@ export default function AgentFaqManager({ agentId, tenantId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <FileText className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground">FAQ Inteligente</h3>
+        <h3 className="text-sm font-display font-semibold text-foreground">FAQ Inteligente</h3>
         <Badge variant="outline" className="text-[9px] font-mono">
           {faqs.length} pergunta{faqs.length !== 1 ? "s" : ""}
         </Badge>

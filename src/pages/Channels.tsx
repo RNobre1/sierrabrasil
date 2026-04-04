@@ -24,7 +24,7 @@ export default function Channels() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">WhatsApp</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">WhatsApp</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Gerencie os números conectados ao seu agente</p>
       </div>
 

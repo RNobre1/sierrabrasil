@@ -122,12 +122,18 @@ function NotificationItem({
               className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
                 notification.action_result === "approved"
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  : notification.action_result === "used"
+                  ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                   : "bg-red-500/10 text-red-400 border border-red-500/20"
               }`}
             >
               {notification.action_result === "approved" ? (
                 <>
                   <Check className="h-2.5 w-2.5" /> Acesso permitido
+                </>
+              ) : notification.action_result === "used" ? (
+                <>
+                  <Check className="h-2.5 w-2.5" /> Sessao encerrada
                 </>
               ) : (
                 <>
@@ -287,7 +293,7 @@ export default function NotificationBell() {
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-          <h3 className="text-[13px] font-semibold text-foreground">Notificações</h3>
+          <h3 className="text-[13px] font-display font-semibold text-foreground">Notificações</h3>
           {unreadCount > 0 && (
             <span className="text-[10px] font-mono text-cosmos-indigo">
               {unreadCount} nova{unreadCount !== 1 ? "s" : ""}

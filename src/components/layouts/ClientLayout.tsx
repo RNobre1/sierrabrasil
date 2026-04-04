@@ -153,7 +153,7 @@ export default function ClientLayout() {
           <nav className="flex-1 px-3 pt-2 space-y-5 overflow-y-auto">
             {navSections.map((section) => (
               <div key={section.label}>
-                <p className="font-body text-[10px] font-semibold uppercase tracking-[0.1em] text-white/30 px-3 mb-1.5">
+                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-white/30 px-3 mb-1.5">
                   {section.label}
                 </p>
                 <div className="space-y-0.5">

@@ -523,7 +523,7 @@ export default function Dashboard() {
       )}
 
       <MeteoraWatermark />
-      <WhatsAppConnectBanner isConnected={hasWhatsApp} />
+      <WhatsAppConnectBanner isConnected={hasWhatsApp} hasAgents={attendants.length > 0} />
       <GuidedTour />
     </div>
   );

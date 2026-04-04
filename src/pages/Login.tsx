@@ -109,7 +109,7 @@ export default function Login() {
         <Particles />
         <div className="relative z-10 max-w-md">
           <img src={meteoraLogo} alt="Meteora Digital" className="h-8 mb-12" />
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white">
+          <h1 className="text-4xl font-display font-bold leading-tight tracking-tight text-white">
             Entregamos <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">soluções</span> que fazem sua empresa{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">vender mais</span>.
           </h1>
@@ -128,7 +128,7 @@ export default function Login() {
             <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-7 dark:hidden block" />
           </div>
 
-          <h2 className="text-xl font-bold tracking-tight text-foreground">Bem-vindo de volta</h2>
+          <h2 className="text-xl font-display font-bold tracking-tight text-foreground">Bem-vindo de volta</h2>
           <p className="text-sm text-muted-foreground mt-1.5">Entre na sua conta para continuar</p>
 
           <Button

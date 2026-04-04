@@ -86,24 +86,38 @@ export default function GuidedTour({
   const [highlight, setHighlight] = useState<HighlightRect | null>(null);
   const { user } = useAuth();
 
+  const measureElement = useCallback((el: Element) => {
+    const rect = el.getBoundingClientRect();
+    const pad = 10;
+    setHighlight({
+      top: rect.top - pad,
+      left: rect.left - pad,
+      width: rect.width + pad * 2,
+      height: rect.height + pad * 2,
+    });
+  }, []);
+
   const updateHighlight = useCallback(() => {
     const current = steps[step];
     if (!current?.selector) return;
     const el = document.querySelector(current.selector);
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      const pad = 8;
-      setHighlight({
-        top: rect.top - pad,
-        left: rect.left - pad,
-        width: rect.width + pad * 2,
-        height: rect.height + pad * 2,
-      });
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    } else {
+    if (!el) {
       setHighlight(null);
+      return;
     }
-  }, [step, steps]);
+
+    // Scroll element into view first, then measure after scroll settles.
+    // scrollIntoView with "smooth" is async — we re-measure after a delay
+    // to capture the element's final position.
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    // Measure immediately (best-effort for already-visible elements)
+    measureElement(el);
+
+    // Re-measure after smooth scroll finishes (~400ms is enough for most browsers)
+    const timer = setTimeout(() => measureElement(el), 400);
+    return timer;
+  }, [step, steps, measureElement]);
 
   useEffect(() => {
     // Fast check: localStorage first
@@ -134,10 +148,26 @@ export default function GuidedTour({
 
   useEffect(() => {
     if (!visible) return;
-    updateHighlight();
-    window.addEventListener("resize", updateHighlight);
-    return () => window.removeEventListener("resize", updateHighlight);
-  }, [visible, step, updateHighlight]);
+
+    const scrollTimer = updateHighlight();
+
+    // Re-measure on resize (layout shift) and scroll (position shift)
+    const onResizeOrScroll = () => {
+      const current = steps[step];
+      if (!current?.selector) return;
+      const el = document.querySelector(current.selector);
+      if (el) measureElement(el);
+    };
+
+    window.addEventListener("resize", onResizeOrScroll);
+    window.addEventListener("scroll", onResizeOrScroll, true); // capture phase for nested scrollables
+
+    return () => {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      window.removeEventListener("resize", onResizeOrScroll);
+      window.removeEventListener("scroll", onResizeOrScroll, true);
+    };
+  }, [visible, step, updateHighlight, measureElement, steps]);
 
   const dismiss = () => {
     setVisible(false);

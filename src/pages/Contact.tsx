@@ -31,7 +31,7 @@ export default function Contact() {
           <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto border border-primary/20">
             <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Recebemos sua solicitação!</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">Recebemos sua solicitação!</h1>
           <p className="text-sm text-muted-foreground">Nosso time entrará em contato em até 24 horas úteis para montar um plano sob medida para seu negócio.</p>
           <Link to="/">
             <Button variant="outline" className="mt-4 gap-2">
@@ -53,7 +53,7 @@ export default function Contact() {
         <img src={meteoraLogo} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:block hidden" />
         <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:hidden block" />
 
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Plano personalizado</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Plano personalizado</h1>
         <p className="text-sm text-muted-foreground mt-2 mb-8">
           Conte um pouco sobre sua operação e montamos o plano ideal para escalar seu negócio com IA.
         </p>

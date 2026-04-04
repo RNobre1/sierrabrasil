@@ -84,7 +84,7 @@ export default function ClientLayout() {
           <nav className="flex-1 px-2.5 pt-2 space-y-4 overflow-y-auto">
             {navSections.map((section) => (
               <div key={section.label}>
-                <p className="font-body text-[9px] font-semibold uppercase tracking-[0.1em] text-white/20 px-3 mb-1">
+                <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.1em] text-white/20 px-3 mb-1">
                   {section.label}
                 </p>
                 <div className="space-y-0.5">

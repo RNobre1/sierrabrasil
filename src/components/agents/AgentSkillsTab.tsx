@@ -142,7 +142,7 @@ export default function AgentSkillsTab({ agentId, agentClass, plan, tenantId }: 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" /> Superpoderes do Agente
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -206,7 +206,7 @@ export default function AgentSkillsTab({ agentId, agentClass, plan, tenantId }: 
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-medium text-foreground truncate">{skill.name}</h4>
+                            <h4 className="text-sm font-display font-medium text-foreground truncate">{skill.name}</h4>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button

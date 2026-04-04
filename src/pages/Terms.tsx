@@ -14,12 +14,12 @@ export default function Terms() {
         <img src={meteoraLogo} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:block hidden" />
         <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-6 mb-8 opacity-80 dark:hidden block" />
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-2">
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground tracking-tight mb-2">
           Termos de Uso
         </h1>
         <p className="text-xs text-muted-foreground mb-10">Última atualização: 29 de março de 2026</p>
 
-        <div className="prose prose-invert prose-sm max-w-none space-y-6 text-muted-foreground leading-relaxed [&_h2]:text-foreground [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-10 [&_h2]:mb-3 [&_h3]:text-foreground [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2 [&_strong]:text-foreground">
+        <div className="prose prose-invert prose-sm max-w-none space-y-6 text-muted-foreground leading-relaxed [&_h2]:text-foreground [&_h2]:text-lg [&_h2]:font-display [&_h2]:font-semibold [&_h2]:mt-10 [&_h2]:mb-3 [&_h3]:text-foreground [&_h3]:text-sm [&_h3]:font-display [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2 [&_strong]:text-foreground">
           <p>
             Estes Termos de Uso regulam o acesso e utilização da plataforma <strong>Meteora Digital</strong>,
             de propriedade da empresa <strong>Meteora Digital</strong>, inscrita no CNPJ sob o nº{" "}

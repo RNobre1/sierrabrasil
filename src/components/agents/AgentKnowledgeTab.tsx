@@ -238,7 +238,7 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan, onRefresh }
       {/* Header + Stats */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" /> Base de Conhecimento
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">

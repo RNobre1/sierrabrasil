@@ -198,7 +198,7 @@ export default function AgentDetail() {
               </span>
             </div>
             <div>
-              <h1 className="text-base sm:text-xl font-bold text-foreground tracking-tight">{agent.name}</h1>
+              <h1 className="text-base sm:text-xl font-display font-bold text-foreground tracking-tight">{agent.name}</h1>
               <p className={`text-[10px] sm:text-xs ${cls.color} mt-0.5`}>{cls.label}</p>
             </div>
           </div>

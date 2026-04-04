@@ -521,7 +521,7 @@ export default function NewAgentOnboarding() {
                   <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/15 transition-colors">
                     {cls.icon}
                   </div>
-                  <h3 className="text-sm font-semibold text-foreground mb-1">{cls.title}</h3>
+                  <h3 className="text-sm font-display font-semibold text-foreground mb-1">{cls.title}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-3">{cls.description}</p>
                   <ul className="space-y-1">
                     {cls.skills.map(s => (

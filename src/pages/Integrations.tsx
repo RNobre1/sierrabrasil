@@ -136,7 +136,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <h3 className="text-sm font-medium text-foreground truncate">{integration.name}</h3>
+          <h3 className="text-sm font-display font-medium text-foreground truncate">{integration.name}</h3>
           <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-4 shrink-0 font-mono", prio.className)}>
             {prio.label}
           </Badge>
@@ -203,7 +203,7 @@ export default function Integrations() {
               {totalCount} integrações
             </Badge>
           </div>
-          <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight mt-3">
+          <h1 className="text-xl md:text-2xl font-display font-bold text-foreground tracking-tight mt-3">
             Conecte seus agentes com dezenas de ferramentas
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-lg">
@@ -229,7 +229,7 @@ export default function Integrations() {
           <section key={category.title}>
             <div className="flex items-center gap-2.5 mb-4">
               <span className="text-base">{category.icon}</span>
-              <h2 className="text-sm font-semibold text-foreground/90 tracking-tight">
+              <h2 className="text-sm font-display font-semibold text-foreground/90 tracking-tight">
                 {category.title}
               </h2>
               <span className="text-[10px] text-muted-foreground/50 font-mono">

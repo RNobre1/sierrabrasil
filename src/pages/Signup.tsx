@@ -111,7 +111,7 @@ export default function Signup() {
         <Particles />
         <div className="relative z-10 max-w-md">
           <img src={meteoraLogo} alt="Meteora Digital" className="h-8 mb-12" />
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-white">
+          <h1 className="text-4xl font-display font-bold leading-tight tracking-tight text-white">
             Seu melhor <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">funcionario digital</span>. Trabalha 24h.
           </h1>
           <p className="mt-6 text-white/60 leading-relaxed">
@@ -140,7 +140,7 @@ export default function Signup() {
             <img src={meteoraLogoPreta} alt="Meteora Digital" className="h-7 dark:hidden block" />
           </div>
 
-          <h2 className="text-xl font-bold tracking-tight text-foreground">Criar conta</h2>
+          <h2 className="text-xl font-display font-bold tracking-tight text-foreground">Criar conta</h2>
           <p className="text-sm text-muted-foreground mt-1.5">Comece a usar a Meteora Digital</p>
 
           <Button variant="outline" className="w-full mt-7 h-11 gap-3 rounded-xl border-border/60 hover:bg-accent transition-all" onClick={handleGoogleSignup}>

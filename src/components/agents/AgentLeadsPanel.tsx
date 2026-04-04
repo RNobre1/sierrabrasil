@@ -45,7 +45,7 @@ export default function AgentLeadsPanel({ agentId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Users className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground">Leads Capturados</h3>
+        <h3 className="text-sm font-display font-semibold text-foreground">Leads Capturados</h3>
         <Badge variant="outline" className="text-[9px] font-mono">
           {leads.length} lead{leads.length !== 1 ? "s" : ""}
         </Badge>
