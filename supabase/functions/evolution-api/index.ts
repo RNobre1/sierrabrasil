@@ -21,6 +21,10 @@ serve(async (req) => {
   if (!EVOLUTION_API_URL) return json({ error: "EVOLUTION_API_URL not configured" }, 500);
   if (!EVOLUTION_API_KEY) return json({ error: "EVOLUTION_API_KEY not configured" }, 500);
 
+  // Use custom domain for webhook URL — Supabase API gateway on direct URLs
+  // requires apikey header which Evolution API doesn't send, causing 401.
+  const WEBHOOK_BASE_URL = Deno.env.get("FUNCTIONS_BASE_URL") || "https://auth.oagente.io";
+
   // Auth: get user from JWT
   const authHeader = req.headers.get("authorization") ?? "";
   const token = authHeader.replace("Bearer ", "");
@@ -82,7 +86,7 @@ serve(async (req) => {
         // Sanitize: prefix with tenant slug for isolation
         const safeName = `${tenant.id.substring(0, 8)}_${instanceName.replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
-        const webhookUrl = `${SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+        const webhookUrl = `${WEBHOOK_BASE_URL}/functions/v1/whatsapp-webhook`;
 
         const evoRes = await fetch(`${baseUrl}/instance/create`, {
           method: "POST",
@@ -235,7 +239,7 @@ serve(async (req) => {
 
           // Ensure webhook is set (fallback in case create_instance didn't set it)
           try {
-            const whUrl = `${SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+            const whUrl = `${WEBHOOK_BASE_URL}/functions/v1/whatsapp-webhook`;
             const whRes = await fetch(`${baseUrl}/webhook/set/${instanceName}`, {
               method: "POST",
               headers: evoHeaders,
@@ -371,7 +375,7 @@ serve(async (req) => {
           .single();
         if (!inst) return json({ error: "Instância não encontrada" }, 404);
 
-        const webhookUrl = `${SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+        const webhookUrl = `${WEBHOOK_BASE_URL}/functions/v1/whatsapp-webhook`;
 
         const evoRes = await fetch(`${baseUrl}/webhook/set/${instanceName}`, {
           method: "POST",
