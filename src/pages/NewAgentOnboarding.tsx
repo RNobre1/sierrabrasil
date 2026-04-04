@@ -74,6 +74,7 @@ export default function NewAgentOnboarding() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [phase, setPhase] = useState<Phase>("class-select");
+  const [classSelectReady, setClassSelectReady] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [messages, setMessages] = useState<DisplayMsg[]>([]);
   const [chatHistory, setChatHistory] = useState<Msg[]>([]);
@@ -112,6 +113,12 @@ export default function NewAgentOnboarding() {
   useEffect(() => {
     scrollToBottom(messages.length > 2 ? "smooth" : "auto");
   }, [messages, isLoading, scrollToBottom]);
+
+  // Debounce class select to prevent accidental Enter propagation
+  useEffect(() => {
+    const t = setTimeout(() => setClassSelectReady(true), 400);
+    return () => clearTimeout(t);
+  }, []);
 
   // Fetch tenant info and check agent limit
   useEffect(() => {
@@ -515,7 +522,7 @@ export default function NewAgentOnboarding() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 + i * 0.12 }}
-                  onClick={() => handleClassSelect(cls.id)}
+                  onClick={() => classSelectReady && handleClassSelect(cls.id)}
                   className="group text-left rounded-2xl border border-border/40 bg-card/50 p-5 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.97] transition-all duration-200 cursor-pointer"
                 >
                   <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/15 transition-colors">
