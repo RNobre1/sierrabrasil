@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Users, Mail, Phone, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPhoneDisplay } from "@/lib/formatters";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 
@@ -83,7 +84,7 @@ export default function AgentLeadsPanel({ agentId }: Props) {
                   {lead.contact_phone && (
                     <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                       <Phone className="h-2.5 w-2.5" />
-                      {lead.contact_phone}
+                      {formatPhoneDisplay(lead.contact_phone)}
                     </span>
                   )}
                 </div>

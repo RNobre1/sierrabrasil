@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { startImpersonation } from "@/hooks/use-tenant";
+import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 
 interface Tenant {
@@ -288,7 +289,7 @@ export default function AdminTenants() {
         <StatCard icon={Users} label="Total" value={String(stats.total)} color="hsl(var(--foreground))" />
         <StatCard icon={UserCheck} label="Ativos" value={String(stats.active)} color="hsl(152, 69%, 41%)" />
         <StatCard icon={UserX} label="Trial" value={String(stats.trial)} color="hsl(38, 92%, 55%)" />
-        <StatCard icon={DollarSign} label="MRR" value={`R$ ${stats.mrr.toLocaleString("pt-BR")}`} color="hsl(152, 69%, 41%)" />
+        <StatCard icon={DollarSign} label="MRR" value={formatCurrency(stats.mrr)} color="hsl(152, 69%, 41%)" />
       </div>
 
       {/* Filters */}
@@ -372,7 +373,7 @@ export default function AdminTenants() {
                         <span className="text-[10px] capitalize">{t.status === "active" ? "Ativo" : t.status}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-xs">R$ {(planPrices[t.plan] || 0).toLocaleString("pt-BR")}</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-xs">{formatCurrency(planPrices[t.plan] || 0)}</td>
                     <td className="px-4 py-2.5 text-right text-[10px] text-muted-foreground font-mono">{timeAgo(t.created_at)}</td>
                     <td className="px-4 py-2.5 text-center">
                       <div className="flex items-center justify-center gap-1">

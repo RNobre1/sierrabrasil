@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { maskPhoneForOtp } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone, ShieldCheck, RotateCcw, Zap, Brain, MessageSquare } from "lucide-react";
@@ -54,18 +55,6 @@ function Particles({ count = 40 }: { count?: number }) {
     return () => { cancelAnimationFrame(animId); window.removeEventListener("resize", resize); };
   }, [count]);
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
-}
-
-function maskPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  // Format: (XX) XXXXX-X•••
-  if (digits.length >= 12) {
-    const ddd = digits.slice(2, 4);
-    const part1 = digits.slice(4, 9);
-    const part2 = digits.slice(9, 10);
-    return `(${ddd}) ${part1}-${part2}${"•".repeat(3)}`;
-  }
-  return phone;
 }
 
 export default function VerifyPhone() {
@@ -306,7 +295,7 @@ export default function VerifyPhone() {
               <h3 className="text-lg font-bold text-foreground">Verificação WhatsApp</h3>
               <p className="text-sm text-muted-foreground">
                 Enviamos um código de 6 dígitos para<br />
-                <span className="font-medium text-foreground">+55 {maskPhone(phone)}</span>
+                <span className="font-medium text-foreground">+55 {maskPhoneForOtp(phone)}</span>
               </p>
             </div>
 

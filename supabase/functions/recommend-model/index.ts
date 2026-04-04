@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAuth } from "../_shared/auth.ts";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 interface ModelRecommendation {
   model: string;
@@ -78,9 +74,17 @@ const CLASS_ADJUSTMENTS: Record<string, { prefer: string; reason: string }> = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return handleCors(req);
 
   try {
+    // Verify authentication (accepts user JWT, service role, or anon key with warning)
+    const caller = await requireAuth(req, "recommend-model");
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     const { sector, agentClass, plan } = await req.json();
 
     // Normalize sector to lowercase, remove accents
@@ -115,7 +119,7 @@ serve(async (req) => {
     };
 
     return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("recommend-model error:", e);
@@ -124,7 +128,7 @@ serve(async (req) => {
       reason: "Modelo padrao recomendado.",
       alternatives: ["anthropic/claude-haiku-4-5"],
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

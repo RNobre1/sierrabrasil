@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatPhoneDisplay } from "@/lib/formatters";
 import AvatarCropModal from "@/components/AvatarCropModal";
 import WhatsAppOTPStep from "@/components/signup/WhatsAppOTPStep";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,13 +25,6 @@ import { ACCOUNT_STEPS, ACCOUNT_TOUR_KEY } from "@/lib/tour-steps";
 
 const MAX_SIZE = 500 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-
-function formatWhatsApp(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return `(${digits}`;
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
 
 // Mock OTP dialog for email verification
 function EmailOTPDialog({ open, onClose, email, onVerified }: { open: boolean; onClose: () => void; email: string; onVerified: () => void }) {
@@ -115,6 +110,7 @@ export default function Account() {
   const [usernameChangedAt, setUsernameChangedAt] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newPhoneDigits, setNewPhoneDigits] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -247,8 +243,8 @@ export default function Account() {
 
   const handlePhoneVerified = async () => {
     if (!user) return;
-    await supabase.from("profiles").update({ phone: `+55${newPhone.replace(/\D/g, "")}` }).eq("user_id", user.id);
-    setPhone(`+55${newPhone.replace(/\D/g, "")}`);
+    await supabase.from("profiles").update({ phone: `+55${newPhoneDigits}` }).eq("user_id", user.id);
+    setPhone(`+55${newPhoneDigits}`);
     setShowPhoneOTP(false);
     setEditingPhone(false);
     toast({ title: "WhatsApp verificado e atualizado!" });
@@ -412,26 +408,26 @@ export default function Account() {
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">+55</span>
-                    <Input value={newPhone} onChange={e => setNewPhone(formatWhatsApp(e.target.value))} className="pl-10" placeholder="(00) 00000-0000" />
+                    <PhoneInput value={newPhone} onAccept={(val, unmasked) => { setNewPhone(val); setNewPhoneDigits(unmasked); }} className="pl-10" />
                   </div>
-                  <Button size="sm" className="h-10" onClick={() => setShowPhoneOTP(true)} disabled={newPhone.replace(/\D/g, "").length < 10}>
+                  <Button size="sm" className="h-10" onClick={() => setShowPhoneOTP(true)} disabled={newPhoneDigits.length < 10}>
                     Verificar
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-10" onClick={() => { setEditingPhone(false); setNewPhone(phone); }}>Cancelar</Button>
+                  <Button size="sm" variant="ghost" className="h-10" onClick={() => { setEditingPhone(false); setNewPhone(""); setNewPhoneDigits(""); }}>Cancelar</Button>
                 </div>
               </div>
             ) : showPhoneOTP ? (
               <div className="rounded-xl border border-border p-4">
                 <WhatsAppOTPStep
-                  phone={newPhone.replace(/\D/g, "")}
+                  phone={newPhoneDigits}
                   onVerified={handlePhoneVerified}
                   onBack={() => { setShowPhoneOTP(false); }}
                 />
               </div>
             ) : (
               <div className="flex gap-2">
-                <Input value={phone || "Não informado"} disabled className="flex-1 bg-muted" />
-                <Button size="sm" variant="outline" className="h-10" onClick={() => { setEditingPhone(true); setNewPhone(""); }}>
+                <Input value={phone ? formatPhoneDisplay(phone) : "Não informado"} disabled className="flex-1 bg-muted" />
+                <Button size="sm" variant="outline" className="h-10" onClick={() => { setEditingPhone(true); setNewPhone(""); setNewPhoneDigits(""); }}>
                   {phone ? "Alterar" : "Adicionar"}
                 </Button>
               </div>

@@ -25,6 +25,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatPhoneDisplay } from "@/lib/formatters";
 import { useImpersonatedTenant } from "@/hooks/use-tenant";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -66,24 +67,6 @@ interface MemoryRow {
 interface Props {
   agentId: string;
   plan: string;
-}
-
-/** Format phone for display: +5511999998888 -> +55 (11) 99999-8888 */
-function formatPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length === 13 && digits.startsWith("55")) {
-    const ddd = digits.slice(2, 4);
-    const p1 = digits.slice(4, 9);
-    const p2 = digits.slice(9);
-    return `+55 (${ddd}) ${p1}-${p2}`;
-  }
-  if (digits.length === 12 && digits.startsWith("55")) {
-    const ddd = digits.slice(2, 4);
-    const p1 = digits.slice(4, 8);
-    const p2 = digits.slice(8);
-    return `+55 (${ddd}) ${p1}-${p2}`;
-  }
-  return phone;
 }
 
 const SENTIMENT_STYLES: Record<string, { label: string; color: string }> = {
@@ -304,7 +287,7 @@ export default function AgentMemoryTab({ agentId, plan }: Props) {
         {filtered.map(mem => {
           const isExpanded = expandedId === mem.id;
           const facts = isExpanded ? (editingFacts[mem.id] ?? mem.key_facts) : mem.key_facts;
-          const displayName = facts.nome || formatPhone(mem.contact_phone);
+          const displayName = facts.nome || formatPhoneDisplay(mem.contact_phone);
           const sentiment = facts.sentimento?.toLowerCase();
           const sentimentStyle = sentiment ? SENTIMENT_STYLES[sentiment] : null;
           const tokenPct = tokenLimit > 0 && mem.token_count
@@ -394,7 +377,7 @@ export default function AgentMemoryTab({ agentId, plan }: Props) {
                       {/* Phone */}
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Hash className="h-3 w-3" />
-                        <span className="font-mono">{formatPhone(mem.contact_phone)}</span>
+                        <span className="font-mono">{formatPhoneDisplay(mem.contact_phone)}</span>
                       </div>
 
                       {/* Summary */}

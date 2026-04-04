@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatPhoneDisplay } from "@/lib/formatters";
 import GuidedTour from "@/components/GuidedTour";
 import { CONVERSATION_DETAIL_STEPS, CONVERSATION_DETAIL_TOUR_KEY } from "@/lib/tour-steps";
 
@@ -280,7 +281,7 @@ export default function ConversationDetail() {
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
             {conversation.contact_phone && (
-              <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {conversation.contact_phone}</span>
+              <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {formatPhoneDisplay(conversation.contact_phone)}</span>
             )}
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {duration()}</span>
             <span className="flex items-center gap-1"><Hash className="h-3 w-3 capitalize" /> {conversation.channel}</span>

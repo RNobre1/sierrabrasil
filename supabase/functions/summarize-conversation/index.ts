@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 // Simple token approximation: ~4 chars per token
 function estimateTokens(text: string): number {
@@ -118,8 +113,15 @@ Responda APENAS com JSON valido:
 }`;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return handleCors(req);
+
+  // Internal auth — only callable with service role key
+  const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const providedKey = req.headers.get("authorization")?.replace("Bearer ", "");
+  if (expectedKey && providedKey !== expectedKey) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), {
+      status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -128,7 +130,7 @@ serve(async (req) => {
     if (!conversation_id) {
       return new Response(
         JSON.stringify({ error: "conversation_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -153,7 +155,7 @@ serve(async (req) => {
       console.error("Conversation not found:", convError?.message);
       return new Response(
         JSON.stringify({ error: "Conversation not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 404, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -163,7 +165,7 @@ serve(async (req) => {
       console.log("Missing attendant_id or contact_phone, skipping summarization");
       return new Response(
         JSON.stringify({ ok: true, skipped: "missing_attendant_or_contact" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -178,7 +180,7 @@ serve(async (req) => {
       console.error("Tenant not found:", tenantError?.message);
       return new Response(
         JSON.stringify({ error: "Tenant not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 404, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -189,7 +191,7 @@ serve(async (req) => {
       console.log(`Plan '${tenant.plan}' does not support memory, skipping`);
       return new Response(
         JSON.stringify({ ok: true, skipped: "plan_no_memory", plan: tenant.plan }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -204,7 +206,7 @@ serve(async (req) => {
       console.log("No messages found for conversation:", conversation_id);
       return new Response(
         JSON.stringify({ ok: true, skipped: "no_messages" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -238,7 +240,7 @@ serve(async (req) => {
       console.error("AI summarization error:", aiResp.status, errText);
       return new Response(
         JSON.stringify({ error: "AI summarization failed", status: aiResp.status }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -255,7 +257,7 @@ serve(async (req) => {
       console.error("Failed to parse AI JSON response:", rawContent.slice(0, 500));
       return new Response(
         JSON.stringify({ error: "Failed to parse summarization response" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -263,7 +265,7 @@ serve(async (req) => {
       console.error("Invalid summarization structure:", JSON.stringify(parsed).slice(0, 300));
       return new Response(
         JSON.stringify({ error: "Invalid summarization structure" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -329,7 +331,7 @@ serve(async (req) => {
         console.error("Failed to update memory:", updateErr.message);
         return new Response(
           JSON.stringify({ error: "Failed to update memory" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
         );
       }
       console.log(`Memory updated for attendant=${attendant_id} contact=${contact_phone} (conversations: ${conversationsCount}, tokens: ${tokenCount})`);
@@ -342,7 +344,7 @@ serve(async (req) => {
         console.error("Failed to insert memory:", insertErr.message);
         return new Response(
           JSON.stringify({ error: "Failed to insert memory" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
         );
       }
       console.log(`Memory created for attendant=${attendant_id} contact=${contact_phone} (tokens: ${tokenCount})`);
@@ -359,13 +361,13 @@ serve(async (req) => {
           compressed: tokenCount > tokenLimit,
         },
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
     );
   } catch (e) {
     console.error("summarize-conversation error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
     );
   }
 });

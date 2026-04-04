@@ -1,21 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const corsHdrs = getCorsHeaders(req);
+  function json(data: unknown, status = 200) {
+    return new Response(JSON.stringify(data), {
+      status,
+      headers: { ...corsHdrs, "Content-Type": "application/json" },
+    });
+  }
+
+  if (req.method === "OPTIONS") return handleCors(req);
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -51,6 +47,21 @@ serve(async (req) => {
     // Normalize phone: ensure +55 prefix and only digits after
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 12) return json({ error: "Numero invalido" }, 400);
+
+    // Rate limit: max 3 OTP sends per phone per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count } = await supabase
+      .from("phone_verifications")
+      .select("id", { count: "exact", head: true })
+      .eq("phone", cleanPhone)
+      .gte("created_at", oneHourAgo);
+
+    if ((count ?? 0) >= 3) {
+      console.warn(`Rate limit hit for phone ${cleanPhone} (user ${user.id})`);
+      return json({
+        error: "Muitas tentativas. Aguarde 1 hora antes de solicitar novo código.",
+      }, 429);
+    }
 
     // Invalidate previous pending verifications for this user
     await supabase

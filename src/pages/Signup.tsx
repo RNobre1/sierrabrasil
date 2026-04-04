@@ -4,17 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Zap, Brain, MessageSquare, Phone } from "lucide-react";
 import meteoraLogo from "@/assets/meteora-branca.png";
 import meteoraLogoPreta from "@/assets/meteora-preta.png";
-
-function formatWhatsApp(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return `(${digits}`;
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
 
 function Particles({ count = 40 }: { count?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,6 +47,7 @@ export default function Signup() {
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [whatsappDigits, setWhatsappDigits] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -70,7 +65,7 @@ export default function Signup() {
         data: {
           full_name: fullName,
           company_name: companyName,
-          whatsapp: whatsapp ? `+55${whatsapp.replace(/\D/g, "")}` : undefined,
+          whatsapp: whatsappDigits ? `+55${whatsappDigits}` : undefined,
         },
       },
     });
@@ -180,7 +175,7 @@ export default function Signup() {
               <Label htmlFor="whatsapp" className="text-xs font-medium text-muted-foreground">WhatsApp</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs text-muted-foreground"><Phone className="h-3.5 w-3.5" /> +55</span>
-                <Input id="whatsapp" value={whatsapp} onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))} required placeholder="(00) 00000-0000" className="h-11 rounded-xl bg-secondary/50 border-border/50 pl-16 text-sm placeholder:text-muted-foreground/50" />
+                <PhoneInput id="whatsapp" value={whatsapp} onAccept={(val, unmasked) => { setWhatsapp(val); setWhatsappDigits(unmasked); }} className="h-11 rounded-xl bg-secondary/50 border-border/50 pl-16 text-sm placeholder:text-muted-foreground/50" />
               </div>
             </div>
             <Button type="submit" className="group w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 font-medium shadow-lg shadow-primary/20 transition-all" disabled={loading}>

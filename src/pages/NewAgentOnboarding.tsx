@@ -930,7 +930,15 @@ function ChatBubble({ msg }: { msg: DisplayMsg }) {
           }`}
         >
           <div className="text-sm leading-relaxed prose prose-sm prose-invert max-w-none [&_p]:m-0 [&_p+p]:mt-2">
-            <ReactMarkdown>{msg.content}</ReactMarkdown>
+            <ReactMarkdown
+              skipHtml={true}
+              allowedElements={["p", "strong", "em", "ul", "ol", "li", "a", "br", "code", "pre", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "del", "span"]}
+              components={{
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+                ),
+              }}
+            >{msg.content}</ReactMarkdown>
           </div>
         </div>
         {isUser && (

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "@/lib/formatters";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, PieChart, Pie, Cell
@@ -215,7 +216,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <HeroKPI
           icon={DollarSign} label="MRR"
-          value={`R$ ${mrr.toLocaleString("pt-BR")}`}
+          value={formatCurrency(mrr)}
           gradient="linear-gradient(135deg, hsl(152 69% 31%), hsl(168 76% 36%))"
           sub={`${tenants.length} clientes · ${Object.keys(planPrices).length} planos`}
           trend={`+${tenants.length}`}
@@ -247,7 +248,7 @@ export default function AdminDashboard() {
         <StatCard icon={Zap} label="Msg/Conv" value={avgMsgPerConv} color="hsl(217, 91%, 60%)" sub="média geral" />
         <StatCard icon={DollarSign} label="Custo IA" value={estimatedCost} color="hsl(38, 92%, 55%)" sub="estimado" />
         <StatCard icon={Globe} label="Trial" value={String(trialTenants)} color="hsl(280, 67%, 55%)" sub="em teste" />
-        <StatCard icon={TrendingUp} label="Ticket Médio" value={`R$ ${tenants.length ? Math.round(mrr / tenants.length) : 0}`} color="hsl(152, 69%, 41%)" sub="/mês por cliente" />
+        <StatCard icon={TrendingUp} label="Ticket Médio" value={formatCurrency(tenants.length ? Math.round(mrr / tenants.length) : 0)} color="hsl(152, 69%, 41%)" sub="/mês por cliente" />
         <StatCard icon={Clock} label="Mensagens" value={messageCount.toLocaleString("pt-BR")} color="hsl(217, 91%, 60%)" sub="total processadas" />
       </div>
 
@@ -330,8 +331,8 @@ export default function AdminDashboard() {
                 <BarChart data={planChartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="plan" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v: number) => `R$${v}`} />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }} formatter={(v: number) => [`R$ ${v.toLocaleString("pt-BR")}`, "Receita"]} />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v: number) => formatCurrency(v)} />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }} formatter={(v: number) => [formatCurrency(v), "Receita"]} />
                   <Bar dataKey="revenue" fill="hsl(217, 91%, 60%)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -428,7 +429,7 @@ export default function AdminDashboard() {
                       </div>
                     </td>
                     <td className="py-2.5 text-right font-mono text-xs font-medium">
-                      R$ {(planPrices[t.plan] || 0).toLocaleString("pt-BR")}
+                      {formatCurrency(planPrices[t.plan] || 0)}
                     </td>
                     <td className="py-2.5 text-right text-[10px] text-muted-foreground font-mono">
                       {timeAgo(t.created_at)}

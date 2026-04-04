@@ -2,17 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone } from "lucide-react";
+import { formatPhoneInput } from "@/lib/formatters";
 
 interface PhoneCollectStepProps {
   onSubmit: (phone: string) => void;
   userName?: string;
-}
-
-function formatWhatsApp(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return `(${digits}`;
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
 export default function PhoneCollectStep({ onSubmit, userName }: PhoneCollectStepProps) {
@@ -52,7 +46,7 @@ export default function PhoneCollectStep({ onSubmit, userName }: PhoneCollectSte
           </span>
           <Input
             value={phone}
-            onChange={(e) => { setPhone(formatWhatsApp(e.target.value)); setError(""); }}
+            onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setError(""); }}
             placeholder="(00) 00000-0000"
             className="h-12 rounded-xl bg-secondary/50 border-border/50 pl-16 text-sm"
           />

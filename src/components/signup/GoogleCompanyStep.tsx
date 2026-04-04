@@ -2,15 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { ArrowRight, Building2, Phone } from "lucide-react";
 import { motion } from "framer-motion";
-
-function formatWhatsApp(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return `(${digits}`;
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
 
 interface GoogleCompanyStepProps {
   userName: string;
@@ -20,10 +14,11 @@ interface GoogleCompanyStepProps {
 export default function GoogleCompanyStep({ userName, onSubmit }: GoogleCompanyStepProps) {
   const [companyName, setCompanyName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [whatsappDigits, setWhatsappDigits] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName.trim() || whatsapp.replace(/\D/g, "").length < 10) return;
+    if (!companyName.trim() || whatsappDigits.length < 10) return;
     onSubmit(companyName, whatsapp);
   };
 
@@ -67,12 +62,11 @@ export default function GoogleCompanyStep({ userName, onSubmit }: GoogleCompanyS
             <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs text-muted-foreground">
               +55
             </span>
-            <Input
+            <PhoneInput
               id="whatsapp"
               value={whatsapp}
-              onChange={(e) => setWhatsapp(formatWhatsApp(e.target.value))}
+              onAccept={(val, unmasked) => { setWhatsapp(val); setWhatsappDigits(unmasked); }}
               required
-              placeholder="(00) 00000-0000"
               className="h-11 rounded-xl bg-secondary/50 border-border/50 pl-12 text-sm placeholder:text-muted-foreground/50"
             />
           </div>
@@ -81,7 +75,7 @@ export default function GoogleCompanyStep({ userName, onSubmit }: GoogleCompanyS
         <Button
           type="submit"
           className="group w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 font-medium shadow-lg shadow-primary/20 transition-all"
-          disabled={!companyName.trim() || whatsapp.replace(/\D/g, "").length < 10}
+          disabled={!companyName.trim() || whatsappDigits.length < 10}
         >
           Continuar
           <span className="relative ml-2 inline-flex items-center justify-center h-6 w-6 rounded-md bg-white/10 shadow-[0_0_8px_rgba(255,255,255,0.15)] group-hover:translate-x-0.5 transition-all duration-300">
