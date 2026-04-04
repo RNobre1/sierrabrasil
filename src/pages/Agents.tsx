@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImpersonatedTenant } from "@/hooks/use-tenant";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import GuidedTour from "@/components/GuidedTour";
@@ -84,7 +85,8 @@ export default function Agents() {
     })();
   }, [user, impersonatedTenant]);
 
-  const maxAgents = tenantPlan === "starter" ? 1 : tenantPlan === "professional" ? 3 : tenantPlan === "enterprise" ? 100 : 10;
+  const { limits: planLimits } = usePlanLimits(tenantPlan);
+  const maxAgents = planLimits.max_agents;
   const canCreate = agents.length < maxAgents;
   const online = agents.filter(a => a.status === "online").length;
   const [showLimitModal, setShowLimitModal] = useState(false);

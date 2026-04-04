@@ -288,6 +288,45 @@ serve(async (req) => {
         conversation_id: conversationId, role: "contact", content: messageContent,
       });
 
+      // 4b. LGPD: detect "forget me" requests
+      const forgetPhrases = [
+        "esquecer meus dados", "deletar minhas informações", "apagar meus dados",
+        "remover meus dados", "esquece meus dados", "delete my data", "forget me",
+      ];
+      const isForgetRequest = forgetPhrases.some(p => messageContent.toLowerCase().includes(p));
+
+      if (isForgetRequest) {
+        // Delete memory
+        await supabase.from("agent_memories").delete()
+          .eq("attendant_id", attendant.id)
+          .eq("contact_phone", contactPhone);
+
+        // Log LGPD request
+        await supabase.from("lgpd_requests").insert({
+          contact_phone: contactPhone,
+          tenant_id: instance.tenant_id,
+          request_type: "DELETION",
+          details: { message: messageContent, attendant_id: attendant.id },
+        });
+
+        // Send confirmation
+        const lgpdReply = "Seus dados foram removidos do nosso sistema conforme solicitado. Sua privacidade é importante para nós.";
+        await supabase.from("messages").insert({
+          conversation_id: conversationId, role: "attendant", content: lgpdReply,
+        });
+
+        // Send via WhatsApp
+        const baseUrlLgpd = EVOLUTION_API_URL?.replace(/\/$/, "") || "";
+        if (baseUrlLgpd && EVOLUTION_API_KEY) {
+          await sendText(baseUrlLgpd, EVOLUTION_API_KEY, instanceName, contactPhone, lgpdReply);
+        }
+
+        console.log(`LGPD deletion request from ${contactPhone} for attendant ${attendant.id}`);
+        return new Response(JSON.stringify({ ok: true, lgpd: "data_deleted" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // 5. Send typing indicator
       const baseUrl = EVOLUTION_API_URL?.replace(/\/$/, "") || "";
       if (baseUrl && EVOLUTION_API_KEY) {

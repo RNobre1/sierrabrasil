@@ -75,7 +75,33 @@ export default function Privacy() {
             salvo obrigação legal de retenção.
           </p>
 
-          <h2>6. Direitos do titular</h2>
+          {/* TODO: Revisar texto abaixo com advogado antes de publicar */}
+          <h2>6. Memória dos agentes de IA</h2>
+          <p>
+            Nossos agentes de IA podem armazenar um resumo contextual das interações anteriores
+            com o mesmo contato, com o objetivo de oferecer um atendimento mais personalizado e
+            contínuo. Esses resumos são vinculados ao número de telefone do contato e ao agente
+            específico, e podem incluir nome, preferências e histórico de atendimento.
+          </p>
+          <ul className="list-disc pl-6 space-y-1 text-sm">
+            <li>
+              <strong>Retenção automática:</strong> Os dados de memória possuem prazo de retenção
+              que varia conforme o plano contratado (30 a 180 dias), após o qual são automaticamente
+              excluídos.
+            </li>
+            <li>
+              <strong>Exclusão sob demanda:</strong> O contato final (cliente do nosso cliente) pode
+              solicitar a exclusão de seus dados a qualquer momento enviando uma mensagem ao agente
+              com frases como "esquecer meus dados" ou "apagar meus dados". A exclusão é imediata
+              e registrada para fins de auditoria.
+            </li>
+            <li>
+              <strong>Registro de solicitações LGPD:</strong> Todas as solicitações de exclusão são
+              registradas em log de auditoria, incluindo data, hora e identificação do solicitante.
+            </li>
+          </ul>
+
+          <h2>7. Direitos do titular</h2>
           <p>Em conformidade com a LGPD, você tem direito a:</p>
           <ul className="list-disc pl-6 space-y-1 text-sm">
             <li>Confirmar a existência de tratamento de dados</li>
@@ -86,14 +112,14 @@ export default function Privacy() {
             <li>Revogar o consentimento a qualquer momento</li>
           </ul>
 
-          <h2>7. Cookies</h2>
+          <h2>8. Cookies</h2>
           <p>
             Utilizamos cookies essenciais para o funcionamento da plataforma (autenticação, sessão)
             e cookies analíticos para entender o uso do serviço. Você pode desativá-los nas configurações
             do seu navegador, mas isso pode afetar a funcionalidade da plataforma.
           </p>
 
-          <h2>8. Contato</h2>
+          <h2>9. Contato</h2>
           <p>
             Para exercer seus direitos ou esclarecer dúvidas sobre esta política, entre em contato:
           </p>

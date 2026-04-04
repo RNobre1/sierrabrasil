@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuditLog } from "@/hooks/use-audit";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
 import AgentFaqManager from "./AgentFaqManager";
 import AgentLeadsPanel from "./AgentLeadsPanel";
 
@@ -57,12 +58,33 @@ interface Props {
   tenantId?: string;
 }
 
+// Skill tier mapping: which tier each skill category requires
+const CATEGORY_TO_TIER: Record<string, string> = {
+  core: "base",
+  advanced: "avancado",
+  premium: "premium",
+};
+
+// Tier hierarchy: higher index = higher tier
+const TIER_HIERARCHY = ["base", "avancado", "premium"];
+
+function isTierIncluded(planTier: string, requiredTier: string): boolean {
+  const planIdx = TIER_HIERARCHY.indexOf(planTier);
+  const reqIdx = TIER_HIERARCHY.indexOf(requiredTier);
+  if (planIdx === -1 || reqIdx === -1) return false;
+  return planIdx >= reqIdx;
+}
+
 export default function AgentSkillsTab({ agentId, agentClass, plan, tenantId }: Props) {
   const [enabledSkills, setEnabledSkills] = useState<Set<string>>(new Set());
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const { logEdit } = useAuditLog();
+  const { limits: planLimits } = usePlanLimits(plan);
+
+  // Determine the plan's skill tier from features
+  const planSkillTier = (planLimits.features?.skill_tiers as string) || "base";
 
   // Load saved skills from DB
   useEffect(() => {
@@ -79,7 +101,10 @@ export default function AgentSkillsTab({ agentId, agentClass, plan, tenantId }: 
     })();
   }, [agentId, plan]);
 
-  const isIncluded = (skill: Skill) => skill.includedIn.includes(plan);
+  const isIncluded = (skill: Skill) => {
+    const requiredTier = CATEGORY_TO_TIER[skill.category] || "base";
+    return isTierIncluded(planSkillTier, requiredTier);
+  };
   const isEnabled = (id: string) => enabledSkills.has(id);
 
   const toggleSkill = (skill: Skill) => {

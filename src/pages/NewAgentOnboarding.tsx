@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
 import SocialLinksSelector from "@/components/onboarding/SocialLinksSelector";
 import ScrapingProgress from "@/components/onboarding/ScrapingProgress";
 import { normalizeSocialUrl } from "@/lib/url-normalizer";
@@ -127,7 +128,8 @@ export default function NewAgentOnboarding() {
     })();
   }, [user]);
 
-  const maxAgents = tenantPlan === "starter" ? 1 : tenantPlan === "professional" ? 3 : tenantPlan === "enterprise" ? 100 : 10;
+  const { limits: planLimits } = usePlanLimits(tenantPlan);
+  const maxAgents = planLimits.max_agents;
   const canCreate = agentCount < maxAgents;
 
   // Streaming helper

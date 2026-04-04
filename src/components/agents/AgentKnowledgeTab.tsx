@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuditLog } from "@/hooks/use-audit";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -30,12 +31,7 @@ interface GroupedDoc {
   chunks: KBItem[];
 }
 
-const PLAN_LIMITS: Record<string, { maxDocs: number; maxSizeMB: number; label: string }> = {
-  starter: { maxDocs: 10, maxSizeMB: 10, label: "Starter" },
-  professional: { maxDocs: 50, maxSizeMB: 100, label: "Profissional" },
-  business: { maxDocs: 200, maxSizeMB: 500, label: "Empresarial" },
-  enterprise: { maxDocs: 9999, maxSizeMB: 2000, label: "Enterprise" },
-};
+// PLAN_LIMITS removed — now fetched from DB via usePlanLimits hook
 
 const ACCEPTED_TYPES = ".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.xls";
 
@@ -127,8 +123,9 @@ export default function AgentKnowledgeTab({ agentId, tenantId, plan, onRefresh }
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { logEdit } = useAuditLog();
+  const { limits: planLimits } = usePlanLimits(plan);
 
-  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.starter;
+  const limits = { maxDocs: planLimits.max_knowledge_docs, maxSizeMB: planLimits.max_knowledge_mb, label: planLimits.display_name };
 
   const fetchKB = async () => {
     const { data } = await supabase

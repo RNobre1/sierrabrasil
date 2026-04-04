@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImpersonatedTenant } from "@/hooks/use-tenant";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +73,7 @@ const CONNECTING_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 export default function WhatsAppTab({ plan }: { plan: string }) {
   const { user } = useAuth();
   const impersonatedTenant = useImpersonatedTenant();
+  const { limits: planLimits } = usePlanLimits(plan);
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -171,10 +173,18 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
     a => !instances.some(i => i.attendant_id === a.id)
   );
 
+  // Check if at the plan's WhatsApp number limit
+  const atNumberLimit = instances.length >= planLimits.max_whatsapp_numbers;
+  const canAddNumber = availableAgents.length > 0 && !atNumberLimit;
+
   const handleCreate = async () => {
     if (!newDisplayName.trim()) return;
+    if (atNumberLimit) {
+      toast.error(`Limite de ${planLimits.max_whatsapp_numbers} numeros atingido no plano ${planLimits.display_name}. Faca upgrade para adicionar mais.`);
+      return;
+    }
     if (availableAgents.length === 0) {
-      toast.error("Todos os seus agentes já possuem um número vinculado. Crie um novo agente primeiro.");
+      toast.error("Todos os seus agentes ja possuem um numero vinculado. Crie um novo agente primeiro.");
       return;
     }
     setCreating(true);
@@ -312,8 +322,15 @@ export default function WhatsAppTab({ plan }: { plan: string }) {
               </Button>
               <Dialog open={showCreate} onOpenChange={setShowCreate}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="gap-1.5" disabled={availableAgents.length === 0} title={availableAgents.length === 0 ? "Todos os agentes já possuem um número. Crie um novo agente primeiro." : undefined}>
-                    <Plus className="h-3.5 w-3.5" /> Adicionar número
+                  <Button size="sm" className="gap-1.5" disabled={!canAddNumber} title={
+                    atNumberLimit
+                      ? `Limite de ${planLimits.max_whatsapp_numbers} numero${planLimits.max_whatsapp_numbers > 1 ? "s" : ""} atingido no plano ${planLimits.display_name}. Faca upgrade para adicionar mais.`
+                      : availableAgents.length === 0
+                        ? "Todos os agentes ja possuem um numero. Crie um novo agente primeiro."
+                        : undefined
+                  }>
+                    <Plus className="h-3.5 w-3.5" /> Adicionar numero
+                    {atNumberLimit && <span className="text-[9px] ml-1 opacity-60">({instances.length}/{planLimits.max_whatsapp_numbers})</span>}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
