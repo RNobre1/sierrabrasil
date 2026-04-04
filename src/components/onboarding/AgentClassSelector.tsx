@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Headphones, TrendingUp, ArrowRight, Zap, Clock, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -31,6 +32,12 @@ const highlights = [
 ];
 
 export default function AgentClassSelector({ onSelect }: AgentClassSelectorProps) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 400);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className="flex flex-col items-center text-center space-y-8 px-4 py-6">
       <motion.div
@@ -85,7 +92,7 @@ export default function AgentClassSelector({ onSelect }: AgentClassSelectorProps
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 + i * 0.12 }}
-            onClick={() => onSelect(cls.id)}
+            onClick={() => ready && onSelect(cls.id)}
             className="group text-left rounded-2xl border border-border/40 bg-card/50 p-5 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.97] transition-all duration-200 cursor-pointer"
           >
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/15 transition-colors">

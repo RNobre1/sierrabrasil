@@ -209,6 +209,9 @@ export default function VerifyPhone() {
     }
 
     if (data?.success) {
+      // Blur active element to prevent Enter keyup from leaking to next page
+      (document.activeElement as HTMLElement)?.blur();
+
       // Check if user already completed onboarding (returning user on new device)
       const { data: att } = await supabase
         .from("attendants")
