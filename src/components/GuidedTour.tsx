@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   X, ArrowRight, ArrowLeft, Bot, Play, Wifi, MessageSquare,
-  BarChart3, Percent, CheckCircle2, Radio, Zap
+  BarChart3, Percent, CheckCircle2, Zap
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,12 +34,6 @@ const DASHBOARD_STEPS: TourStep[] = [
     description: "Veja quantas conversas estao ativas, resolvidas ou escaladas. A barra de resolucao mostra a eficiencia do seu agente.",
     icon: <Percent className="h-5 w-5" />,
     selector: "[data-tour='status-panel']",
-  },
-  {
-    title: "Conversas por canal",
-    description: "Descubra de onde vem suas conversas: WhatsApp, Instagram ou Web. Ajuda a priorizar canais.",
-    icon: <Radio className="h-5 w-5" />,
-    selector: "[data-tour='channel-chart']",
   },
   {
     title: "Seus agentes",
