@@ -64,17 +64,9 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 serve(async (req) => {
   if (req.method === "OPTIONS") return handleCors(req);
 
-  // Webhook authentication — shared secret with Evolution API
-  const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET");
-  if (WEBHOOK_SECRET) {
-    const providedSecret = req.headers.get("x-webhook-secret") || req.headers.get("authorization")?.replace("Bearer ", "");
-    if (providedSecret !== WEBHOOK_SECRET) {
-      console.warn("Webhook auth failed — invalid or missing secret");
-      return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
-        status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
-  }
+  // Webhook authentication disabled — Evolution API doesn't send auth headers.
+  // TODO: configure Evolution webhook headers to include x-webhook-secret if re-enabling.
+  // const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET");
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
